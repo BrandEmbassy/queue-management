@@ -71,6 +71,7 @@ abstract class AbstractJob implements JobInterface
     {
         $arrayData = [
             self::UUID       => $this->uuid,
+            self::JOB_NAME   => $this->name,
             self::JOB_CLASS  => static::class,
             self::ATTEMPTS   => $this->attempts,
             self::PARAMETERS => $this->parameters->toArray(),

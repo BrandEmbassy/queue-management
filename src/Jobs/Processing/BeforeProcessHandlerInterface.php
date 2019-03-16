@@ -6,5 +6,5 @@ use BE\QueueManagement\Jobs\JobInterface;
 
 interface BeforeProcessHandlerInterface
 {
-    public function __invoke(JobInterface $job): void;
+    public function before(JobInterface $job): void;
 }

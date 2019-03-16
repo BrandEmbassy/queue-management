@@ -86,7 +86,7 @@ class LoadedJobHandler
     private function beforeProcess(JobInterface $job): void
     {
         foreach ($this->beforeProcessHandlers as $beforeProcessHandler) {
-            $beforeProcessHandler($job);
+            $beforeProcessHandler->before($job);
         }
     }
 
@@ -94,7 +94,7 @@ class LoadedJobHandler
     private function afterProcess(JobInterface $job): void
     {
         foreach ($this->afterProcessHandlers as $afterProcessHandler) {
-            $afterProcessHandler($job);
+            $afterProcessHandler->after($job);
         }
     }
 }
