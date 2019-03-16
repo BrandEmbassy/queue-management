@@ -1,0 +1,24 @@
+{
+    "name": "brandembassy/queue-management",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "BE\\QueueManagement\\": "src"
+        }
+    },
+    "require": {
+        "psr/log": "^1.1",
+        "doctrine/collections": "^1.5",
+        "php-amqplib/php-amqplib": "^2.8",
+        "brandembassy/datetime": "^1.2"
+    },
+    "require-dev": {
+        "nette/bootstrap": "3.0.0-RC1",
+        "brandembassy/coding-standard": "^5.3"
+    },
+    "scripts": {
+        "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests",
+        "phpcbf": "./vendor/bin/phpcbf --standard=BrandEmbassyCodingStandard src tests",
+        "phpstan": "./vendor/bin/phpstan analyze -c phpstan.neon src tests"
+    }
+}
