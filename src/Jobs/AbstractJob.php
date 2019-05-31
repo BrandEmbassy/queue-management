@@ -9,7 +9,7 @@ use Nette\Utils\Json;
 use function implode;
 use function sprintf;
 
-abstract class AbstractJob implements JobInterface
+class AbstractJob implements JobInterface
 {
     /**
      * @var string
@@ -17,9 +17,9 @@ abstract class AbstractJob implements JobInterface
     private $uuid;
 
     /**
-     * @var string
+     * @var DateTimeImmutable
      */
-    private $name;
+    private $createdAt;
 
     /**
      * @var int
@@ -36,16 +36,27 @@ abstract class AbstractJob implements JobInterface
      */
     private $executionStartedAt;
 
+    /**
+     * @var JobDefinitionInterface
+     */
+    private $jobDefinition;
+
 
     /**
      * @param Collection|mixed[] $parameters
      */
-    public function __construct(string $uuid, string $name, int $attempts, Collection $parameters)
-    {
+    public function __construct(
+        string $uuid,
+        DateTimeImmutable $createdAt,
+        int $attempts,
+        JobDefinitionInterface $jobDefinition,
+        Collection $parameters
+    ) {
         $this->uuid = $uuid;
-        $this->name = $name;
+        $this->createdAt = $createdAt;
         $this->attempts = $attempts;
         $this->parameters = $parameters;
+        $this->jobDefinition = $jobDefinition;
     }
 
 
@@ -57,7 +68,7 @@ abstract class AbstractJob implements JobInterface
 
     public function getName(): string
     {
-        return $this->name;
+        return $this->jobDefinition->getJobName();
     }
 
 
@@ -71,7 +82,7 @@ abstract class AbstractJob implements JobInterface
     {
         $arrayData = [
             self::UUID       => $this->uuid,
-            self::JOB_NAME   => $this->name,
+            self::JOB_NAME   => $this->getName(),
             self::JOB_CLASS  => static::class,
             self::ATTEMPTS   => $this->attempts,
             self::PARAMETERS => $this->parameters->toArray(),
@@ -84,7 +95,7 @@ abstract class AbstractJob implements JobInterface
     /**
      * @param mixed $value
      */
-    public function setParameter(string $key, $value): void
+    protected function setParameter(string $key, $value): void
     {
         $this->parameters->set($key, $value);
     }
@@ -135,8 +146,14 @@ abstract class AbstractJob implements JobInterface
     }
 
 
-    abstract public function getQueueName(): string;
+    public function getMaxAttempts(): ?int
+    {
+        return $this->jobDefinition->getMaxAttempts();
+    }
 
 
-    abstract public function getMaxAttempts(): ?int;
+    public function getCreatedAt(): DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
 }

@@ -6,11 +6,12 @@ use DateTimeImmutable;
 
 interface JobInterface
 {
-    public const UUID = 'uuid';
+    public const UUID = 'jobUuid';
     public const JOB_NAME = 'jobName';
     public const JOB_CLASS = 'jobClass';
     public const ATTEMPTS = 'attempts';
-    public const PARAMETERS = 'parameters';
+    public const CREATED_AT = 'createdAt';
+    public const PARAMETERS = 'jobParameters';
 
 
     public function getUuid(): string;
@@ -22,13 +23,10 @@ interface JobInterface
     public function getAttempts(): int;
 
 
+    public function getMaxAttempts(): ?int;
+
+
     public function toJson(): string;
-
-
-    /**
-     * @param mixed $value
-     */
-    public function setParameter(string $key, $value): void;
 
 
     /**
@@ -37,10 +35,7 @@ interface JobInterface
     public function getParameter(string $key);
 
 
-    public function getQueueName(): string;
-
-
-    public function getMaxAttempts(): ?int;
+    public function getCreatedAt(): DateTimeImmutable;
 
 
     public function getExecutionStartedAt(): ?DateTimeImmutable;
