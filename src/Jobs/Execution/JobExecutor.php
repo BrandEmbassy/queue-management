@@ -7,17 +7,17 @@ use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-class JobExecutor
+class JobExecutor implements JobExecutorInterface
 {
     /**
      * @var LoggerInterface
      */
-    private $logger;
+    protected $logger;
 
     /**
      * @var DateTimeImmutableFactory
      */
-    private $dateTimeImmutableFactory;
+    protected $dateTimeImmutableFactory;
 
 
     public function __construct(LoggerInterface $logger, DateTimeImmutableFactory $dateTimeImmutableFactory)
@@ -32,13 +32,22 @@ class JobExecutor
         try {
             $processor = $job->getJobDefinition()->getJobProcessor();
 
-            $job->executionStarted($this->dateTimeImmutableFactory->getNow());
+            $startedAt = $this->dateTimeImmutableFactory->getNow();
+
+            $job->executionStarted($startedAt);
 
             $this->logger->info('Job execution start');
 
             $processor->process($job);
 
-            $this->logger->info('Job execution success');
+            $executedAt = $this->dateTimeImmutableFactory->getNow();
+
+            $diff = $executedAt->getTimestamp() - $startedAt->getTimestamp();
+
+            $this->logger->info(
+                'Job execution success [' . $diff . ' sec]',
+                ['executionTime' => $diff]
+            );
         } catch (ConsumerFailedExceptionInterface | UnresolvableProcessFailExceptionInterface $exception) {
             throw $exception;
         } catch (Throwable $exception) {

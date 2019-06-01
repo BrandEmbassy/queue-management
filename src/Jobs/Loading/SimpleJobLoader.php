@@ -25,6 +25,6 @@ class SimpleJobLoader implements JobLoaderInterface
         /** @var SimpleJob $jobClass */
         $jobClass = $jobDefinition->getJobClass();
 
-        return new $jobClass($uuid, $createdAt, $attempts, $jobDefinition);
+        return new $jobClass($uuid, $createdAt, $attempts, $jobDefinition, $parameters);
     }
 }

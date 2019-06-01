@@ -4,6 +4,7 @@ namespace BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\Execution\MaximumAttemptsExceededException;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
+use DateTime;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use Nette\Utils\Json;
@@ -87,6 +88,7 @@ class SimpleJob implements JobInterface
             self::JOB_NAME   => $this->getName(),
             self::JOB_CLASS  => static::class,
             self::ATTEMPTS   => $this->attempts,
+            self::CREATED_AT => $this->createdAt->format(DateTime::ATOM),
             self::PARAMETERS => $this->parameters->toArray(),
         ];
 
@@ -136,14 +138,14 @@ class SimpleJob implements JobInterface
 
     public function incrementAttempts(): void
     {
-        $incremented = $this->getAttempts() + 1;
+        $this->attempts++;
         $maxAttempts = $this->getMaxAttempts();
 
-        if ($maxAttempts !== null && $incremented > $maxAttempts) {
+        if ($maxAttempts !== null && $this->attempts > $maxAttempts) {
             throw new MaximumAttemptsExceededException(sprintf('Maximum limit (%s) attempts exceeded', $maxAttempts));
         }
 
-        $this->setParameter(self::ATTEMPTS, $incremented);
+        $this->setParameter(self::ATTEMPTS, $this->attempts);
     }
 
 

@@ -36,16 +36,8 @@ class PushDelayedResolver
 
         $pushDelay = $delayRule->getDelay($job, $exception);
 
-        $this->logger->error(
-            sprintf(
-                'Job execution failed [attempts: %s, next-ttl: %s], reason: %s',
-                $job->getAttempts(),
-                $pushDelay,
-                $exception->getMessage()
-            ),
-            ['exception' => $exception]
-        );
-
         $this->queueManager->pushDelayed($job, $pushDelay);
+
+        $this->logger->warning(sprintf('Job requeued [delay: %d]', $pushDelay));
     }
 }

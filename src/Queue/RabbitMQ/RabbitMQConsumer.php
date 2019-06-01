@@ -2,53 +2,51 @@
 
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
-use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
-use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
-use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\JobExecutor;
+use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
+use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
-use BrandEmbassy\DateTime\DateTimeFromString;
-use DateTime;
-use Nette\Utils\Json;
+use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
+use function sprintf;
 
 class RabbitMQConsumer
 {
     /**
      * @var LoggerInterface
      */
-    private $logger;
+    protected $logger;
 
     /**
      * @var PushDelayedResolver
      */
-    private $pushDelayedResolver;
+    protected $pushDelayedResolver;
 
     /**
      * @var JobExecutor
      */
-    private $loadedJobHandler;
+    protected $jobExecutor;
 
     /**
-     * @var JobDefinitionsContainer
+     * @var JobLoaderInterface
      */
-    private $jobDefinitionsContainer;
+    protected $jobLoader;
 
 
     public function __construct(
         LoggerInterface $logger,
-        JobDefinitionsContainer $jobDefinitionsContainer,
-        JobExecutor $loadedJobHandler,
-        PushDelayedResolver $pushDelayedResolver
+        JobExecutorInterface $jobExecutor,
+        PushDelayedResolver $pushDelayedResolver,
+        JobLoaderInterface $jobLoader
     ) {
         $this->logger = $logger;
         $this->pushDelayedResolver = $pushDelayedResolver;
-        $this->loadedJobHandler = $loadedJobHandler;
-        $this->jobDefinitionsContainer = $jobDefinitionsContainer;
+        $this->jobExecutor = $jobExecutor;
+        $this->jobLoader = $jobLoader;
     }
 
 
@@ -58,20 +56,16 @@ class RabbitMQConsumer
         $channel = $message->delivery_info['channel'];
 
         try {
-            $job = $this->loadJob($message->getBody());
-
-            $this->loadedJobHandler->execute($job);
+            $this->executeJob($message);
 
             $channel->basic_ack($message->delivery_info['delivery_tag']);
-        } catch (DelayableProcessFailExceptionInterface $exception) {
-            $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
         } catch (ConsumerFailedExceptionInterface $exception) {
+            $channel->basic_reject($message->delivery_info['delivery_tag'], true);
+
             $this->logger->error(
-                'Job rejected from queue: ' . $exception->getMessage(),
+                'Consumer failed, job requeued: ' . $exception->getMessage(),
                 ['exception' => $exception]
             );
-
-            $channel->basic_reject($message->delivery_info['delivery_tag'], true);
 
             throw $exception;
         } catch (UnresolvableProcessFailExceptionInterface $exception) {
@@ -85,23 +79,23 @@ class RabbitMQConsumer
     }
 
 
-    public function loadJob(string $messageBody): JobInterface
+    private function executeJob(AMQPMessage $message): void
     {
-        $messageParameters = Json::decode($messageBody, Json::FORCE_ARRAY);
+        try {
+            $job = $this->jobLoader->loadJob($message->getBody());
 
-        $jobDefinition = $this->jobDefinitionsContainer->get($messageParameters[JobInterface::JOB_NAME]);
+            $this->jobExecutor->execute($job);
+        } catch (DelayableProcessFailExceptionInterface $exception) {
+            $this->logger->error(
+                sprintf(
+                    'Job execution failed [attempts: %s], reason: %s',
+                    $exception->getJob()->getAttempts(),
+                    $exception->getMessage()
+                ),
+                ['exception' => $exception]
+            );
 
-        $jobLoader = $jobDefinition->getJobLoader();
-
-        return $jobLoader->load(
-            $jobDefinition,
-            $messageParameters[JobInterface::UUID],
-            DateTimeFromString::create(
-                DateTime::ATOM,
-                $messageParameters[JobInterface::CREATED_AT]
-            ),
-            $messageParameters[JobInterface::ATTEMPTS],
-            $messageParameters[JobInterface::PARAMETERS]
-        );
+            $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
+        }
     }
 }
