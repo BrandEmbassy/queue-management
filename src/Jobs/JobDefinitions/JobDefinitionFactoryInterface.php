@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Jobs;
+namespace BE\QueueManagement\Jobs\JobDefinitions;
 
 interface JobDefinitionFactoryInterface
 {

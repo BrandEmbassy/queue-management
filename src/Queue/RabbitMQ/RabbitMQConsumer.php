@@ -3,13 +3,14 @@
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
 use BE\QueueManagement\Jobs\JobInterface;
-use BE\QueueManagement\Jobs\Loading\JobLoadersMapInterface;
-use BE\QueueManagement\Jobs\Processing\ConsumerFailedExceptionInterface;
-use BE\QueueManagement\Jobs\Processing\DelayableProcessFailExceptionInterface;
-use BE\QueueManagement\Jobs\Processing\LoadedJobHandler;
-use BE\QueueManagement\Jobs\Processing\UnresolvableProcessFailExceptionInterface;
-use Doctrine\Common\Collections\ArrayCollection;
+use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
+use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
+use BE\QueueManagement\Jobs\Execution\JobExecutor;
+use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
+use BrandEmbassy\DateTime\DateTimeFromString;
+use DateTime;
 use Nette\Utils\Json;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -23,55 +24,43 @@ class RabbitMQConsumer
     private $logger;
 
     /**
-     * @var JobLoadersMapInterface
-     */
-    private $jobLoadersMap;
-
-    /**
      * @var PushDelayedResolver
      */
     private $pushDelayedResolver;
 
     /**
-     * @var LoadedJobHandler
+     * @var JobExecutor
      */
     private $loadedJobHandler;
 
     /**
-     * @var array|BeforeLoadHandlerInterface[]
+     * @var JobDefinitionsContainer
      */
-    private $beforeLoadHandlers;
+    private $jobDefinitionsContainer;
 
 
-    /**
-     * @param BeforeLoadHandlerInterface[] $beforeLoadHandlers
-     */
     public function __construct(
-        array $beforeLoadHandlers,
         LoggerInterface $logger,
-        JobLoadersMapInterface $jobLoadersMap,
-        LoadedJobHandler $loadedJobHandler,
+        JobDefinitionsContainer $jobDefinitionsContainer,
+        JobExecutor $loadedJobHandler,
         PushDelayedResolver $pushDelayedResolver
     ) {
         $this->logger = $logger;
-        $this->jobLoadersMap = $jobLoadersMap;
         $this->pushDelayedResolver = $pushDelayedResolver;
         $this->loadedJobHandler = $loadedJobHandler;
-        $this->beforeLoadHandlers = $beforeLoadHandlers;
+        $this->jobDefinitionsContainer = $jobDefinitionsContainer;
     }
 
 
     public function __invoke(AMQPMessage $message): void
     {
-        $this->beforeLoad($message);
-
         /** @var AMQPChannel $channel */
         $channel = $message->delivery_info['channel'];
 
         try {
             $job = $this->loadJob($message->getBody());
 
-            $this->loadedJobHandler->handle($job);
+            $this->loadedJobHandler->execute($job);
 
             $channel->basic_ack($message->delivery_info['delivery_tag']);
         } catch (DelayableProcessFailExceptionInterface $exception) {
@@ -91,32 +80,28 @@ class RabbitMQConsumer
                 ['exception' => $exception]
             );
 
-            $channel->basic_nack($message->delivery_info['delivery_tag'], true);
+            $channel->basic_nack($message->delivery_info['delivery_tag']);
         }
     }
 
 
-    private function beforeLoad(AMQPMessage $message): void
+    public function loadJob(string $messageBody): JobInterface
     {
-        foreach ($this->beforeLoadHandlers as $consumerHealthCheck) {
-            $consumerHealthCheck($this, $message);
-        }
-    }
+        $messageParameters = Json::decode($messageBody, Json::FORCE_ARRAY);
 
+        $jobDefinition = $this->jobDefinitionsContainer->get($messageParameters[JobInterface::JOB_NAME]);
 
-    public function loadJob(string $queueMessage): JobInterface
-    {
-        $decodedMessage = Json::decode($queueMessage, Json::FORCE_ARRAY);
-
-        $jobLoader = $this->jobLoadersMap->getJobLoader($decodedMessage[JobInterface::JOB_NAME]);
-
-        $parameters = new ArrayCollection($decodedMessage[JobInterface::PARAMETERS]);
+        $jobLoader = $jobDefinition->getJobLoader();
 
         return $jobLoader->load(
-            $decodedMessage[JobInterface::UUID],
-            $decodedMessage[JobInterface::JOB_NAME],
-            $decodedMessage[JobInterface::ATTEMPTS],
-            $parameters
+            $jobDefinition,
+            $messageParameters[JobInterface::UUID],
+            DateTimeFromString::create(
+                DateTime::ATOM,
+                $messageParameters[JobInterface::CREATED_AT]
+            ),
+            $messageParameters[JobInterface::ATTEMPTS],
+            $messageParameters[JobInterface::PARAMETERS]
         );
     }
 }

@@ -11,11 +11,6 @@ use function sprintf;
 class PushDelayedResolver
 {
     /**
-     * @var DelayRulesMapInterface
-     */
-    private $delayRulesMap;
-
-    /**
      * @var QueueManagerInterface
      */
     private $queueManager;
@@ -26,12 +21,8 @@ class PushDelayedResolver
     private $logger;
 
 
-    public function __construct(
-        DelayRulesMapInterface $delayRulesMap,
-        QueueManagerInterface $queueManager,
-        LoggerInterface $logger
-    ) {
-        $this->delayRulesMap = $delayRulesMap;
+    public function __construct(QueueManagerInterface $queueManager, LoggerInterface $logger)
+    {
         $this->queueManager = $queueManager;
         $this->logger = $logger;
     }
@@ -41,7 +32,7 @@ class PushDelayedResolver
     {
         $job->incrementAttempts();
 
-        $delayRule = $this->delayRulesMap->getDelayRule($job->getName());
+        $delayRule = $job->getJobDefinition()->getDelayRule();
 
         $pushDelay = $delayRule->getDelay($job, $exception);
 

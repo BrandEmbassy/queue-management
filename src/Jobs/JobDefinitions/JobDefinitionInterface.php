@@ -1,10 +1,10 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Jobs;
+namespace BE\QueueManagement\Jobs\JobDefinitions;
 
 use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleInterface;
 use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
-use BE\QueueManagement\Jobs\Processing\JobProcessorInterface;
+use BE\QueueManagement\Jobs\Execution\JobProcessorInterface;
 
 interface JobDefinitionInterface
 {

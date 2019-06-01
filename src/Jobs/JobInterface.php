@@ -2,6 +2,7 @@
 
 namespace BE\QueueManagement\Jobs;
 
+use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use DateTimeImmutable;
 
 interface JobInterface
@@ -26,7 +27,7 @@ interface JobInterface
     public function getMaxAttempts(): ?int;
 
 
-    public function toJson(): string;
+    public function toJson(array $customParameters = []): string;
 
 
     /**
@@ -45,4 +46,7 @@ interface JobInterface
 
 
     public function incrementAttempts(): void;
+
+
+    public function getJobDefinition(): JobDefinitionInterface;
 }

@@ -2,14 +2,16 @@
 
 namespace BE\QueueManagement\Jobs;
 
-use BE\QueueManagement\Jobs\Processing\MaximumAttemptsExceededException;
+use BE\QueueManagement\Jobs\Execution\MaximumAttemptsExceededException;
+use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use Nette\Utils\Json;
+use function array_merge;
 use function implode;
 use function sprintf;
 
-class AbstractJob implements JobInterface
+class SimpleJob implements JobInterface
 {
     /**
      * @var string
@@ -34,12 +36,12 @@ class AbstractJob implements JobInterface
     /**
      * @var DateTimeImmutable|null
      */
-    private $executionStartedAt;
+    protected $executionStartedAt;
 
     /**
      * @var JobDefinitionInterface
      */
-    private $jobDefinition;
+    protected $jobDefinition;
 
 
     /**
@@ -78,7 +80,7 @@ class AbstractJob implements JobInterface
     }
 
 
-    public function toJson(): string
+    public function toJson(array $customParameters = []): string
     {
         $arrayData = [
             self::UUID       => $this->uuid,
@@ -88,7 +90,7 @@ class AbstractJob implements JobInterface
             self::PARAMETERS => $this->parameters->toArray(),
         ];
 
-        return Json::encode($arrayData);
+        return Json::encode(array_merge($arrayData, $customParameters));
     }
 
 
@@ -98,6 +100,17 @@ class AbstractJob implements JobInterface
     protected function setParameter(string $key, $value): void
     {
         $this->parameters->set($key, $value);
+    }
+
+
+    /**
+     * @param mixed[] $parameters
+     */
+    protected function setMultipleParameters(array $parameters = []): void
+    {
+        foreach ($parameters as $key => $value) {
+            $this->setParameter($key, $value);
+        }
     }
 
 
@@ -155,5 +168,11 @@ class AbstractJob implements JobInterface
     public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+
+    public function getJobDefinition(): JobDefinitionInterface
+    {
+        return $this->jobDefinition;
     }
 }

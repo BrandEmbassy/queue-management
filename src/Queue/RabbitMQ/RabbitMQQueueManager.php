@@ -69,7 +69,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     public function push(JobInterface $job): void
     {
-        $queueName = $job->getQueueName();
+        $queueName = $job->getJobDefinition()->getQueueName();
 
         $this->declareQueueIfNotDeclared($queueName);
 
@@ -80,7 +80,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
                 'Job (%s) [%s] pushed into %s queue',
                 $job->getName(),
                 $job->getUuid(),
-                $job->getQueueName()
+                $queueName
             )
         );
     }
@@ -88,7 +88,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     public function pushDelayed(JobInterface $job, int $delay): void
     {
-        $queueName = $job->getQueueName();
+        $queueName = $job->getJobDefinition()->getQueueName();
 
         $this->declareQueueIfNotDeclared($queueName);
 
