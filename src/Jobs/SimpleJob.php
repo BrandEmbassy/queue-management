@@ -142,7 +142,7 @@ class SimpleJob implements JobInterface
         $maxAttempts = $this->getMaxAttempts();
 
         if ($maxAttempts !== null && $this->attempts > $maxAttempts) {
-            throw new MaximumAttemptsExceededException(sprintf('Maximum limit (%s) attempts exceeded', $maxAttempts));
+            throw MaximumAttemptsExceededException::createFromAttemptsLimit($maxAttempts);
         }
 
         $this->setParameter(self::ATTEMPTS, $this->attempts);

@@ -6,11 +6,17 @@ use BE\QueueManagement\Jobs\JobInterface;
 
 interface QueueManagerInterface
 {
-    public function consumeMessages(callable $consumer, string $queueName): void;
+    /**
+     * @param mixed[] $parameters
+     */
+    public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void;
 
 
     public function push(JobInterface $job): void;
 
 
     public function pushDelayed(JobInterface $job, int $delay): void;
+
+
+    public function checkConnection(): bool;
 }

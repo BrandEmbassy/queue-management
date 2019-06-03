@@ -16,6 +16,8 @@ use function sprintf;
 
 class RabbitMQQueueManager implements QueueManagerInterface
 {
+    public const PREFETCH_COUNT = 'prefetchCount';
+    public const NO_ACK = 'noAck';
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
 
     /**
@@ -52,12 +54,18 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
-    public function consumeMessages(callable $consumer, string $queueName): void
+    /**
+     * @param mixed[] $parameters
+     */
+    public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void
     {
+        $prefetchCount = $parameters[self::PREFETCH_COUNT] ?? 1;
+        $noAck = $parameters[self::NO_ACK] ?? false;
+
         $this->declareQueueIfNotDeclared($queueName);
 
-        $this->getChannel()->basic_qos(0, 1, false);
-        $this->getChannel()->basic_consume($queueName, '', false, false, false, false, $consumer);
+        $this->getChannel()->basic_qos(0, $prefetchCount, false);
+        $this->getChannel()->basic_consume($queueName, '', false, $noAck, false, false, $consumer);
 
         while (count($this->getChannel()->callbacks) > 0) {
             $this->getChannel()->wait();

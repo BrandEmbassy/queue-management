@@ -22,12 +22,12 @@ class JobDefinitionFactory implements JobDefinitionFactoryInterface
     {
         return new JobDefinition(
             $jobName,
-            $jobDefinition['class'],
-            $jobDefinition['queueName'],
-            $jobDefinition['maxAttempts'],
-            $jobDefinition['jobLoader'] ?? $this->defaultJobLoader,
-            $jobDefinition['jobDelayRule'],
-            $jobDefinition['jobProcessor']
+            $jobDefinition[self::JOB_CLASS],
+            $jobDefinition[self::QUEUE_NAME],
+            $jobDefinition[self::MAX_ATTEMPTS] ?? null,
+            $jobDefinition[self::JOB_LOADER] ?? $this->defaultJobLoader,
+            $jobDefinition[self::JOB_DELAY_RULE],
+            $jobDefinition[self::JOB_PROCESSOR]
         );
     }
 }

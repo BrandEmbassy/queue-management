@@ -4,12 +4,11 @@ namespace BE\QueueManagement\Jobs\JobDefinitions;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Exception;
 
 class JobDefinitionsContainer
 {
     /**
-     * @var Collection[]|JobDefinitionInterface[]
+     * @var Collection|JobDefinitionInterface[]
      */
     private $jobDefinitions;
 
@@ -18,11 +17,17 @@ class JobDefinitionsContainer
      */
     private $jobDefinitionFactory;
 
+    /**
+     * @var mixed[]
+     */
+    private $jobDefinitionsConfig;
+
 
     public function __construct(array $jobDefinitionsConfig, JobDefinitionFactoryInterface $jobDefinitionFactory)
     {
         $this->jobDefinitionFactory = $jobDefinitionFactory;
-        $this->jobDefinitions = $this->loadJobDefinitions($jobDefinitionsConfig);
+        $this->jobDefinitionsConfig = $jobDefinitionsConfig;
+        $this->jobDefinitions = new ArrayCollection();
     }
 
 
@@ -31,21 +36,37 @@ class JobDefinitionsContainer
         $jobDefinition = $this->jobDefinitions->get($jobName);
 
         if ($jobDefinition === null) {
-            throw new Exception('TBD');
+            return $this->loadJobDefinition($jobName);
         }
 
         return $jobDefinition;
     }
 
 
-    private function loadJobDefinitions(array $jobDefinitionsConfig): Collection
+    public function has(string $jobName): bool
     {
-        $jobDefinitions = new ArrayCollection();
+        return $this->jobDefinitions->containsKey($jobName);
+    }
 
-        foreach ($jobDefinitionsConfig as $jobName => $jobDefinition) {
-            $jobDefinitions->set($jobName, $this->jobDefinitionFactory->create($jobName, $jobDefinition));
+
+    public function all(): Collection
+    {
+        return $this->jobDefinitions;
+    }
+
+
+    private function loadJobDefinition(string $jobName): JobDefinitionInterface
+    {
+        if (!isset($this->jobDefinitionsConfig[$jobName])) {
+            throw UnknownJobDefinitionException::createFromUnknownJobName($jobName);
         }
 
-        return $jobDefinitions;
+        $jobDefinitionsConfig = $this->jobDefinitionsConfig[$jobName];
+
+        $jobDefinition = $this->jobDefinitionFactory->create($jobName, $jobDefinitionsConfig);
+
+        $this->jobDefinitions->set($jobName, $jobDefinition);
+
+        return $jobDefinition;
     }
 }

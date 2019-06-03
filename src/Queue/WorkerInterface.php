@@ -4,5 +4,8 @@ namespace BE\QueueManagement\Queue;
 
 interface WorkerInterface
 {
-    public function start(string $queueName): void;
+    /**
+     * @param mixed[] $parameters
+     */
+    public function start(string $queueName, array $parameters = []): void;
 }

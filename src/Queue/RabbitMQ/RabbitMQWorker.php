@@ -24,8 +24,11 @@ class RabbitMQWorker implements WorkerInterface
     }
 
 
-    public function start(string $queueName): void
+    /**
+     * @param mixed[] $parameters
+     */
+    public function start(string $queueName, array $parameters = []): void
     {
-        $this->queueManager->consumeMessages($this->consumer, $queueName);
+        $this->queueManager->consumeMessages($this->consumer, $queueName, $parameters);
     }
 }
