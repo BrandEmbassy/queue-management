@@ -86,7 +86,6 @@ class SimpleJob implements JobInterface
         $arrayData = [
             self::UUID       => $this->uuid,
             self::JOB_NAME   => $this->getName(),
-            self::JOB_CLASS  => static::class,
             self::ATTEMPTS   => $this->attempts,
             self::CREATED_AT => $this->createdAt->format(DateTime::ATOM),
             self::PARAMETERS => $this->parameters->toArray(),

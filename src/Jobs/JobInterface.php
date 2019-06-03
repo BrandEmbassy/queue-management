@@ -9,7 +9,6 @@ interface JobInterface
 {
     public const UUID = 'jobUuid';
     public const JOB_NAME = 'jobName';
-    public const JOB_CLASS = 'jobClass';
     public const ATTEMPTS = 'attempts';
     public const CREATED_AT = 'createdAt';
     public const PARAMETERS = 'jobParameters';
