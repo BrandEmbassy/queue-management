@@ -9,8 +9,6 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use Nette\Utils\Json;
 use function array_merge;
-use function implode;
-use function sprintf;
 
 class SimpleJob implements JobInterface
 {
@@ -105,17 +103,6 @@ class SimpleJob implements JobInterface
 
 
     /**
-     * @param mixed[] $parameters
-     */
-    protected function setMultipleParameters(array $parameters = []): void
-    {
-        foreach ($parameters as $key => $value) {
-            $this->setParameter($key, $value);
-        }
-    }
-
-
-    /**
      * @return mixed
      */
     public function getParameter(string $key)
@@ -124,14 +111,7 @@ class SimpleJob implements JobInterface
             return $this->parameters->get($key);
         }
 
-        throw new JobValidationException(
-            sprintf(
-                'Parameter %s not found, available parameters: %s',
-                $key,
-                implode(', ', $this->parameters->getKeys())
-            ),
-            $this
-        );
+        throw JobValidationException::createFromUnknownParameter($key, $this->parameters->getKeys(), $this);
     }
 
 

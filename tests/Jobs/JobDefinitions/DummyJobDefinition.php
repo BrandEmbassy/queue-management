@@ -11,13 +11,13 @@ use Tests\BE\QueueManagement\Jobs\DummyJob;
 
 class DummyJobDefinition implements JobDefinitionInterface
 {
-    public const JOB_NAME = 'dummyJob';
     public const QUEUE_NAME = 'dummyJobQueue';
+    public const MAX_ATTEMPTS = 3;
 
 
     public function getJobName(): string
     {
-        return self::JOB_NAME;
+        return DummyJob::JOB_NAME;
     }
 
 
@@ -35,7 +35,7 @@ class DummyJobDefinition implements JobDefinitionInterface
 
     public function getMaxAttempts(): ?int
     {
-        throw new RuntimeException('Not implemented');
+        return self::MAX_ATTEMPTS;
     }
 
 
