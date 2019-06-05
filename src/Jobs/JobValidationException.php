@@ -4,6 +4,8 @@ namespace BE\QueueManagement\Jobs;
 
 use RuntimeException;
 use Throwable;
+use function implode;
+use function sprintf;
 
 class JobValidationException extends RuntimeException
 {
@@ -23,5 +25,21 @@ class JobValidationException extends RuntimeException
     public function getJob(): JobInterface
     {
         return $this->job;
+    }
+
+
+    /**
+     * @param mixed[] $existingKeys
+     */
+    public static function createFromUnknownParameter(string $key, array $existingKeys, JobInterface $job): self
+    {
+        return new JobValidationException(
+            sprintf(
+                'Parameter %s not found, available parameters: %s',
+                $key,
+                implode(', ', $existingKeys)
+            ),
+            $job
+        );
     }
 }
