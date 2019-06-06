@@ -18,7 +18,6 @@
         "brandembassy/datetime": "^1.2"
     },
     "require-dev": {
-        "nette/bootstrap": "3.0.0-RC1",
         "brandembassy/coding-standard": "^5.3",
         "mockery/mockery": "^1.2",
         "phpunit/phpunit": "^8.1"
