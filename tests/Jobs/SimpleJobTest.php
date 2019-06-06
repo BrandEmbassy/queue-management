@@ -4,15 +4,12 @@ namespace Tests\BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\Execution\MaximumAttemptsExceededException;
 use BE\QueueManagement\Jobs\JobValidationException;
-use BE\QueueManagement\Jobs\SimpleJob;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Nette\Utils\Json;
 use PHPUnit\Framework\TestCase;
-use Mockery;
-use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use Mockery\MockInterface;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
 
 class SimpleJobTest extends TestCase

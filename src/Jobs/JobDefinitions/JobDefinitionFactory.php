@@ -18,6 +18,9 @@ class JobDefinitionFactory implements JobDefinitionFactoryInterface
     }
 
 
+    /**
+     * @param mixed[] $jobDefinition
+     */
     public function create(string $jobName, array $jobDefinition): JobDefinitionInterface
     {
         return new JobDefinition(

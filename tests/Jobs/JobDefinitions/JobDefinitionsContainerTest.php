@@ -61,6 +61,9 @@ class JobDefinitionsContainerTest extends TestCase
     }
 
 
+    /**
+     * @param mixed[] $jobDefinitionsConfig
+     */
     private function createJobDefinitionsContainer(array $jobDefinitionsConfig): JobDefinitionsContainer
     {
         $jobDefinitionFactory = new JobDefinitionFactory(new SimpleJobLoader());

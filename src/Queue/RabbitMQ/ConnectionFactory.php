@@ -32,6 +32,9 @@ class ConnectionFactory implements ConnectionFactoryInterface
     private $connectionConfig;
 
 
+    /**
+     * @param mixed[] $connectionConfig
+     */
     public function __construct(array $connectionConfig)
     {
         $this->connectionConfig = $connectionConfig;

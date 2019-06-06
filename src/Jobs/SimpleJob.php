@@ -79,6 +79,9 @@ class SimpleJob implements JobInterface
     }
 
 
+    /**
+     * @param mixed[] $customParameters
+     */
     public function toJson(array $customParameters = []): string
     {
         $arrayData = [
@@ -94,7 +97,7 @@ class SimpleJob implements JobInterface
 
 
     /**
-     * @param mixed $value
+     * @param string|int|mixed[]|null $value
      */
     protected function setParameter(string $key, $value): void
     {

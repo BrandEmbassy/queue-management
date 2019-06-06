@@ -2,10 +2,10 @@
 
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
-use function implode;
 use RuntimeException;
-use function sprintf;
 use Throwable;
+use function implode;
+use function sprintf;
 
 class ConnectionException extends RuntimeException
 {
@@ -15,6 +15,9 @@ class ConnectionException extends RuntimeException
     }
 
 
+    /**
+     * @param string[] $missingParameters
+     */
     public static function createFromMissingParameters(array $missingParameters): self
     {
         return new self(
