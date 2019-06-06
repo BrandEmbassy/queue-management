@@ -2,7 +2,6 @@
 
 namespace BE\QueueManagement\Jobs;
 
-use BE\AdapterSdk\Queue\Jobs\JobInterface;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
