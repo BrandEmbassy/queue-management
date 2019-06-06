@@ -2,8 +2,10 @@
 
 namespace BE\QueueManagement\Jobs\Execution;
 
+use BE\QueueManagement\Jobs\BlacklistedJobUuidException;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobTerminator;
 use BrandEmbassy\DateTime\DateTimeFromString;
 use DateTime;
 use Nette\Utils\Json;
@@ -15,10 +17,16 @@ class JobLoader implements JobLoaderInterface
      */
     private $jobDefinitionsContainer;
 
+    /**
+     * @var JobTerminator
+     */
+    private $jobTerminator;
 
-    public function __construct(JobDefinitionsContainer $jobDefinitionsContainer)
+
+    public function __construct(JobDefinitionsContainer $jobDefinitionsContainer, JobTerminator $jobTerminator)
     {
         $this->jobDefinitionsContainer = $jobDefinitionsContainer;
+        $this->jobTerminator = $jobTerminator;
     }
 
 
@@ -26,19 +34,34 @@ class JobLoader implements JobLoaderInterface
     {
         $messageParameters = Json::decode($messageBody, Json::FORCE_ARRAY);
 
+        $jobUuid = $messageParameters[JobInterface::UUID];
+        $attempts = $messageParameters[JobInterface::ATTEMPTS];
+
+        $this->checkUuidBlacklist($jobUuid, $attempts);
+
         $jobDefinition = $this->jobDefinitionsContainer->get($messageParameters[JobInterface::JOB_NAME]);
 
         $jobLoader = $jobDefinition->getJobLoader();
 
         return $jobLoader->load(
             $jobDefinition,
-            $messageParameters[JobInterface::UUID],
+            $jobUuid,
             DateTimeFromString::create(
                 DateTime::ATOM,
                 $messageParameters[JobInterface::CREATED_AT]
             ),
-            $messageParameters[JobInterface::ATTEMPTS],
+            $attempts,
             $messageParameters[JobInterface::PARAMETERS]
         );
+    }
+
+
+    protected function checkUuidBlacklist(string $jobUuid, int $attempts): void
+    {
+        if ($this->jobTerminator->shouldBeTerminated($jobUuid, $attempts)) {
+            $this->jobTerminator->terminate($jobUuid);
+
+            throw BlacklistedJobUuidException::createFromJobUuid($jobUuid);
+        }
     }
 }
