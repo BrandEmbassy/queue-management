@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<phpunit
+    colors="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    processIsolation="false"
+    stopOnFailure="false"
+    cacheResultFile="./var/.phpunit.result.cache"
+>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">./src</directory>
+            <exclude>
+                <directory>./tests</directory>
+                <directory>./vendor</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+    <testsuite name="TestsWorking">
+        <directory>./tests</directory>
+    </testsuite>
+
+    <logging>
+        <log type="coverage-html" target="./var/code-coverage" lowUpperBound="50" highLowerBound="80"/>
+        <log type="testdox-html" target="./var/code-coverage/index.html"/>
+    </logging>
+</phpunit>

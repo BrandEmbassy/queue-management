@@ -36,7 +36,7 @@ class JobTerminator
 
     public function shouldBeTerminated(string $jobUuid, int $attempts): bool
     {
-        if ($attempts < $this->minimumAttempts) {
+        if ($attempts <= $this->minimumAttempts) {
             return false;
         }
 
