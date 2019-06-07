@@ -19,22 +19,37 @@ class DummyJobDefinition implements JobDefinitionInterface
      */
     private $jobLoader;
 
+    /**
+     * @var string
+     */
+    private $jobName;
 
-    public function __construct(?JobLoaderInterface $jobLoader = null)
-    {
+    /**
+     * @var string
+     */
+    private $jobClass;
+
+
+    public function __construct(
+        ?JobLoaderInterface $jobLoader = null,
+        string $jobName = DummyJob::JOB_NAME,
+        string $jobClass = DummyJob::class
+    ) {
         $this->jobLoader = $jobLoader;
+        $this->jobName = $jobName;
+        $this->jobClass = $jobClass;
     }
 
 
     public function getJobName(): string
     {
-        return DummyJob::JOB_NAME;
+        return $this->jobName;
     }
 
 
     public function getJobClass(): string
     {
-        return DummyJob::class;
+        return $this->jobClass;
     }
 
 

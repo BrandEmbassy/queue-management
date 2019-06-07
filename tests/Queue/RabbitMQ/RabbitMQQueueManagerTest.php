@@ -4,8 +4,6 @@ namespace Tests\BE\QueueManagement\Queue\RabbitMQ;
 
 use BE\QueueManagement\Queue\RabbitMQ\ConnectionFactory;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQQueueManager;
-use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -21,7 +19,6 @@ use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
 class RabbitMQQueueManagerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
-    private const JOB_UUID = 'some-random-uuid';
 
     /**
      * @var ConnectionFactory|MockInterface
@@ -59,7 +56,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->expectSetUpConnection();
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job (dummyJob) [some-random-uuid] pushed into dummyJobQueue queue')
+            ->with('Job (dummyJob) [some-job-uud] pushed into dummyJobQueue queue')
             ->once();
 
         $dummyJob = $this->createDummyJob();
@@ -180,17 +177,7 @@ class RabbitMQQueueManagerTest extends TestCase
 
     private function createDummyJob(): DummyJob
     {
-        $dummyJobDefinition = new DummyJobDefinition();
-
-        $dummyJob = new DummyJob(
-            self::JOB_UUID,
-            new DateTimeImmutable(),
-            0,
-            $dummyJobDefinition,
-            new ArrayCollection()
-        );
-
-        return $dummyJob;
+        return new DummyJob(new DummyJobDefinition());
     }
 
 
