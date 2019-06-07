@@ -2,9 +2,9 @@
 
 namespace BE\QueueManagement\Jobs\JobDefinitions;
 
+use BE\QueueManagement\Jobs\Execution\JobProcessorInterface;
 use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleInterface;
 use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
-use BE\QueueManagement\Jobs\Execution\JobProcessorInterface;
 
 class JobDefinition implements JobDefinitionInterface
 {

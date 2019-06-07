@@ -185,7 +185,8 @@ class RabbitMQQueueManagerTest extends TestCase
         $dummyJob = new DummyJob(
             self::JOB_UUID,
             new DateTimeImmutable(),
-            0, $dummyJobDefinition,
+            0,
+            $dummyJobDefinition,
             new ArrayCollection()
         );
 

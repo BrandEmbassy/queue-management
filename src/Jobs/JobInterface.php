@@ -26,6 +26,9 @@ interface JobInterface
     public function getMaxAttempts(): ?int;
 
 
+    /**
+     * @param mixed[] $customParameters
+     */
     public function toJson(array $customParameters = []): string;
 
 

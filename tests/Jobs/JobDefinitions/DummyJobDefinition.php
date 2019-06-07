@@ -14,6 +14,17 @@ class DummyJobDefinition implements JobDefinitionInterface
     public const QUEUE_NAME = 'dummyJobQueue';
     public const MAX_ATTEMPTS = 3;
 
+    /**
+     * @var JobLoaderInterface|null
+     */
+    private $jobLoader;
+
+
+    public function __construct(?JobLoaderInterface $jobLoader = null)
+    {
+        $this->jobLoader = $jobLoader;
+    }
+
 
     public function getJobName(): string
     {
@@ -41,6 +52,10 @@ class DummyJobDefinition implements JobDefinitionInterface
 
     public function getJobLoader(): JobLoaderInterface
     {
+        if ($this->jobLoader !== null) {
+            return $this->jobLoader;
+        }
+
         throw new RuntimeException('Not implemented');
     }
 

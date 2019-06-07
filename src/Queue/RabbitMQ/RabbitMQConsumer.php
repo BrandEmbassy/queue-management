@@ -4,7 +4,6 @@ namespace BE\QueueManagement\Queue\RabbitMQ;
 
 use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
-use BE\QueueManagement\Jobs\Execution\JobExecutor;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
@@ -27,7 +26,7 @@ class RabbitMQConsumer
     protected $pushDelayedResolver;
 
     /**
-     * @var JobExecutor
+     * @var JobExecutorInterface
      */
     protected $jobExecutor;
 

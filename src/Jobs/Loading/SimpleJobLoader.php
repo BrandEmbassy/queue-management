@@ -12,8 +12,6 @@ class SimpleJobLoader implements JobLoaderInterface
 {
     /**
      * @param Collection|mixed[] $parameters
-     *
-     * @return JobInterface
      */
     public function load(
         JobDefinitionInterface $jobDefinition,

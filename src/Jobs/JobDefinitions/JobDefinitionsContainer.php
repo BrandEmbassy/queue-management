@@ -23,6 +23,9 @@ class JobDefinitionsContainer
     private $jobDefinitionsConfig;
 
 
+    /**
+     * @param mixed[] $jobDefinitionsConfig
+     */
     public function __construct(array $jobDefinitionsConfig, JobDefinitionFactoryInterface $jobDefinitionFactory)
     {
         $this->jobDefinitionFactory = $jobDefinitionFactory;
@@ -49,6 +52,9 @@ class JobDefinitionsContainer
     }
 
 
+    /**
+     * @return Collection|JobDefinitionInterface[]
+     */
     public function all(): Collection
     {
         return $this->jobDefinitions;

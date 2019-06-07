@@ -12,5 +12,8 @@ interface JobDefinitionFactoryInterface
     public const JOB_PROCESSOR = 'jobProcessor';
 
 
+    /**
+     * @param mixed[] $jobDefinition
+     */
     public function create(string $jobName, array $jobDefinition): JobDefinitionInterface;
 }
