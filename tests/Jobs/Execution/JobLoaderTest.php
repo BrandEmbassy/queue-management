@@ -8,6 +8,7 @@ use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\JobTerminator;
 use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
+use BE\QueueManagement\Jobs\SimpleJob;
 use DateTime;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -49,27 +50,27 @@ class JobLoaderTest extends TestCase
             ->once()
             ->andReturnFalse();
 
-        $dummyJobDefinition = new DummyJobDefinition(new SimpleJobLoader());
+        $dummyJobDefinition = new DummyJobDefinition(new SimpleJobLoader(), SimpleJob::JOB_NAME, SimpleJob::class);
 
         $this->jobDefinitionsContainerMock->shouldReceive('get')
-            ->with(DummyJob::JOB_NAME)
+            ->with(SimpleJob::JOB_NAME)
             ->once()
             ->andReturn($dummyJobDefinition);
 
         $messageBodyData = [
             JobInterface::UUID       => DummyJob::UUID,
             JobInterface::ATTEMPTS   => DummyJob::ATTEMPTS,
-            JobInterface::JOB_NAME   => DummyJob::JOB_NAME,
+            JobInterface::JOB_NAME   => SimpleJob::JOB_NAME,
             JobInterface::CREATED_AT => DummyJob::CREATED_AT,
             JobInterface::PARAMETERS => [DummyJob::PARAMETER_FOO => 'bar'],
         ];
 
-        /** @var DummyJob $simpleJob */
+        /** @var SimpleJob $simpleJob */
         $simpleJob = $jobLoader->loadJob(Json::encode($messageBodyData));
 
-        self::assertEquals('bar', $simpleJob->getFoo());
+        self::assertEquals('bar', $simpleJob->getParameter('foo'));
         self::assertEquals(DummyJob::UUID, $simpleJob->getUuid());
-        self::assertEquals(DummyJob::JOB_NAME, $simpleJob->getName());
+        self::assertEquals(SimpleJob::JOB_NAME, $simpleJob->getName());
         self::assertEquals(DummyJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
         self::assertEquals(DummyJob::ATTEMPTS, $simpleJob->getAttempts());
         self::assertEquals(DummyJob::CREATED_AT, $simpleJob->getCreatedAt()->format(DateTime::ATOM));
