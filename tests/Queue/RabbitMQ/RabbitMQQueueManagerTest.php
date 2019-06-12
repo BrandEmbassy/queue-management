@@ -177,7 +177,7 @@ class RabbitMQQueueManagerTest extends TestCase
 
     private function createDummyJob(): DummyJob
     {
-        return new DummyJob(new DummyJobDefinition());
+        return new DummyJob();
     }
 
 

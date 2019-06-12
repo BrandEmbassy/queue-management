@@ -29,15 +29,54 @@ class DummyJobDefinition implements JobDefinitionInterface
      */
     private $jobClass;
 
+    /**
+     * @var DelayRuleInterface|null
+     */
+    private $delayRule;
 
-    public function __construct(
-        ?JobLoaderInterface $jobLoader = null,
-        string $jobName = DummyJob::JOB_NAME,
-        string $jobClass = DummyJob::class
-    ) {
-        $this->jobLoader = $jobLoader;
+    /**
+     * @var JobProcessorInterface|null
+     */
+    private $jobProcessor;
+
+
+    public function __construct(string $jobName, string $jobClass)
+    {
         $this->jobName = $jobName;
         $this->jobClass = $jobClass;
+    }
+
+
+    public static function create(string $jobName = DummyJob::JOB_NAME, string $jobClass = DummyJob::class): self
+    {
+        return new self($jobName, $jobClass);
+    }
+
+
+    public function withJobLoader(JobLoaderInterface $jobLoader): self
+    {
+        $clone = clone $this;
+        $clone->jobLoader = $jobLoader;
+
+        return $clone;
+    }
+
+
+    public function withDelayRule(DelayRuleInterface $delayRule): self
+    {
+        $clone = clone $this;
+        $clone->delayRule = $delayRule;
+
+        return $clone;
+    }
+
+
+    public function withJobProcessor(JobProcessorInterface $jobProcessor): self
+    {
+        $clone = clone $this;
+        $clone->jobProcessor = $jobProcessor;
+
+        return $clone;
     }
 
 
@@ -77,12 +116,20 @@ class DummyJobDefinition implements JobDefinitionInterface
 
     public function getDelayRule(): DelayRuleInterface
     {
+        if ($this->delayRule !== null) {
+            return $this->delayRule;
+        }
+
         throw new RuntimeException('Not implemented');
     }
 
 
     public function getJobProcessor(): JobProcessorInterface
     {
+        if ($this->jobProcessor !== null) {
+            return $this->jobProcessor;
+        }
+
         throw new RuntimeException('Not implemented');
     }
 }
