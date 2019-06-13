@@ -9,22 +9,22 @@ use function count;
 
 class ConnectionFactory implements ConnectionFactoryInterface
 {
-    private const HOST = 'host';
-    private const PORT = 'port';
-    private const USER = 'user';
-    private const PASSWORD = 'password';
-    private const VHOST = 'vhost';
-    private const INSIST = 'insist';
-    private const LOGIN_METHOD = 'loginMethod';
-    private const LOGIN_RESPONSE = 'loginResponse';
-    private const LOCALE = 'locale';
-    private const CONNECTION_TIMEOUT = 'connectionTimeout';
-    private const READ_WRITE_TIMEOUT = 'readWriteTimeout';
-    private const CONTEXT = 'context';
-    private const KEEP_ALIVE = 'keepAlive';
-    private const HEART_BEAT = 'heartBeat';
-    private const CHANNEL_RPC_TIMEOUT = 'channelRpcTimeout';
-    private const SSL_PROTOCOL = 'sslProtocol';
+    public const HOST = 'host';
+    public const PORT = 'port';
+    public const USER = 'user';
+    public const PASSWORD = 'password';
+    public const VHOST = 'vhost';
+    public const INSIST = 'insist';
+    public const LOGIN_METHOD = 'loginMethod';
+    public const LOGIN_RESPONSE = 'loginResponse';
+    public const LOCALE = 'locale';
+    public const CONNECTION_TIMEOUT = 'connectionTimeout';
+    public const READ_WRITE_TIMEOUT = 'readWriteTimeout';
+    public const CONTEXT = 'context';
+    public const KEEP_ALIVE = 'keepAlive';
+    public const HEART_BEAT = 'heartBeat';
+    public const CHANNEL_RPC_TIMEOUT = 'channelRpcTimeout';
+    public const SSL_PROTOCOL = 'sslProtocol';
 
     /**
      * @var mixed[]
