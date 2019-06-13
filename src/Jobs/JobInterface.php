@@ -12,6 +12,7 @@ interface JobInterface
     public const ATTEMPTS = 'attempts';
     public const CREATED_AT = 'createdAt';
     public const PARAMETERS = 'jobParameters';
+    public const INIT_ATTEMPTS = 1;
 
 
     public function getUuid(): string;
