@@ -54,9 +54,7 @@ class PushDelayedResolverTest extends TestCase
             ->with('Job requeued [delay: 5]')
             ->once();
 
-        $exception = new Exception();
-
-        $pushDelayedResolver->resolve($dummyJob, $exception);
+        $pushDelayedResolver->resolve($dummyJob, new Exception());
     }
 
 
