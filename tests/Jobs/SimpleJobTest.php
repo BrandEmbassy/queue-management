@@ -89,7 +89,7 @@ class SimpleJobTest extends TestCase
             self::JOB_UUID,
             $jobCreatedAt,
             0,
-            new DummyJobDefinition(null, SimpleJob::JOB_NAME),
+            DummyJobDefinition::create(SimpleJob::JOB_NAME),
             new ArrayCollection(['foo' => $foo])
         );
     }

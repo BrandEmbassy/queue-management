@@ -17,7 +17,6 @@ use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\DummyJob;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
 
 class RabbitMQConsumerTest extends TestCase
 {
@@ -63,7 +62,7 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testSuccessExecution(): void
     {
-        $dummyJob = new DummyJob(new DummyJobDefinition());
+        $dummyJob = new DummyJob();
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')

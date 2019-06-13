@@ -7,6 +7,7 @@ use BE\QueueManagement\Jobs\SimpleJob;
 use BrandEmbassy\DateTime\DateTimeFromString;
 use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
 
 class DummyJob extends SimpleJob
 {
@@ -17,13 +18,13 @@ class DummyJob extends SimpleJob
     public const PARAMETER_FOO = 'foo';
 
 
-    public function __construct(JobDefinitionInterface $jobDefinition, string $bar = 'bar')
+    public function __construct(?JobDefinitionInterface $jobDefinition = null, string $bar = 'bar')
     {
         parent::__construct(
             self::JOB_UUID,
             DateTimeFromString::create(DateTime::ATOM, self::CREATED_AT),
             self::ATTEMPTS,
-            $jobDefinition,
+            $jobDefinition ?? DummyJobDefinition::create(),
             new ArrayCollection([self::PARAMETER_FOO => $bar])
         );
     }

@@ -50,7 +50,8 @@ class JobLoaderTest extends TestCase
             ->once()
             ->andReturnFalse();
 
-        $dummyJobDefinition = new DummyJobDefinition(new SimpleJobLoader(), SimpleJob::JOB_NAME, SimpleJob::class);
+        $dummyJobDefinition = DummyJobDefinition::create(SimpleJob::JOB_NAME, SimpleJob::class)
+            ->withJobLoader(new SimpleJobLoader());
 
         $this->jobDefinitionsContainerMock->shouldReceive('get')
             ->with(SimpleJob::JOB_NAME)
