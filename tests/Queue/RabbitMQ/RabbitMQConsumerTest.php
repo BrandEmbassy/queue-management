@@ -116,7 +116,7 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testRejectBlacklistedJob(): void
     {
-        $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(DummyJob::JOB_UUID);
+        $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(DummyJob::UUID);
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')

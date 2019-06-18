@@ -85,11 +85,11 @@ class SimpleJob implements JobInterface
     public function toJson(array $customParameters = []): string
     {
         $arrayData = [
-            self::UUID       => $this->uuid,
-            self::JOB_NAME   => $this->getName(),
-            self::ATTEMPTS   => $this->attempts,
-            self::CREATED_AT => $this->createdAt->format(DateTime::ATOM),
-            self::PARAMETERS => $this->parameters->toArray(),
+            JobParameters::UUID       => $this->uuid,
+            JobParameters::JOB_NAME   => $this->getName(),
+            JobParameters::ATTEMPTS   => $this->attempts,
+            JobParameters::CREATED_AT => $this->createdAt->format(DateTime::ATOM),
+            JobParameters::PARAMETERS => $this->parameters->toArray(),
         ];
 
         return Json::encode(array_merge($arrayData, $customParameters));
@@ -127,7 +127,7 @@ class SimpleJob implements JobInterface
             throw MaximumAttemptsExceededException::createFromAttemptsLimit($maxAttempts);
         }
 
-        $this->setParameter(self::ATTEMPTS, $this->attempts);
+        $this->setParameter(JobParameters::ATTEMPTS, $this->attempts);
     }
 
 

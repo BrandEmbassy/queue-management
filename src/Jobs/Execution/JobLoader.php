@@ -5,6 +5,7 @@ namespace BE\QueueManagement\Jobs\Execution;
 use BE\QueueManagement\Jobs\BlacklistedJobUuidException;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobTerminator;
 use BrandEmbassy\DateTime\DateTimeFromString;
 use DateTime;
@@ -35,12 +36,12 @@ class JobLoader implements JobLoaderInterface
     {
         $messageParameters = Json::decode($messageBody, Json::FORCE_ARRAY);
 
-        $jobUuid = $messageParameters[JobInterface::UUID];
-        $attempts = $messageParameters[JobInterface::ATTEMPTS];
+        $jobUuid = $messageParameters[JobParameters::UUID];
+        $attempts = $messageParameters[JobParameters::ATTEMPTS];
 
         $this->checkUuidBlacklist($jobUuid, $attempts);
 
-        $jobDefinition = $this->jobDefinitionsContainer->get($messageParameters[JobInterface::JOB_NAME]);
+        $jobDefinition = $this->jobDefinitionsContainer->get($messageParameters[JobParameters::JOB_NAME]);
 
         $jobLoader = $jobDefinition->getJobLoader();
 
@@ -49,10 +50,10 @@ class JobLoader implements JobLoaderInterface
             $jobUuid,
             DateTimeFromString::create(
                 DateTime::ATOM,
-                $messageParameters[JobInterface::CREATED_AT]
+                $messageParameters[JobParameters::CREATED_AT]
             ),
             $attempts,
-            new ArrayCollection($messageParameters[JobInterface::PARAMETERS])
+            new ArrayCollection($messageParameters[JobParameters::PARAMETERS])
         );
     }
 
