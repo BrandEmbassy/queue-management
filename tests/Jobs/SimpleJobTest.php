@@ -3,6 +3,8 @@
 namespace Tests\BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\Execution\MaximumAttemptsExceededException;
+use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobValidationException;
 use BE\QueueManagement\Jobs\SimpleJob;
 use DateTime;
@@ -16,7 +18,6 @@ use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
 class SimpleJobTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
-    private const JOB_UUID = 'some-random-uuid';
 
 
     public function testInitializedData(): void
@@ -26,18 +27,18 @@ class SimpleJobTest extends TestCase
         $simpleJob = $this->createSimpleJob('bar', $jobCreatedAt);
 
         $expectedJobData = [
-            'jobUuid'       => self::JOB_UUID,
-            'jobName'       => SimpleJob::JOB_NAME,
-            'attempts'      => 0,
-            'createdAt'     => $jobCreatedAt->format(DateTime::ATOM),
-            'jobParameters' => ['foo' => 'bar'],
+            JobParameters::UUID       => DummyJob::UUID,
+            JobParameters::JOB_NAME   => DummyJob::JOB_NAME,
+            JobParameters::ATTEMPTS   => 1,
+            JobParameters::CREATED_AT => $jobCreatedAt->format(DateTime::ATOM),
+            JobParameters::PARAMETERS => ['foo' => 'bar'],
         ];
 
         self::assertEquals($jobCreatedAt, $simpleJob->getCreatedAt());
-        self::assertEquals(0, $simpleJob->getAttempts());
+        self::assertEquals(JobInterface::INIT_ATTEMPTS, $simpleJob->getAttempts());
         self::assertEquals('bar', $simpleJob->getParameter('foo'));
-        self::assertEquals(self::JOB_UUID, $simpleJob->getUuid());
-        self::assertEquals(SimpleJob::JOB_NAME, $simpleJob->getName());
+        self::assertEquals(DummyJob::UUID, $simpleJob->getUuid());
+        self::assertEquals(DummyJob::JOB_NAME, $simpleJob->getName());
         self::assertEquals(DummyJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
         self::assertEquals(Json::encode($expectedJobData), $simpleJob->toJson());
     }
@@ -58,7 +59,6 @@ class SimpleJobTest extends TestCase
     public function testThrowMaximumAttemptsExceededException(): void
     {
         $simpleJob = $this->createSimpleJob('bar', new DateTimeImmutable());
-        $simpleJob->incrementAttempts();
         $simpleJob->incrementAttempts();
 
         self::assertEquals(2, $simpleJob->getAttempts());
@@ -86,10 +86,10 @@ class SimpleJobTest extends TestCase
     private function createSimpleJob(string $foo, DateTimeImmutable $jobCreatedAt): SimpleJob
     {
         return new SimpleJob(
-            self::JOB_UUID,
+            DummyJob::UUID,
             $jobCreatedAt,
-            0,
-            DummyJobDefinition::create(SimpleJob::JOB_NAME),
+            JobInterface::INIT_ATTEMPTS,
+            DummyJobDefinition::create(),
             new ArrayCollection(['foo' => $foo])
         );
     }

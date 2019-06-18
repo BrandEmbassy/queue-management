@@ -5,7 +5,7 @@ namespace Tests\BE\QueueManagement\Jobs\Execution;
 use BE\QueueManagement\Jobs\BlacklistedJobUuidException;
 use BE\QueueManagement\Jobs\Execution\JobLoader;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
-use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobTerminator;
 use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
 use BE\QueueManagement\Jobs\SimpleJob;
@@ -50,20 +50,20 @@ class JobLoaderTest extends TestCase
             ->once()
             ->andReturnFalse();
 
-        $dummyJobDefinition = DummyJobDefinition::create(SimpleJob::JOB_NAME, SimpleJob::class)
+        $dummyJobDefinition = DummyJobDefinition::create(DummyJob::JOB_NAME, SimpleJob::class)
             ->withJobLoader(new SimpleJobLoader());
 
         $this->jobDefinitionsContainerMock->shouldReceive('get')
-            ->with(SimpleJob::JOB_NAME)
+            ->with(DummyJob::JOB_NAME)
             ->once()
             ->andReturn($dummyJobDefinition);
 
         $messageBodyData = [
-            JobInterface::UUID       => DummyJob::UUID,
-            JobInterface::ATTEMPTS   => DummyJob::ATTEMPTS,
-            JobInterface::JOB_NAME   => SimpleJob::JOB_NAME,
-            JobInterface::CREATED_AT => DummyJob::CREATED_AT,
-            JobInterface::PARAMETERS => [DummyJob::PARAMETER_FOO => 'bar'],
+            JobParameters::UUID       => DummyJob::UUID,
+            JobParameters::ATTEMPTS   => DummyJob::ATTEMPTS,
+            JobParameters::JOB_NAME   => DummyJob::JOB_NAME,
+            JobParameters::CREATED_AT => DummyJob::CREATED_AT,
+            JobParameters::PARAMETERS => [DummyJob::PARAMETER_FOO => 'bar'],
         ];
 
         /** @var SimpleJob $simpleJob */
@@ -71,7 +71,7 @@ class JobLoaderTest extends TestCase
 
         self::assertEquals('bar', $simpleJob->getParameter('foo'));
         self::assertEquals(DummyJob::UUID, $simpleJob->getUuid());
-        self::assertEquals(SimpleJob::JOB_NAME, $simpleJob->getName());
+        self::assertEquals(DummyJob::JOB_NAME, $simpleJob->getName());
         self::assertEquals(DummyJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
         self::assertEquals(DummyJob::ATTEMPTS, $simpleJob->getAttempts());
         self::assertEquals(DummyJob::CREATED_AT, $simpleJob->getCreatedAt()->format(DateTime::ATOM));
@@ -93,8 +93,8 @@ class JobLoaderTest extends TestCase
             ->once();
 
         $messageBodyData = [
-            JobInterface::UUID     => DummyJob::UUID,
-            JobInterface::ATTEMPTS => 31,
+            JobParameters::UUID     => DummyJob::UUID,
+            JobParameters::ATTEMPTS => 31,
         ];
 
         $this->expectException(BlacklistedJobUuidException::class);
