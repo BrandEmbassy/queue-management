@@ -47,7 +47,7 @@ class ExampleJobProcessor implements JobProcessorInterface
 
 For example using neon DI:
 
-```neon
+```yml
 parameters:
     queue:
         jobs:
