@@ -62,10 +62,10 @@ parameters:
                     jobProcessorService: queue.processors.exampleJobProcessor
 
 services:
-	queue.processors.exampleJobProcessor: YourApp\JobProcessors\ExampleJobProcessor 
+    queue.processors.exampleJobProcessor: YourApp\JobProcessors\ExampleJobProcessor 
 	
-	# JobDefinitionsContainer
-	queue.jobDefinitionsContainer: BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer(%queue.jobs.jobDefinitions%)
+    # JobDefinitionsContainer
+    queue.jobDefinitionsContainer: BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer(%queue.jobs.jobDefinitions%)
 ```
 
 ### 4. Push job into queue
