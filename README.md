@@ -63,7 +63,7 @@ parameters:
 
 services:
     queue.processors.exampleJobProcessor: YourApp\JobProcessors\ExampleJobProcessor 
-	
+
     # JobDefinitionsContainer
     queue.jobDefinitionsContainer: BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer(%queue.jobs.jobDefinitions%)
 ```
