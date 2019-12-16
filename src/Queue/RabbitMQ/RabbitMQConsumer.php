@@ -91,7 +91,10 @@ class RabbitMQConsumer
                     $exception->getJob()->getAttempts(),
                     $exception->getMessage()
                 ),
-                ['exception' => $exception]
+                [
+                    'exception'         => $exception,
+                    'previousException' => $exception->getPrevious(),,
+                ]
             );
 
             $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
