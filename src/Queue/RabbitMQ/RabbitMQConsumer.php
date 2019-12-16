@@ -93,7 +93,7 @@ class RabbitMQConsumer
                 ),
                 [
                     'exception'         => $exception,
-                    'previousException' => $exception->getPrevious(),,
+                    'previousException' => $exception->getPrevious(),
                 ]
             );
 
