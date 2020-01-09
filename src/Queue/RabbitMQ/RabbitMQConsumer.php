@@ -13,7 +13,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
-class RabbitMQConsumer
+class RabbitMQConsumer implements RabbitMQConsumerInterface
 {
     /**
      * @var LoggerInterface
