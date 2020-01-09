@@ -17,7 +17,7 @@ class RabbitMQWorker implements WorkerInterface
     private $consumer;
 
 
-    public function __construct(RabbitMQQueueManager $queueManager, RabbitMQConsumer $consumer)
+    public function __construct(RabbitMQQueueManager $queueManager, RabbitMQConsumerInterface $consumer)
     {
         $this->queueManager = $queueManager;
         $this->consumer = $consumer;
