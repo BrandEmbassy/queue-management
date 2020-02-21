@@ -132,7 +132,7 @@ class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
-        $queueManager->pushDelayedWithMilliSeconds($dummyJob, 500);
+        $queueManager->pushDelayedWithMilliseconds($dummyJob, 500);
     }
 
 

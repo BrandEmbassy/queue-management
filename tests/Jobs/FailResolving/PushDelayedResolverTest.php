@@ -60,7 +60,7 @@ class PushDelayedResolverTest extends TestCase
     public function testPushDelayedInMilliSeconds(): void
     {
         $dummyJobDefinition = DummyJobDefinition::create()
-            ->withDelayRule(new ConstantDelayRuleWithMilliSeconds(3500));
+            ->withDelayRule(new ConstantDelayRuleWithMilliseconds(3500));
 
         $dummyJob = new DummyJob($dummyJobDefinition);
 
