@@ -33,11 +33,11 @@ class PushDelayedResolver
     {
         $job->incrementAttempts();
 
-        $pushDelay = $this->getDelayInMilliSeconds($job, $exception);
+        $pushDelayInMilliSeconds = $this->getDelayInMilliSeconds($job, $exception);
 
-        $this->queueManager->pushDelayedWithMilliSeconds($job, $pushDelay);
+        $this->queueManager->pushDelayedWithMilliSeconds($job, $pushDelayInMilliSeconds);
 
-        $this->logger->warning(sprintf('Job requeued [delay: %.3f]', $pushDelay / 1000));
+        $this->logger->warning(sprintf('Job requeued [delay: %.3f]', $pushDelayInMilliSeconds / 1000));
     }
 
 
