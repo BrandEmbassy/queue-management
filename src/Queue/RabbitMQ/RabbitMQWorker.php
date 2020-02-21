@@ -12,7 +12,7 @@ class RabbitMQWorker implements WorkerInterface
     private $queueManager;
 
     /**
-     * @var RabbitMQConsumer
+     * @var RabbitMQConsumerInterface
      */
     private $consumer;
 
