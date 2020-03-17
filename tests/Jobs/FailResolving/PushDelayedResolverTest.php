@@ -57,6 +57,7 @@ class PushDelayedResolverTest extends TestCase
         $pushDelayedResolver->resolve($dummyJob, new Exception());
     }
 
+
     public function testPushDelayedInMilliSeconds(): void
     {
         $dummyJobDefinition = DummyJobDefinition::create()

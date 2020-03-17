@@ -21,6 +21,7 @@ use Tests\BE\QueueManagement\Jobs\DummyJob;
 class RabbitMQConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
+
     private const AMQP_TAG = 'someAmqpTag';
 
     /**

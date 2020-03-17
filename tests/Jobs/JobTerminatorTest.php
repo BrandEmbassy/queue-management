@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 class JobTerminatorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
+
     private const MINIMUM_ATTEMPTS = 20;
 
     /**
