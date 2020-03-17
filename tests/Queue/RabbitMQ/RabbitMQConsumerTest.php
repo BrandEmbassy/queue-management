@@ -21,6 +21,7 @@ use Tests\BE\QueueManagement\Jobs\DummyJob;
 class RabbitMQConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
+
     private const AMQP_TAG = 'someAmqpTag';
 
     /**
@@ -123,7 +124,7 @@ class RabbitMQConsumerTest extends TestCase
             ->once()
             ->andThrow($blacklistedJobUuidException);
 
-        $this->loggerMock->shouldReceive('error')
+        $this->loggerMock->shouldReceive('warning')
             ->with(
                 'Job removed from queue: Job some-job-uud blacklisted',
                 ['exception' => $blacklistedJobUuidException]

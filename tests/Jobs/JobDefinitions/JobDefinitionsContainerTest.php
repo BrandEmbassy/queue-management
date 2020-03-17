@@ -16,6 +16,7 @@ use Tests\BE\QueueManagement\Jobs\Execution\DummyJobProcessor;
 class JobDefinitionsContainerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
+
     private const SIMPLE_JOB_NAME = 'simpleJob';
 
 
