@@ -123,7 +123,7 @@ class RabbitMQConsumerTest extends TestCase
             ->once()
             ->andThrow($blacklistedJobUuidException);
 
-        $this->loggerMock->shouldReceive('error')
+        $this->loggerMock->shouldReceive('warning')
             ->with(
                 'Job removed from queue: Job some-job-uud blacklisted',
                 ['exception' => $blacklistedJobUuidException]

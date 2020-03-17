@@ -68,7 +68,7 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
 
             throw $exception;
         } catch (UnresolvableProcessFailExceptionInterface $exception) {
-            $this->logger->error(
+            $this->logger->warning(
                 'Job removed from queue: ' . $exception->getMessage(),
                 ['exception' => $exception]
             );
