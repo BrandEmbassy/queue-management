@@ -8,7 +8,7 @@ use Doctrine\Common\Collections\Collection;
 class JobDefinitionsContainer
 {
     /**
-     * @var Collection|JobDefinitionInterface[]
+     * @var Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
      */
     private $jobDefinitions;
 
@@ -53,7 +53,7 @@ class JobDefinitionsContainer
 
 
     /**
-     * @return Collection|JobDefinitionInterface[]
+     * @return Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
      */
     public function all(): Collection
     {
