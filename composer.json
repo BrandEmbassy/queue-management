@@ -18,7 +18,7 @@
         "brandembassy/datetime": "^1.2"
     },
     "require-dev": {
-        "brandembassy/coding-standard": "^6.2",
+        "brandembassy/coding-standard": "^8.1",
         "mockery/mockery": "^1.2",
         "phpunit/phpunit": "^8.5"
     },
