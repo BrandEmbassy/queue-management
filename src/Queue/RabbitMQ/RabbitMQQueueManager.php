@@ -26,7 +26,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
     private $connectionFactory;
 
     /**
-     * @var Collection|string[]
+     * @var Collection<int, string>|string[]
      */
     private $declaredQueues;
 

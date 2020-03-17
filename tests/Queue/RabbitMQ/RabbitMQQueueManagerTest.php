@@ -21,22 +21,22 @@ class RabbitMQQueueManagerTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     /**
-     * @var ConnectionFactory|MockInterface
+     * @var ConnectionFactory&MockInterface
      */
     private $connectionFactoryMock;
 
     /**
-     * @var LoggerInterface|MockInterface
+     * @var LoggerInterface&MockInterface
      */
     private $loggerMock;
 
     /**
-     * @var MockInterface|AMQPChannel
+     * @var MockInterface&AMQPChannel
      */
     private $amqpChannelMock;
 
     /**
-     * @var MockInterface|AMQPStreamConnection
+     * @var MockInterface&AMQPStreamConnection
      */
     private $amqpStreamConnectionMock;
 
@@ -64,7 +64,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob) {
+                    static function (AMQPMessage $message) use ($dummyJob): bool {
                         return $message->getBody() === $dummyJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
                     }
@@ -87,8 +87,8 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob) {
-                        /** @var AMQPTable $applicationHeaders */
+                    static function (AMQPMessage $message) use ($dummyJob): bool {
+                        /** @var AMQPTable<mixed, mixed> $applicationHeaders */
                         $applicationHeaders = $message->get_properties()['application_headers'];
 
                         $expectedNativeData = ['x-delay' => 5000];
@@ -116,8 +116,8 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob) {
-                        /** @var AMQPTable $applicationHeaders */
+                    static function (AMQPMessage $message) use ($dummyJob): bool {
+                        /** @var AMQPTable<mixed, mixed> $applicationHeaders */
                         $applicationHeaders = $message->get_properties()['application_headers'];
 
                         $expectedNativeData = ['x-delay' => 500];

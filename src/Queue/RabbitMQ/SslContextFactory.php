@@ -3,6 +3,7 @@
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
 use function stream_context_create;
+use function stream_context_set_option;
 
 final class SslContextFactory
 {
@@ -12,6 +13,9 @@ final class SslContextFactory
     private $sslOptions;
 
 
+    /**
+     * @param mixed[] $sslOptions
+     */
     public function __construct(array $sslOptions)
     {
         $this->sslOptions = $sslOptions;

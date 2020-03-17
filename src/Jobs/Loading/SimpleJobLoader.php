@@ -11,7 +11,7 @@ use Doctrine\Common\Collections\Collection;
 class SimpleJobLoader implements JobLoaderInterface
 {
     /**
-     * @param Collection|mixed[] $parameters
+     * @param Collection<string, mixed>|mixed[] $parameters
      */
     public function load(
         JobDefinitionInterface $jobDefinition,
