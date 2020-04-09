@@ -15,7 +15,7 @@
         "psr/log": "^1.1",
         "doctrine/collections": "^1.5",
         "php-amqplib/php-amqplib": "^2.9",
-        "brandembassy/datetime": "^1.2",
+        "brandembassy/datetime": "^1.2 || ^2.0",
         "nette/utils": "^3.0"
     },
     "require-dev": {
