@@ -92,7 +92,7 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
                     $exception->getMessage()
                 ),
                 [
-                    'exception'         => $exception,
+                    'exception' => $exception,
                     'previousException' => $exception->getPrevious(),
                 ]
             );
