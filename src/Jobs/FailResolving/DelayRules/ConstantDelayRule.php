@@ -10,17 +10,17 @@ class ConstantDelayRule implements DelayRuleInterface
     /**
      * @var int
      */
-    private $constantDelayInSeconds;
+    private $constantDelay;
 
 
-    public function __construct(int $constantDelayInSeconds)
+    public function __construct(int $constantDelay)
     {
-        $this->constantDelayInSeconds = $constantDelayInSeconds;
+        $this->constantDelay = $constantDelay;
     }
 
 
     public function getDelay(JobInterface $job, Throwable $exception): int
     {
-        return $this->constantDelayInSeconds;
+        return $this->constantDelay;
     }
 }

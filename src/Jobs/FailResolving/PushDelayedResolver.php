@@ -2,7 +2,6 @@
 
 namespace BE\QueueManagement\Jobs\FailResolving;
 
-use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleWithMillisecondsInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -33,22 +32,18 @@ class PushDelayedResolver
     {
         $job->incrementAttempts();
 
-        $pushDelayInMilliseconds = $this->getDelayInMilliseconds($job, $exception);
+        $pushDelay = $this->getDelay($job, $exception);
 
-        $this->queueManager->pushDelayedWithMilliseconds($job, $pushDelayInMilliseconds);
+        $this->queueManager->pushDelayed($job, $pushDelay);
 
-        $this->logger->warning(sprintf('Job requeued [delay: %.3f]', $pushDelayInMilliseconds / 1000));
+        $this->logger->warning(sprintf('Job requeued [delay: %s]', $pushDelay));
     }
 
 
-    private function getDelayInMilliseconds(JobInterface $job, Throwable $exception): int
+    private function getDelay(JobInterface $job, Throwable $exception): int
     {
         $delayRule = $job->getJobDefinition()->getDelayRule();
 
-        if ($delayRule instanceof DelayRuleWithMillisecondsInterface) {
-            return $delayRule->getDelayWithMilliseconds($job, $exception);
-        }
-
-        return $delayRule->getDelay($job, $exception) * 1000;
+        return $delayRule->getDelay($job, $exception);
     }
 }
