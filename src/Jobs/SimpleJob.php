@@ -85,9 +85,9 @@ class SimpleJob implements JobInterface
     public function toJson(array $customParameters = []): string
     {
         $arrayData = [
-            JobParameters::UUID       => $this->uuid,
-            JobParameters::JOB_NAME   => $this->getName(),
-            JobParameters::ATTEMPTS   => $this->attempts,
+            JobParameters::UUID => $this->uuid,
+            JobParameters::JOB_NAME => $this->getName(),
+            JobParameters::ATTEMPTS => $this->attempts,
             JobParameters::CREATED_AT => $this->createdAt->format(DateTime::ATOM),
             JobParameters::PARAMETERS => $this->parameters->toArray(),
         ];
@@ -115,6 +115,15 @@ class SimpleJob implements JobInterface
         }
 
         throw JobValidationException::createFromUnknownParameter($key, $this->parameters->getKeys(), $this);
+    }
+
+
+    /**
+     * @return Collection<string, mixed>|mixed[]
+     */
+    public function getParameters(): Collection
+    {
+        return $this->parameters;
     }
 
 

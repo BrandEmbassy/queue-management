@@ -18,8 +18,5 @@ interface QueueManagerInterface
     public function pushDelayed(JobInterface $job, int $delayInSeconds): void;
 
 
-    public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void;
-
-
     public function checkConnection(): bool;
 }

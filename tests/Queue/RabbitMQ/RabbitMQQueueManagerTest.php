@@ -103,36 +103,7 @@ class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
-        $queueManager->pushDelayed($dummyJob, 5);
-    }
-
-
-    public function testPushDelayedWithMilliSeconds(): void
-    {
-        $this->expectSetUpConnection();
-
-        $dummyJob = $this->createDummyJob();
-
-        $this->amqpChannelMock->shouldReceive('basic_publish')
-            ->with(
-                Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob): bool {
-                        /** @var AMQPTable<mixed, mixed> $applicationHeaders */
-                        $applicationHeaders = $message->get_properties()['application_headers'];
-
-                        $expectedNativeData = ['x-delay' => 500];
-
-                        return $message->getBody() === $dummyJob->toJson()
-                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT
-                            && $applicationHeaders->getNativeData() === $expectedNativeData;
-                    }
-                ),
-                DummyJobDefinition::QUEUE_NAME . '.sync'
-            )
-            ->once();
-
-        $queueManager = $this->createQueueManager();
-        $queueManager->pushDelayedWithMilliseconds($dummyJob, 500);
+        $queueManager->pushDelayed($dummyJob, 5000);
     }
 
 

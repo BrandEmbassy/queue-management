@@ -149,7 +149,7 @@ class RabbitMQConsumerTest extends TestCase
     {
         $amqpMessage = new AMQPMessage(Json::encode($messageData));
         $amqpMessage->delivery_info = [
-            'channel'      => $this->amqpChannelMock,
+            'channel' => $this->amqpChannelMock,
             'delivery_tag' => self::AMQP_TAG,
         ];
 

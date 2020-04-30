@@ -3,6 +3,7 @@
 namespace BE\QueueManagement\Jobs\Execution;
 
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobParameters;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -36,7 +37,10 @@ class JobExecutor implements JobExecutorInterface
 
             $job->executionStarted($startedAt);
 
-            $this->logger->info('Job execution start');
+            $this->logger->info(
+                'Job execution start',
+                [JobParameters::PARAMETERS => $job->getParameters()->toArray()]
+            );
 
             $processor->process($job);
 

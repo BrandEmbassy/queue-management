@@ -94,13 +94,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
-    public function pushDelayed(JobInterface $job, int $delayInSeconds): void
-    {
-        $this->pushDelayedWithMilliseconds($job, $delayInSeconds * 1000);
-    }
-
-
-    public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void
+    public function pushDelayed(JobInterface $job, int $delay): void
     {
         $queueName = $job->getJobDefinition()->getQueueName();
 
@@ -108,7 +102,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $parameters = [
             'application_headers' => new AMQPTable(
-                ['x-delay' => $delayInMilliseconds]
+                ['x-delay' => $delay]
             ),
         ];
 

@@ -27,9 +27,9 @@ class SimpleJobTest extends TestCase
         $simpleJob = $this->createSimpleJob('bar', $jobCreatedAt);
 
         $expectedJobData = [
-            JobParameters::UUID       => DummyJob::UUID,
-            JobParameters::JOB_NAME   => DummyJob::JOB_NAME,
-            JobParameters::ATTEMPTS   => 1,
+            JobParameters::UUID => DummyJob::UUID,
+            JobParameters::JOB_NAME => DummyJob::JOB_NAME,
+            JobParameters::ATTEMPTS => 1,
             JobParameters::CREATED_AT => $jobCreatedAt->format(DateTime::ATOM),
             JobParameters::PARAMETERS => ['foo' => 'bar'],
         ];

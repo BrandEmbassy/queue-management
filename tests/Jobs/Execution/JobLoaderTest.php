@@ -59,9 +59,9 @@ class JobLoaderTest extends TestCase
             ->andReturn($dummyJobDefinition);
 
         $messageBodyData = [
-            JobParameters::UUID       => DummyJob::UUID,
-            JobParameters::ATTEMPTS   => DummyJob::ATTEMPTS,
-            JobParameters::JOB_NAME   => DummyJob::JOB_NAME,
+            JobParameters::UUID => DummyJob::UUID,
+            JobParameters::ATTEMPTS => DummyJob::ATTEMPTS,
+            JobParameters::JOB_NAME => DummyJob::JOB_NAME,
             JobParameters::CREATED_AT => DummyJob::CREATED_AT,
             JobParameters::PARAMETERS => [DummyJob::PARAMETER_FOO => 'bar'],
         ];
@@ -93,7 +93,7 @@ class JobLoaderTest extends TestCase
             ->once();
 
         $messageBodyData = [
-            JobParameters::UUID     => DummyJob::UUID,
+            JobParameters::UUID => DummyJob::UUID,
             JobParameters::ATTEMPTS => 31,
         ];
 

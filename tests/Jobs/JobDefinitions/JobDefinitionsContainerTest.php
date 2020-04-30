@@ -28,11 +28,11 @@ class JobDefinitionsContainerTest extends TestCase
 
         $jobDefinitionsConfig = [
             self::SIMPLE_JOB_NAME => [
-                JobDefinitionFactoryInterface::JOB_CLASS      => SimpleJob::class,
-                JobDefinitionFactoryInterface::QUEUE_NAME     => DummyJobDefinition::QUEUE_NAME,
-                JobDefinitionFactoryInterface::MAX_ATTEMPTS   => null,
-                JobDefinitionFactoryInterface::JOB_PROCESSOR  => $dummyJobProcessor,
-                JobDefinitionFactoryInterface::JOB_LOADER     => $simpleJobLoader,
+                JobDefinitionFactoryInterface::JOB_CLASS => SimpleJob::class,
+                JobDefinitionFactoryInterface::QUEUE_NAME => DummyJobDefinition::QUEUE_NAME,
+                JobDefinitionFactoryInterface::MAX_ATTEMPTS => null,
+                JobDefinitionFactoryInterface::JOB_PROCESSOR => $dummyJobProcessor,
+                JobDefinitionFactoryInterface::JOB_LOADER => $simpleJobLoader,
                 JobDefinitionFactoryInterface::JOB_DELAY_RULE => $constantDelayRule,
             ],
         ];

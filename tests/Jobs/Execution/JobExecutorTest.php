@@ -56,7 +56,7 @@ class JobExecutorTest extends TestCase
             ->andReturn($startedAt, $executedAt);
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job execution start')
+            ->with('Job execution start', ['jobParameters' => ['foo' => 'bar']])
             ->once();
 
         $this->loggerMock->shouldReceive('info')
@@ -93,7 +93,7 @@ class JobExecutorTest extends TestCase
             ->andReturn($startedAt);
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job execution start')
+            ->with('Job execution start', ['jobParameters' => ['foo' => 'bar']])
             ->once();
 
         $jobExecutor = $this->createJobExecutor();
@@ -130,7 +130,7 @@ class JobExecutorTest extends TestCase
             ->andReturn($startedAt);
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job execution start')
+            ->with('Job execution start', ['jobParameters' => ['foo' => 'bar']])
             ->once();
 
         $jobExecutor = $this->createJobExecutor();
