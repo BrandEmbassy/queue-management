@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Psr\Log\LoggerInterface;
@@ -179,7 +180,13 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $amqpMessage = new AMQPMessage($message, $properties);
 
-        $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
+        try {
+            $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
+        } catch (AMQPRuntimeException $exception) {
+            $this->reconnect();
+
+            $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
+        }
     }
 
 
@@ -187,6 +194,13 @@ class RabbitMQQueueManager implements QueueManagerInterface
     {
         $this->getChannel()->close();
         $this->getConnection()->close();
+    }
+
+
+    private function reconnect(): void
+    {
+        $this->getChannel()->getConnection()->reconnect();
+        $this->connection->reconnect();
     }
 
 
