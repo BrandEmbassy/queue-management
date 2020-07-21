@@ -199,28 +199,40 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     private function reconnect(): void
     {
-        $this->getChannel()->getConnection()->reconnect();
-        $this->connection->reconnect();
+        $this->connection = $this->createConnection();
+        $this->channel = $this->createChannel();
     }
 
 
     private function getConnection(): AMQPStreamConnection
     {
         if ($this->connection === null) {
-            $this->connection = $this->connectionFactory->create();
+            $this->connection = $this->createConnection();
         }
 
         return $this->connection;
     }
 
 
+    private function createConnection(): AMQPStreamConnection
+    {
+        return $this->connectionFactory->create();
+    }
+
+
     protected function getChannel(): AMQPChannel
     {
         if ($this->channel === null) {
-            $this->channel = $this->getConnection()->channel();
+            $this->channel = $this->createChannel();
         }
 
         return $this->channel;
+    }
+
+
+    private function createChannel(): AMQPChannel
+    {
+        return $this->getConnection()->channel();
     }
 
 

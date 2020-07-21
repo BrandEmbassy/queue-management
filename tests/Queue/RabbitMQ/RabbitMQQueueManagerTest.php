@@ -9,6 +9,7 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use PHPUnit\Framework\TestCase;
@@ -136,6 +137,46 @@ class RabbitMQQueueManagerTest extends TestCase
     }
 
 
+    public function testPushWithReconnect(): void
+    {
+        $this->expectSetUpConnection(2, 2);
+
+        $this->loggerMock->shouldReceive('info')
+            ->with('Job (dummyJob) [some-job-uud] pushed into dummyJobQueue queue')
+            ->once();
+
+        $dummyJob = $this->createDummyJob();
+
+        $this->amqpChannelMock->shouldReceive('basic_publish')
+            ->with(
+                Mockery::on(
+                    static function (AMQPMessage $message) use ($dummyJob): bool {
+                        return $message->getBody() === $dummyJob->toJson()
+                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
+                    }
+                ),
+                DummyJobDefinition::QUEUE_NAME . '.sync'
+            )
+            ->once()
+            ->andThrow(new AMQPRuntimeException('Broken pipe'));
+
+        $this->amqpChannelMock->shouldReceive('basic_publish')
+            ->with(
+                Mockery::on(
+                    static function (AMQPMessage $message) use ($dummyJob): bool {
+                        return $message->getBody() === $dummyJob->toJson()
+                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
+                    }
+                ),
+                DummyJobDefinition::QUEUE_NAME . '.sync'
+            )
+            ->once();
+
+        $queueManager = $this->createQueueManager();
+        $queueManager->push($dummyJob);
+    }
+
+
     public function testConsume(): void
     {
         $this->expectSetUpConnection();
@@ -216,16 +257,16 @@ class RabbitMQQueueManagerTest extends TestCase
     }
 
 
-    private function expectSetUpConnection(): void
+    private function expectSetUpConnection(int $connectionIsCreatedTimes = 1, int $channelIsCreatedTimes = 1): void
     {
         $this->amqpStreamConnectionMock->shouldReceive('channel')
             ->withNoArgs()
-            ->once()
+            ->times($channelIsCreatedTimes)
             ->andReturn($this->amqpChannelMock);
 
         $this->connectionFactoryMock->shouldReceive('create')
             ->withNoArgs()
-            ->once()
+            ->times($connectionIsCreatedTimes)
             ->andReturn($this->amqpStreamConnectionMock);
 
         $this->amqpChannelMock->shouldReceive('queue_declare')
