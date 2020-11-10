@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Psr\Log\LoggerInterface;
@@ -179,7 +180,13 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $amqpMessage = new AMQPMessage($message, $properties);
 
-        $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
+        try {
+            $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
+        } catch (AMQPRuntimeException $exception) {
+            $this->reconnect();
+
+            $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
+        }
     }
 
 
@@ -190,23 +197,42 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
+    private function reconnect(): void
+    {
+        $this->connection = $this->createConnection();
+        $this->channel = $this->createChannel();
+    }
+
+
     private function getConnection(): AMQPStreamConnection
     {
         if ($this->connection === null) {
-            $this->connection = $this->connectionFactory->create();
+            $this->connection = $this->createConnection();
         }
 
         return $this->connection;
     }
 
 
+    private function createConnection(): AMQPStreamConnection
+    {
+        return $this->connectionFactory->create();
+    }
+
+
     protected function getChannel(): AMQPChannel
     {
         if ($this->channel === null) {
-            $this->channel = $this->getConnection()->channel();
+            $this->channel = $this->createChannel();
         }
 
         return $this->channel;
+    }
+
+
+    private function createChannel(): AMQPChannel
+    {
+        return $this->getConnection()->channel();
     }
 
 
