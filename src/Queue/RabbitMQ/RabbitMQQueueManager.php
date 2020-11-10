@@ -69,7 +69,13 @@ class RabbitMQQueueManager implements QueueManagerInterface
         $this->getChannel()->basic_consume($queueName, '', false, $noAck, false, false, $consumer);
 
         while (count($this->getChannel()->callbacks) > 0) {
-            $this->getChannel()->wait();
+            try {
+                $this->getChannel()->wait();
+            } catch (AMQPRuntimeException $exception) {
+                $this->reconnect();
+
+                $this->getChannel()->wait();
+            }
         }
 
         $this->closeConnection();
