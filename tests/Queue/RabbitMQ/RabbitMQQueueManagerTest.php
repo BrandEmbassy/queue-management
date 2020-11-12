@@ -229,7 +229,7 @@ class RabbitMQQueueManagerTest extends TestCase
             ->with(DummyJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
             ->once();
 
-        $callbackMock = static function(): void {
+        $callbackMock = static function (): void {
         };
 
         $amqpChannelMock->callbacks = [$callbackMock];
