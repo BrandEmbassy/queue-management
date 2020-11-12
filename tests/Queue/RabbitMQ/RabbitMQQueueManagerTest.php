@@ -236,7 +236,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $amqpChannelMock->shouldReceive('wait')
             ->once()
             ->andReturnUsing(
-                static function () use ($amqpChannelMock) {
+                static function () use ($amqpChannelMock): void {
                     $amqpChannelMock->callbacks = [];
                 }
             );
