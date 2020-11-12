@@ -229,10 +229,10 @@ class RabbitMQQueueManagerTest extends TestCase
             ->with(DummyJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
             ->once();
 
-        $amqpChannelMock->callbacks = [
-            static function(): void {
-            }
-        ];
+        $callbackMock = static function(): void {
+        };
+
+        $amqpChannelMock->callbacks = [$callbackMock];
         $amqpChannelMock->shouldReceive('wait')
             ->once()
             ->andThrow(new AMQPRuntimeException('Broken pipe'));
