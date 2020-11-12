@@ -179,7 +179,7 @@ class RabbitMQQueueManagerTest extends TestCase
 
     public function testConsume(): void
     {
-        $this->expectSetUpConnection(2, 2);
+        $this->expectSetUpConnection();
 
         $expectedCallback = function (AMQPMessage $message): void {
         };
@@ -191,11 +191,6 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_consume')
             ->with(DummyJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
             ->once();
-
-        $this->amqpChannelMock->set('callbacks', ['xxx']);
-        $this->amqpChannelMock->shouldReceive('wait')
-            ->once()
-            ->andThrow(new AMQPRuntimeException('Broken pipe'));
 
         $this->amqpChannelMock->shouldReceive('close')
             ->withNoArgs()
@@ -219,20 +214,34 @@ class RabbitMQQueueManagerTest extends TestCase
 
     public function testConsumeWithReconnect(): void
     {
-        $this->expectSetUpConnection();
+        $this->expectSetUpConnection(2, 2);
 
         $expectedCallback = function (AMQPMessage $message): void {
         };
 
-        $this->amqpChannelMock->shouldReceive('basic_qos')
+        $amqpChannelMock = $this->amqpChannelMock;
+
+        $amqpChannelMock->shouldReceive('basic_qos')
             ->with(0, 2, false)
             ->once();
 
-        $this->amqpChannelMock->shouldReceive('basic_consume')
+        $amqpChannelMock->shouldReceive('basic_consume')
             ->with(DummyJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
             ->once();
 
-        $this->amqpChannelMock->shouldReceive('close')
+        $amqpChannelMock->callbacks = ['test_callback'];
+        $amqpChannelMock->shouldReceive('wait')
+            ->once()
+            ->andThrow(new AMQPRuntimeException('Broken pipe'));
+        $amqpChannelMock->shouldReceive('wait')
+            ->once()
+            ->andReturnUsing(
+                static function () use ($amqpChannelMock) {
+                    $amqpChannelMock->callbacks = [];
+                }
+            );
+
+        $amqpChannelMock->shouldReceive('close')
             ->withNoArgs()
             ->once();
 
