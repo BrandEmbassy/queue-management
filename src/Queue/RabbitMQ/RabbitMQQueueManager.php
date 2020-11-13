@@ -73,8 +73,6 @@ class RabbitMQQueueManager implements QueueManagerInterface
                 $this->getChannel()->wait();
             } catch (AMQPRuntimeException $exception) {
                 $this->reconnect();
-
-                $this->getChannel()->wait();
             }
         }
 
