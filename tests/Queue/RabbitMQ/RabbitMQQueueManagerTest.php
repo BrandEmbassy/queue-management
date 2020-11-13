@@ -212,6 +212,58 @@ class RabbitMQQueueManagerTest extends TestCase
     }
 
 
+    public function testConsumeWithReconnect(): void
+    {
+        $this->expectSetUpConnection(2, 2);
+
+        $expectedCallback = function (AMQPMessage $message): void {
+        };
+
+        $amqpChannelMock = $this->amqpChannelMock;
+
+        $amqpChannelMock->shouldReceive('basic_qos')
+            ->with(0, 2, false)
+            ->once();
+
+        $amqpChannelMock->shouldReceive('basic_consume')
+            ->with(DummyJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
+            ->once();
+
+        $callbackMock = static function (): void {
+        };
+
+        $amqpChannelMock->callbacks = [$callbackMock];
+        $amqpChannelMock->shouldReceive('wait')
+            ->once()
+            ->andThrow(new AMQPRuntimeException('Broken pipe'));
+        $amqpChannelMock->shouldReceive('wait')
+            ->once()
+            ->andReturnUsing(
+                static function () use ($amqpChannelMock): void {
+                    $amqpChannelMock->callbacks = [];
+                }
+            );
+
+        $amqpChannelMock->shouldReceive('close')
+            ->withNoArgs()
+            ->once();
+
+        $this->amqpStreamConnectionMock->shouldReceive('close')
+            ->withNoArgs()
+            ->once();
+
+        $queueManager = $this->createQueueManager();
+        $queueManager->consumeMessages(
+            $expectedCallback,
+            DummyJobDefinition::QUEUE_NAME,
+            [
+                RabbitMQQueueManager::PREFETCH_COUNT => 2,
+                RabbitMQQueueManager::NO_ACK => true,
+            ]
+        );
+    }
+
+
     /**
      * @dataProvider connectionStatusDataProvider
      */
