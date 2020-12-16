@@ -15,13 +15,15 @@
         "psr/log": "^1.1",
         "doctrine/collections": "^1.5",
         "php-amqplib/php-amqplib": "^2.9",
-        "brandembassy/datetime": "^1.2 || ^2.0",
+        "brandembassy/datetime": "^3.0",
         "nette/utils": "^3.0"
     },
     "require-dev": {
         "brandembassy/coding-standard": "^8.1",
+        "brandembassy/mockery-tools": "^2.0",
         "mockery/mockery": "^1.2",
-        "phpunit/phpunit": "^8.5"
+        "phpunit/phpunit": "^8.5",
+        "roave/security-advisories": "dev-master"
     },
     "scripts": {
         "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests",

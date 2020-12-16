@@ -4,7 +4,7 @@ namespace BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\Execution\MaximumAttemptsExceededException;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
-use DateTime;
+use BrandEmbassy\DateTime\DateTimeFormatter;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use Nette\Utils\Json;
@@ -88,7 +88,7 @@ class SimpleJob implements JobInterface
             JobParameters::UUID       => $this->uuid,
             JobParameters::JOB_NAME   => $this->getName(),
             JobParameters::ATTEMPTS   => $this->attempts,
-            JobParameters::CREATED_AT => $this->createdAt->format(DateTime::ATOM),
+            JobParameters::CREATED_AT => DateTimeFormatter::format($this->createdAt),
             JobParameters::PARAMETERS => $this->parameters->toArray(),
         ];
 
