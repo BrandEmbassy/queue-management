@@ -7,7 +7,8 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobValidationException;
 use BE\QueueManagement\Jobs\SimpleJob;
-use DateTime;
+use BrandEmbassy\DateTime\DateTimeFromString;
+use BrandEmbassy\MockeryTools\DateTime\DateTimeAssertions;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -19,22 +20,23 @@ class SimpleJobTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
+    private const JOB_CREATED_AT = '2020-12-02T05:16:45+00:00';
+
 
     public function testInitializedData(): void
     {
-        $jobCreatedAt = new DateTimeImmutable();
-
+        $jobCreatedAt = DateTimeFromString::create(self::JOB_CREATED_AT);
         $simpleJob = $this->createSimpleJob('bar', $jobCreatedAt);
 
         $expectedJobData = [
             JobParameters::UUID       => DummyJob::UUID,
             JobParameters::JOB_NAME   => DummyJob::JOB_NAME,
             JobParameters::ATTEMPTS   => 1,
-            JobParameters::CREATED_AT => $jobCreatedAt->format(DateTime::ATOM),
+            JobParameters::CREATED_AT => self::JOB_CREATED_AT,
             JobParameters::PARAMETERS => ['foo' => 'bar'],
         ];
 
-        self::assertEquals($jobCreatedAt, $simpleJob->getCreatedAt());
+        DateTimeAssertions::assertDateTimeAtomEqualsDateTime(self::JOB_CREATED_AT, $simpleJob->getCreatedAt());
         self::assertEquals(JobInterface::INIT_ATTEMPTS, $simpleJob->getAttempts());
         self::assertEquals('bar', $simpleJob->getParameter('foo'));
         self::assertEquals(DummyJob::UUID, $simpleJob->getUuid());

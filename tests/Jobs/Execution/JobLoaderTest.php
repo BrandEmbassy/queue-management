@@ -9,7 +9,7 @@ use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobTerminator;
 use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
 use BE\QueueManagement\Jobs\SimpleJob;
-use DateTime;
+use BrandEmbassy\MockeryTools\DateTime\DateTimeAssertions;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -74,7 +74,7 @@ class JobLoaderTest extends TestCase
         self::assertEquals(DummyJob::JOB_NAME, $simpleJob->getName());
         self::assertEquals(DummyJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
         self::assertEquals(DummyJob::ATTEMPTS, $simpleJob->getAttempts());
-        self::assertEquals(DummyJob::CREATED_AT, $simpleJob->getCreatedAt()->format(DateTime::ATOM));
+        DateTimeAssertions::assertDateTimeAtomEqualsDateTime(DummyJob::CREATED_AT, $simpleJob->getCreatedAt());
         self::assertEquals($dummyJobDefinition, $simpleJob->getJobDefinition());
     }
 

@@ -8,7 +8,6 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobTerminator;
 use BrandEmbassy\DateTime\DateTimeFromString;
-use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Nette\Utils\Json;
 
@@ -48,10 +47,7 @@ class JobLoader implements JobLoaderInterface
         return $jobLoader->load(
             $jobDefinition,
             $jobUuid,
-            DateTimeFromString::create(
-                DateTime::ATOM,
-                $messageParameters[JobParameters::CREATED_AT]
-            ),
+            DateTimeFromString::create($messageParameters[JobParameters::CREATED_AT]),
             $attempts,
             new ArrayCollection($messageParameters[JobParameters::PARAMETERS])
         );

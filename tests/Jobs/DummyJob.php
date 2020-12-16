@@ -6,7 +6,6 @@ use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\SimpleJob;
 use BrandEmbassy\DateTime\DateTimeFromString;
-use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
 
@@ -23,7 +22,7 @@ class DummyJob extends SimpleJob
     {
         parent::__construct(
             self::UUID,
-            DateTimeFromString::create(DateTime::ATOM, self::CREATED_AT),
+            DateTimeFromString::create(self::CREATED_AT),
             self::ATTEMPTS,
             $jobDefinition ?? DummyJobDefinition::create(),
             new ArrayCollection([self::PARAMETER_FOO => $bar])
