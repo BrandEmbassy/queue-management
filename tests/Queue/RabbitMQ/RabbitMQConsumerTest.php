@@ -148,10 +148,8 @@ final class RabbitMQConsumerTest extends TestCase
     private function createAmqpMessage(array $messageData): AMQPMessage
     {
         $amqpMessage = new AMQPMessage(Json::encode($messageData));
-        $amqpMessage->delivery_info = [
-            'channel' => $this->amqpChannelMock,
-            'delivery_tag' => self::AMQP_TAG,
-        ];
+        $amqpMessage->setChannel($this->amqpChannelMock);
+        $amqpMessage->setDeliveryTag(self::AMQP_TAG);
 
         return $amqpMessage;
     }
