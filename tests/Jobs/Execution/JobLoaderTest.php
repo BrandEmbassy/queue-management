@@ -51,13 +51,13 @@ final class JobLoaderTest extends TestCase
             ->once()
             ->andReturnFalse();
 
-        $dummyJobDefinition = ExampleJobDefinition::create(ExampleJob::JOB_NAME, SimpleJob::class)
+        $exampleJobDefinition = ExampleJobDefinition::create(ExampleJob::JOB_NAME, SimpleJob::class)
             ->withJobLoader(new SimpleJobLoader());
 
         $this->jobDefinitionsContainerMock->shouldReceive('get')
             ->with(ExampleJob::JOB_NAME)
             ->once()
-            ->andReturn($dummyJobDefinition);
+            ->andReturn($exampleJobDefinition);
 
         $messageBodyData = [
             JobParameters::UUID => ExampleJob::UUID,
@@ -76,7 +76,7 @@ final class JobLoaderTest extends TestCase
         Assert::assertSame(ExampleJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
         Assert::assertSame(ExampleJob::ATTEMPTS, $simpleJob->getAttempts());
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(ExampleJob::CREATED_AT, $simpleJob->getCreatedAt());
-        Assert::assertSame($dummyJobDefinition, $simpleJob->getJobDefinition());
+        Assert::assertSame($exampleJobDefinition, $simpleJob->getJobDefinition());
     }
 
 

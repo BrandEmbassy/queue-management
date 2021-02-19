@@ -58,16 +58,16 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->expectSetUpConnection();
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job (dummyJob) [some-job-uud] pushed into dummyJobQueue queue')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
             ->once();
 
-        $dummyJob = $this->createDummyJob();
+        $exampleJob = $this->createExampleJob();
 
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob): bool {
-                        return $message->getBody() === $dummyJob->toJson()
+                    static function (AMQPMessage $message) use ($exampleJob): bool {
+                        return $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
                     }
                 ),
@@ -76,7 +76,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
-        $queueManager->push($dummyJob);
+        $queueManager->push($exampleJob);
     }
 
 
@@ -84,18 +84,18 @@ final class RabbitMQQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection();
 
-        $dummyJob = $this->createDummyJob();
+        $exampleJob = $this->createExampleJob();
 
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob): bool {
+                    static function (AMQPMessage $message) use ($exampleJob): bool {
                         /** @var AMQPTable<mixed, mixed> $applicationHeaders */
                         $applicationHeaders = $message->get_properties()['application_headers'];
 
                         $expectedNativeData = ['x-delay' => 5000];
 
-                        return $message->getBody() === $dummyJob->toJson()
+                        return $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT
                             && $applicationHeaders->getNativeData() === $expectedNativeData;
                     }
@@ -105,7 +105,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
-        $queueManager->pushDelayed($dummyJob, 5);
+        $queueManager->pushDelayed($exampleJob, 5);
     }
 
 
@@ -113,18 +113,18 @@ final class RabbitMQQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection();
 
-        $dummyJob = $this->createDummyJob();
+        $exampleJob = $this->createExampleJob();
 
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob): bool {
+                    static function (AMQPMessage $message) use ($exampleJob): bool {
                         /** @var AMQPTable<mixed, mixed> $applicationHeaders */
                         $applicationHeaders = $message->get_properties()['application_headers'];
 
                         $expectedNativeData = ['x-delay' => 500];
 
-                        return $message->getBody() === $dummyJob->toJson()
+                        return $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT
                             && $applicationHeaders->getNativeData() === $expectedNativeData;
                     }
@@ -134,7 +134,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
-        $queueManager->pushDelayedWithMilliseconds($dummyJob, 500);
+        $queueManager->pushDelayedWithMilliseconds($exampleJob, 500);
     }
 
 
@@ -143,16 +143,16 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->expectSetUpConnection(2, 2);
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job (dummyJob) [some-job-uud] pushed into dummyJobQueue queue')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
             ->once();
 
-        $dummyJob = $this->createDummyJob();
+        $exampleJob = $this->createExampleJob();
 
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob): bool {
-                        return $message->getBody() === $dummyJob->toJson()
+                    static function (AMQPMessage $message) use ($exampleJob): bool {
+                        return $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
                     }
                 ),
@@ -164,8 +164,8 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($dummyJob): bool {
-                        return $message->getBody() === $dummyJob->toJson()
+                    static function (AMQPMessage $message) use ($exampleJob): bool {
+                        return $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
                     }
                 ),
@@ -174,7 +174,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
-        $queueManager->push($dummyJob);
+        $queueManager->push($exampleJob);
     }
 
 
@@ -298,7 +298,7 @@ final class RabbitMQQueueManagerTest extends TestCase
     }
 
 
-    private function createDummyJob(): ExampleJob
+    private function createExampleJob(): ExampleJob
     {
         return new ExampleJob();
     }

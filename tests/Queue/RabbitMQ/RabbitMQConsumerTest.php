@@ -63,15 +63,15 @@ final class RabbitMQConsumerTest extends TestCase
 
     public function testSuccessExecution(): void
     {
-        $dummyJob = new ExampleJob();
+        $exampleJob = new ExampleJob();
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')
             ->once()
-            ->andReturn($dummyJob);
+            ->andReturn($exampleJob);
 
         $this->jobExecutorMock->shouldReceive('execute')
-            ->with($dummyJob)
+            ->with($exampleJob)
             ->once();
 
         $this->amqpChannelMock->shouldReceive('basic_ack')
@@ -96,7 +96,7 @@ final class RabbitMQConsumerTest extends TestCase
 
         $this->loggerMock->shouldReceive('error')
             ->with(
-                'Consumer failed, job requeued: Job definition (dummyJob) not found, maybe you forget to register it',
+                'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
                 ['exception' => $unknownJobDefinitionException]
             )
             ->once();
@@ -106,7 +106,7 @@ final class RabbitMQConsumerTest extends TestCase
             ->once();
 
         $this->expectException(UnknownJobDefinitionException::class);
-        $this->expectExceptionMessage('Job definition (dummyJob) not found, maybe you forget to register it');
+        $this->expectExceptionMessage('Job definition (exampleJob) not found, maybe you forget to register it');
 
         $amqpMessage = $this->createAmqpMessage(['a' => 'b']);
 

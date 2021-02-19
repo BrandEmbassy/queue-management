@@ -39,43 +39,43 @@ final class PushDelayedResolverTest extends TestCase
 
     public function testPushDelayedInSeconds(): void
     {
-        $dummyJobDefinition = ExampleJobDefinition::create()
+        $exampleJobDefinition = ExampleJobDefinition::create()
             ->withDelayRule(new ConstantDelayRule(5));
 
-        $dummyJob = new ExampleJob($dummyJobDefinition);
+        $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
         $this->queueManagerMock->shouldReceive('pushDelayedWithMilliSeconds')
-            ->with($dummyJob, 5000)
+            ->with($exampleJob, 5000)
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
             ->with('Job requeued [delay: 5.000]')
             ->once();
 
-        $pushDelayedResolver->resolve($dummyJob, new Exception());
+        $pushDelayedResolver->resolve($exampleJob, new Exception());
     }
 
 
     public function testPushDelayedInMilliSeconds(): void
     {
-        $dummyJobDefinition = ExampleJobDefinition::create()
+        $exampleJobDefinition = ExampleJobDefinition::create()
             ->withDelayRule(new ConstantDelayRuleWithMilliseconds(3500));
 
-        $dummyJob = new ExampleJob($dummyJobDefinition);
+        $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
         $this->queueManagerMock->shouldReceive('pushDelayedWithMilliSeconds')
-            ->with($dummyJob, 3500)
+            ->with($exampleJob, 3500)
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
             ->with('Job requeued [delay: 3.500]')
             ->once();
 
-        $pushDelayedResolver->resolve($dummyJob, new Exception());
+        $pushDelayedResolver->resolve($exampleJob, new Exception());
     }
 
 

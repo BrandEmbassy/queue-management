@@ -23,7 +23,7 @@ final class JobDefinitionsContainerTest extends TestCase
 
     public function testGetJobDefinition(): void
     {
-        $dummyJobProcessor = new ExampleJobProcessor();
+        $exampleJobProcessor = new ExampleJobProcessor();
         $simpleJobLoader = new SimpleJobLoader();
         $constantDelayRule = new ConstantDelayRule(10);
 
@@ -32,7 +32,7 @@ final class JobDefinitionsContainerTest extends TestCase
                 JobDefinitionFactoryInterface::JOB_CLASS => SimpleJob::class,
                 JobDefinitionFactoryInterface::QUEUE_NAME => ExampleJobDefinition::QUEUE_NAME,
                 JobDefinitionFactoryInterface::MAX_ATTEMPTS => null,
-                JobDefinitionFactoryInterface::JOB_PROCESSOR => $dummyJobProcessor,
+                JobDefinitionFactoryInterface::JOB_PROCESSOR => $exampleJobProcessor,
                 JobDefinitionFactoryInterface::JOB_LOADER => $simpleJobLoader,
                 JobDefinitionFactoryInterface::JOB_DELAY_RULE => $constantDelayRule,
             ],
@@ -46,7 +46,7 @@ final class JobDefinitionsContainerTest extends TestCase
         self::assertNull($simpleJobDefinition->getMaxAttempts());
         Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
         Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
-        Assert::assertSame($dummyJobProcessor, $simpleJobDefinition->getJobProcessor());
+        Assert::assertSame($exampleJobProcessor, $simpleJobDefinition->getJobProcessor());
         Assert::assertSame($simpleJobLoader, $simpleJobDefinition->getJobLoader());
         Assert::assertSame($constantDelayRule, $simpleJobDefinition->getDelayRule());
     }
