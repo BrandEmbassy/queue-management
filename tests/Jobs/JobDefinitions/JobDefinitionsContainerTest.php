@@ -10,6 +10,7 @@ use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
 use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
 use BE\QueueManagement\Jobs\SimpleJob;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleJobProcessor;
 
@@ -43,11 +44,11 @@ class JobDefinitionsContainerTest extends TestCase
         self::assertTrue($jobDefinitionContainer->has(self::SIMPLE_JOB_NAME));
         self::assertFalse($jobDefinitionContainer->has('unknownJobName'));
         self::assertNull($simpleJobDefinition->getMaxAttempts());
-        \PHPUnit\Framework\Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
-        \PHPUnit\Framework\Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
-        \PHPUnit\Framework\Assert::assertSame($dummyJobProcessor, $simpleJobDefinition->getJobProcessor());
-        \PHPUnit\Framework\Assert::assertSame($simpleJobLoader, $simpleJobDefinition->getJobLoader());
-        \PHPUnit\Framework\Assert::assertSame($constantDelayRule, $simpleJobDefinition->getDelayRule());
+        Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
+        Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
+        Assert::assertSame($dummyJobProcessor, $simpleJobDefinition->getJobProcessor());
+        Assert::assertSame($simpleJobLoader, $simpleJobDefinition->getJobLoader());
+        Assert::assertSame($constantDelayRule, $simpleJobDefinition->getDelayRule());
     }
 
 

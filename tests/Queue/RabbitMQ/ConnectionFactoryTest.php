@@ -11,6 +11,7 @@ class ConnectionFactoryTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
+
     public function testUnableToEstablishConnectionThrowsException(): void
     {
         $connectionFactory = new ConnectionFactory(

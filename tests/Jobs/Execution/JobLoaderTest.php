@@ -14,6 +14,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
@@ -69,13 +70,13 @@ class JobLoaderTest extends TestCase
         /** @var SimpleJob $simpleJob */
         $simpleJob = $jobLoader->loadJob(Json::encode($messageBodyData));
 
-        \PHPUnit\Framework\Assert::assertSame('bar', $simpleJob->getParameter('foo'));
-        \PHPUnit\Framework\Assert::assertSame(ExampleJob::UUID, $simpleJob->getUuid());
-        \PHPUnit\Framework\Assert::assertSame(ExampleJob::JOB_NAME, $simpleJob->getName());
-        \PHPUnit\Framework\Assert::assertSame(ExampleJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
-        \PHPUnit\Framework\Assert::assertSame(ExampleJob::ATTEMPTS, $simpleJob->getAttempts());
+        Assert::assertSame('bar', $simpleJob->getParameter('foo'));
+        Assert::assertSame(ExampleJob::UUID, $simpleJob->getUuid());
+        Assert::assertSame(ExampleJob::JOB_NAME, $simpleJob->getName());
+        Assert::assertSame(ExampleJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
+        Assert::assertSame(ExampleJob::ATTEMPTS, $simpleJob->getAttempts());
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(ExampleJob::CREATED_AT, $simpleJob->getCreatedAt());
-        \PHPUnit\Framework\Assert::assertSame($dummyJobDefinition, $simpleJob->getJobDefinition());
+        Assert::assertSame($dummyJobDefinition, $simpleJob->getJobDefinition());
     }
 
 

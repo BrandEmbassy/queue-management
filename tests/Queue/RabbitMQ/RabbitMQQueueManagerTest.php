@@ -12,6 +12,7 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
@@ -281,7 +282,7 @@ class RabbitMQQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager();
 
-        \PHPUnit\Framework\Assert::assertSame($connectionStatus, $queueManager->checkConnection());
+        Assert::assertSame($connectionStatus, $queueManager->checkConnection());
     }
 
 
