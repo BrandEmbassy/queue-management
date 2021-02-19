@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-class RabbitMQQueueManagerTest extends TestCase
+final class RabbitMQQueueManagerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

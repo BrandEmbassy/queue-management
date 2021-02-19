@@ -7,7 +7,7 @@ use BE\QueueManagement\Queue\RabbitMQ\ConnectionFactory;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
-class ConnectionFactoryTest extends TestCase
+final class ConnectionFactoryTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

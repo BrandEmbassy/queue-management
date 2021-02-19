@@ -17,7 +17,7 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-class ExampleJobTest extends TestCase
+final class ExampleJobTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

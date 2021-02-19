@@ -18,7 +18,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 
-class RabbitMQConsumerTest extends TestCase
+final class RabbitMQConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
