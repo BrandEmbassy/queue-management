@@ -11,8 +11,8 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
 class PushDelayedResolverTest extends TestCase
 {
@@ -39,10 +39,10 @@ class PushDelayedResolverTest extends TestCase
 
     public function testPushDelayedInSeconds(): void
     {
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $dummyJobDefinition = ExampleJobDefinition::create()
             ->withDelayRule(new ConstantDelayRule(5));
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $dummyJob = new ExampleJob($dummyJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
@@ -60,10 +60,10 @@ class PushDelayedResolverTest extends TestCase
 
     public function testPushDelayedInMilliSeconds(): void
     {
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $dummyJobDefinition = ExampleJobDefinition::create()
             ->withDelayRule(new ConstantDelayRuleWithMilliseconds(3500));
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $dummyJob = new ExampleJob($dummyJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 

@@ -14,8 +14,8 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
 class JobExecutorTest extends TestCase
 {
@@ -42,10 +42,10 @@ class JobExecutorTest extends TestCase
 
     public function testExecutableJob(): void
     {
-        $dummyJobDefinition = DummyJobDefinition::create()
-            ->withJobProcessor(new DummyJobProcessor());
+        $dummyJobDefinition = ExampleJobDefinition::create()
+            ->withJobProcessor(new ExampleJobProcessor());
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $dummyJob = new ExampleJob($dummyJobDefinition);
 
         $startedAt = new DateTimeImmutable();
         $executedAt = $startedAt->modify('+5 seconds');
@@ -73,10 +73,10 @@ class JobExecutorTest extends TestCase
         /** @var JobProcessorInterface|MockInterface $jobProcessorMock */
         $jobProcessorMock = Mockery::mock(JobProcessorInterface::class);
 
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $dummyJobDefinition = ExampleJobDefinition::create()
             ->withJobProcessor($jobProcessorMock);
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $dummyJob = new ExampleJob($dummyJobDefinition);
 
         $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName('unknown');
 
@@ -110,10 +110,10 @@ class JobExecutorTest extends TestCase
         /** @var JobProcessorInterface|MockInterface $jobProcessorMock */
         $jobProcessorMock = Mockery::mock(JobProcessorInterface::class);
 
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $dummyJobDefinition = ExampleJobDefinition::create()
             ->withJobProcessor($jobProcessorMock);
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $dummyJob = new ExampleJob($dummyJobDefinition);
 
         $someProcessException = new Exception('API not reachable');
 

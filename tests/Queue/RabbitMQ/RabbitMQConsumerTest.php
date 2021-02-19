@@ -16,7 +16,7 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
 
 class RabbitMQConsumerTest extends TestCase
 {
@@ -63,7 +63,7 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testSuccessExecution(): void
     {
-        $dummyJob = new DummyJob();
+        $dummyJob = new ExampleJob();
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')
@@ -87,7 +87,7 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testRequeueUnknownJobDefinition(): void
     {
-        $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName(DummyJob::JOB_NAME);
+        $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName(ExampleJob::JOB_NAME);
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')
@@ -117,7 +117,7 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testRejectBlacklistedJob(): void
     {
-        $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(DummyJob::UUID);
+        $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(ExampleJob::UUID);
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')
@@ -149,7 +149,7 @@ class RabbitMQConsumerTest extends TestCase
     {
         $amqpMessage = new AMQPMessage(Json::encode($messageData));
         $amqpMessage->delivery_info = [
-            'channel'      => $this->amqpChannelMock,
+            'channel' => $this->amqpChannelMock,
             'delivery_tag' => self::AMQP_TAG,
         ];
 

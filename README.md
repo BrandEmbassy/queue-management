@@ -33,11 +33,10 @@ use YourApp\Jobs\ExampleJob;
 
 class ExampleJobProcessor implements JobProcessorInterface
 {
-    /**
-     * @param ExampleJob $job
-     */
     public function process(JobInterface $job): void
     {
+        assert($job instanceof ExampleJob);
+        
         echo $job->getFoo();
     }
 }
@@ -150,13 +149,13 @@ class WorkerStartCommand extends Command
     }
 
 
-    protected function execute(InputInterface $input, OutputInterface $output): ?int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->worker->start(
             'example_queue',
             [
                 RabbitMQQueueManager::PREFETCH_COUNT => 1,
-                RabbitMQQueueManager::NO_ACK         => true,
+                RabbitMQQueueManager::NO_ACK => true,
             ]
         );
         

@@ -13,10 +13,11 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Nette\Utils\Json;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-class SimpleJobTest extends TestCase
+class ExampleJobTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -29,20 +30,20 @@ class SimpleJobTest extends TestCase
         $simpleJob = $this->createSimpleJob('bar', $jobCreatedAt);
 
         $expectedJobData = [
-            JobParameters::UUID       => DummyJob::UUID,
-            JobParameters::JOB_NAME   => DummyJob::JOB_NAME,
-            JobParameters::ATTEMPTS   => 1,
+            JobParameters::UUID => ExampleJob::UUID,
+            JobParameters::JOB_NAME => ExampleJob::JOB_NAME,
+            JobParameters::ATTEMPTS => 1,
             JobParameters::CREATED_AT => self::JOB_CREATED_AT,
             JobParameters::PARAMETERS => ['foo' => 'bar'],
         ];
 
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(self::JOB_CREATED_AT, $simpleJob->getCreatedAt());
-        self::assertEquals(JobInterface::INIT_ATTEMPTS, $simpleJob->getAttempts());
-        self::assertEquals('bar', $simpleJob->getParameter('foo'));
-        self::assertEquals(DummyJob::UUID, $simpleJob->getUuid());
-        self::assertEquals(DummyJob::JOB_NAME, $simpleJob->getName());
-        self::assertEquals(DummyJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
-        self::assertEquals(Json::encode($expectedJobData), $simpleJob->toJson());
+        Assert::assertSame(JobInterface::INIT_ATTEMPTS, $simpleJob->getAttempts());
+        Assert::assertSame('bar', $simpleJob->getParameter('foo'));
+        Assert::assertSame(ExampleJob::UUID, $simpleJob->getUuid());
+        Assert::assertSame(ExampleJob::JOB_NAME, $simpleJob->getName());
+        Assert::assertSame(ExampleJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
+        Assert::assertSame(Json::encode($expectedJobData), $simpleJob->toJson());
     }
 
 
@@ -54,7 +55,7 @@ class SimpleJobTest extends TestCase
 
         $simpleJob->executionStarted($startedAt);
 
-        self::assertEquals($startedAt, $simpleJob->getExecutionStartedAt());
+        Assert::assertSame($startedAt, $simpleJob->getExecutionStartedAt());
     }
 
 
@@ -63,7 +64,7 @@ class SimpleJobTest extends TestCase
         $simpleJob = $this->createSimpleJob('bar', new DateTimeImmutable());
         $simpleJob->incrementAttempts();
 
-        self::assertEquals(2, $simpleJob->getAttempts());
+        Assert::assertSame(2, $simpleJob->getAttempts());
 
         $simpleJob->incrementAttempts();
 
@@ -88,10 +89,10 @@ class SimpleJobTest extends TestCase
     private function createSimpleJob(string $foo, DateTimeImmutable $jobCreatedAt): SimpleJob
     {
         return new SimpleJob(
-            DummyJob::UUID,
+            ExampleJob::UUID,
             $jobCreatedAt,
             JobInterface::INIT_ATTEMPTS,
-            DummyJobDefinition::create(),
+            ExampleJobDefinition::create(),
             new ArrayCollection(['foo' => $foo])
         );
     }

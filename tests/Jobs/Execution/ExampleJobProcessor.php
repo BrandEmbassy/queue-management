@@ -5,7 +5,7 @@ namespace Tests\BE\QueueManagement\Jobs\Execution;
 use BE\QueueManagement\Jobs\Execution\JobProcessorInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 
-class DummyJobProcessor implements JobProcessorInterface
+class ExampleJobProcessor implements JobProcessorInterface
 {
     public function process(JobInterface $job): void
     {

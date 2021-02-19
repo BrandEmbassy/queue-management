@@ -11,15 +11,14 @@ class ConnectionFactoryTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
-
     public function testUnableToEstablishConnectionThrowsException(): void
     {
         $connectionFactory = new ConnectionFactory(
             [
-                ConnectionFactory::HOST     => 'localhost',
-                ConnectionFactory::PORT     => 6666,
+                ConnectionFactory::HOST => 'localhost',
+                ConnectionFactory::PORT => 6666,
                 ConnectionFactory::PASSWORD => 'admin',
-                ConnectionFactory::USER     => 'root',
+                ConnectionFactory::USER => 'root',
             ]
         );
 

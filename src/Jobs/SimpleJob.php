@@ -85,9 +85,9 @@ class SimpleJob implements JobInterface
     public function toJson(array $customParameters = []): string
     {
         $arrayData = [
-            JobParameters::UUID       => $this->uuid,
-            JobParameters::JOB_NAME   => $this->getName(),
-            JobParameters::ATTEMPTS   => $this->attempts,
+            JobParameters::UUID => $this->uuid,
+            JobParameters::JOB_NAME => $this->getName(),
+            JobParameters::ATTEMPTS => $this->attempts,
             JobParameters::CREATED_AT => DateTimeFormatter::format($this->createdAt),
             JobParameters::PARAMETERS => $this->parameters->toArray(),
         ];

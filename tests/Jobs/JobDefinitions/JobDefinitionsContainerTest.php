@@ -11,7 +11,7 @@ use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
 use BE\QueueManagement\Jobs\SimpleJob;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
-use Tests\BE\QueueManagement\Jobs\Execution\DummyJobProcessor;
+use Tests\BE\QueueManagement\Jobs\Execution\ExampleJobProcessor;
 
 class JobDefinitionsContainerTest extends TestCase
 {
@@ -22,17 +22,17 @@ class JobDefinitionsContainerTest extends TestCase
 
     public function testGetJobDefinition(): void
     {
-        $dummyJobProcessor = new DummyJobProcessor();
+        $dummyJobProcessor = new ExampleJobProcessor();
         $simpleJobLoader = new SimpleJobLoader();
         $constantDelayRule = new ConstantDelayRule(10);
 
         $jobDefinitionsConfig = [
             self::SIMPLE_JOB_NAME => [
-                JobDefinitionFactoryInterface::JOB_CLASS      => SimpleJob::class,
-                JobDefinitionFactoryInterface::QUEUE_NAME     => DummyJobDefinition::QUEUE_NAME,
-                JobDefinitionFactoryInterface::MAX_ATTEMPTS   => null,
-                JobDefinitionFactoryInterface::JOB_PROCESSOR  => $dummyJobProcessor,
-                JobDefinitionFactoryInterface::JOB_LOADER     => $simpleJobLoader,
+                JobDefinitionFactoryInterface::JOB_CLASS => SimpleJob::class,
+                JobDefinitionFactoryInterface::QUEUE_NAME => ExampleJobDefinition::QUEUE_NAME,
+                JobDefinitionFactoryInterface::MAX_ATTEMPTS => null,
+                JobDefinitionFactoryInterface::JOB_PROCESSOR => $dummyJobProcessor,
+                JobDefinitionFactoryInterface::JOB_LOADER => $simpleJobLoader,
                 JobDefinitionFactoryInterface::JOB_DELAY_RULE => $constantDelayRule,
             ],
         ];
@@ -43,11 +43,11 @@ class JobDefinitionsContainerTest extends TestCase
         self::assertTrue($jobDefinitionContainer->has(self::SIMPLE_JOB_NAME));
         self::assertFalse($jobDefinitionContainer->has('unknownJobName'));
         self::assertNull($simpleJobDefinition->getMaxAttempts());
-        self::assertEquals(DummyJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
-        self::assertEquals(DummyJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
-        self::assertEquals($dummyJobProcessor, $simpleJobDefinition->getJobProcessor());
-        self::assertEquals($simpleJobLoader, $simpleJobDefinition->getJobLoader());
-        self::assertEquals($constantDelayRule, $simpleJobDefinition->getDelayRule());
+        \PHPUnit\Framework\Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
+        \PHPUnit\Framework\Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
+        \PHPUnit\Framework\Assert::assertSame($dummyJobProcessor, $simpleJobDefinition->getJobProcessor());
+        \PHPUnit\Framework\Assert::assertSame($simpleJobLoader, $simpleJobDefinition->getJobLoader());
+        \PHPUnit\Framework\Assert::assertSame($constantDelayRule, $simpleJobDefinition->getDelayRule());
     }
 
 

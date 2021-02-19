@@ -14,8 +14,8 @@ use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
 class RabbitMQQueueManagerTest extends TestCase
 {
@@ -70,7 +70,7 @@ class RabbitMQQueueManagerTest extends TestCase
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
                     }
                 ),
-                DummyJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync'
             )
             ->once();
 
@@ -99,7 +99,7 @@ class RabbitMQQueueManagerTest extends TestCase
                             && $applicationHeaders->getNativeData() === $expectedNativeData;
                     }
                 ),
-                DummyJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync'
             )
             ->once();
 
@@ -128,7 +128,7 @@ class RabbitMQQueueManagerTest extends TestCase
                             && $applicationHeaders->getNativeData() === $expectedNativeData;
                     }
                 ),
-                DummyJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync'
             )
             ->once();
 
@@ -155,7 +155,7 @@ class RabbitMQQueueManagerTest extends TestCase
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
                     }
                 ),
-                DummyJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync'
             )
             ->once()
             ->andThrow(new AMQPRuntimeException('Broken pipe'));
@@ -168,7 +168,7 @@ class RabbitMQQueueManagerTest extends TestCase
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
                     }
                 ),
-                DummyJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync'
             )
             ->once();
 
@@ -189,7 +189,7 @@ class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $this->amqpChannelMock->shouldReceive('basic_consume')
-            ->with(DummyJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
+            ->with(ExampleJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
             ->once();
 
         $this->amqpChannelMock->shouldReceive('close')
@@ -203,7 +203,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(
             $expectedCallback,
-            DummyJobDefinition::QUEUE_NAME,
+            ExampleJobDefinition::QUEUE_NAME,
             [
                 RabbitMQQueueManager::PREFETCH_COUNT => 2,
                 RabbitMQQueueManager::NO_ACK => true,
@@ -226,7 +226,7 @@ class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $amqpChannelMock->shouldReceive('basic_consume')
-            ->with(DummyJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
+            ->with(ExampleJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
             ->once();
 
         $callbackMock = static function (): void {
@@ -255,7 +255,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(
             $expectedCallback,
-            DummyJobDefinition::QUEUE_NAME,
+            ExampleJobDefinition::QUEUE_NAME,
             [
                 RabbitMQQueueManager::PREFETCH_COUNT => 2,
                 RabbitMQQueueManager::NO_ACK => true,
@@ -281,7 +281,7 @@ class RabbitMQQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager();
 
-        self::assertEquals($connectionStatus, $queueManager->checkConnection());
+        \PHPUnit\Framework\Assert::assertSame($connectionStatus, $queueManager->checkConnection());
     }
 
 
@@ -297,9 +297,9 @@ class RabbitMQQueueManagerTest extends TestCase
     }
 
 
-    private function createDummyJob(): DummyJob
+    private function createDummyJob(): ExampleJob
     {
-        return new DummyJob();
+        return new ExampleJob();
     }
 
 
@@ -322,12 +322,12 @@ class RabbitMQQueueManagerTest extends TestCase
             ->andReturn($this->amqpStreamConnectionMock);
 
         $this->amqpChannelMock->shouldReceive('queue_declare')
-            ->with(DummyJobDefinition::QUEUE_NAME, false, true, false, false, false, [])
+            ->with(ExampleJobDefinition::QUEUE_NAME, false, true, false, false, false, [])
             ->once();
 
         $this->amqpChannelMock->shouldReceive('exchange_declare')
             ->with(
-                DummyJobDefinition::QUEUE_NAME . '.sync',
+                ExampleJobDefinition::QUEUE_NAME . '.sync',
                 'x-delayed-message',
                 false,
                 true,
@@ -339,7 +339,7 @@ class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $this->amqpChannelMock->shouldReceive('queue_bind')
-            ->with(DummyJobDefinition::QUEUE_NAME, DummyJobDefinition::QUEUE_NAME . '.sync')
+            ->with(ExampleJobDefinition::QUEUE_NAME, ExampleJobDefinition::QUEUE_NAME . '.sync')
             ->once();
     }
 }
