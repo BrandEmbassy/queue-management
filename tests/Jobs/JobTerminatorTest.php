@@ -10,7 +10,7 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-class JobTerminatorTest extends TestCase
+final class JobTerminatorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

@@ -7,11 +7,11 @@ use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleInterface;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 use RuntimeException;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
 
-class DummyJobDefinition implements JobDefinitionInterface
+final class ExampleJobDefinition implements JobDefinitionInterface
 {
-    public const QUEUE_NAME = 'dummyJobQueue';
+    public const QUEUE_NAME = 'exampleJobQueue';
     public const MAX_ATTEMPTS = 3;
 
     /**
@@ -47,7 +47,7 @@ class DummyJobDefinition implements JobDefinitionInterface
     }
 
 
-    public static function create(string $jobName = DummyJob::JOB_NAME, string $jobClass = DummyJob::class): self
+    public static function create(string $jobName = ExampleJob::JOB_NAME, string $jobClass = ExampleJob::class): self
     {
         return new self($jobName, $jobClass);
     }

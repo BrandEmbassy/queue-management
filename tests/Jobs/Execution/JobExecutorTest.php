@@ -14,20 +14,20 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-class JobExecutorTest extends TestCase
+final class JobExecutorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
     /**
-     * @var MockInterface|LoggerInterface
+     * @var MockInterface&LoggerInterface
      */
     private $loggerMock;
 
     /**
-     * @var DateTimeImmutableFactory|MockInterface
+     * @var DateTimeImmutableFactory&MockInterface
      */
     private $dateTimeImmutableFactory;
 
@@ -42,10 +42,10 @@ class JobExecutorTest extends TestCase
 
     public function testExecutableJob(): void
     {
-        $dummyJobDefinition = DummyJobDefinition::create()
-            ->withJobProcessor(new DummyJobProcessor());
+        $exampleJobDefinition = ExampleJobDefinition::create()
+            ->withJobProcessor(new ExampleJobProcessor());
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $startedAt = new DateTimeImmutable();
         $executedAt = $startedAt->modify('+5 seconds');
@@ -64,7 +64,7 @@ class JobExecutorTest extends TestCase
             ->once();
 
         $jobExecutor = $this->createJobExecutor();
-        $jobExecutor->execute($dummyJob);
+        $jobExecutor->execute($exampleJob);
     }
 
 
@@ -73,15 +73,15 @@ class JobExecutorTest extends TestCase
         /** @var JobProcessorInterface|MockInterface $jobProcessorMock */
         $jobProcessorMock = Mockery::mock(JobProcessorInterface::class);
 
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $exampleJobDefinition = ExampleJobDefinition::create()
             ->withJobProcessor($jobProcessorMock);
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName('unknown');
 
         $jobProcessorMock->shouldReceive('process')
-            ->with($dummyJob)
+            ->with($exampleJob)
             ->once()
             ->andThrow($unknownJobDefinitionException);
 
@@ -101,7 +101,7 @@ class JobExecutorTest extends TestCase
         $this->expectException(UnknownJobDefinitionException::class);
         $this->expectExceptionMessage('Job definition (unknown) not found, maybe you forget to register it');
 
-        $jobExecutor->execute($dummyJob);
+        $jobExecutor->execute($exampleJob);
     }
 
 
@@ -110,15 +110,15 @@ class JobExecutorTest extends TestCase
         /** @var JobProcessorInterface|MockInterface $jobProcessorMock */
         $jobProcessorMock = Mockery::mock(JobProcessorInterface::class);
 
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $exampleJobDefinition = ExampleJobDefinition::create()
             ->withJobProcessor($jobProcessorMock);
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $someProcessException = new Exception('API not reachable');
 
         $jobProcessorMock->shouldReceive('process')
-            ->with($dummyJob)
+            ->with($exampleJob)
             ->once()
             ->andThrow($someProcessException);
 
@@ -138,7 +138,7 @@ class JobExecutorTest extends TestCase
         $this->expectException(UnableToProcessLoadedJobException::class);
         $this->expectExceptionMessage('API not reachable');
 
-        $jobExecutor->execute($dummyJob);
+        $jobExecutor->execute($exampleJob);
     }
 
 

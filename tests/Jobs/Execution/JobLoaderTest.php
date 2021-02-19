@@ -14,11 +14,12 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-class JobLoaderTest extends TestCase
+final class JobLoaderTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -46,36 +47,36 @@ class JobLoaderTest extends TestCase
         $jobLoader = $this->createJobLoader();
 
         $this->jobTerminatorMock->shouldReceive('shouldBeTerminated')
-            ->with(DummyJob::UUID, DummyJob::ATTEMPTS)
+            ->with(ExampleJob::UUID, ExampleJob::ATTEMPTS)
             ->once()
             ->andReturnFalse();
 
-        $dummyJobDefinition = DummyJobDefinition::create(DummyJob::JOB_NAME, SimpleJob::class)
+        $exampleJobDefinition = ExampleJobDefinition::create(ExampleJob::JOB_NAME, SimpleJob::class)
             ->withJobLoader(new SimpleJobLoader());
 
         $this->jobDefinitionsContainerMock->shouldReceive('get')
-            ->with(DummyJob::JOB_NAME)
+            ->with(ExampleJob::JOB_NAME)
             ->once()
-            ->andReturn($dummyJobDefinition);
+            ->andReturn($exampleJobDefinition);
 
         $messageBodyData = [
-            JobParameters::UUID       => DummyJob::UUID,
-            JobParameters::ATTEMPTS   => DummyJob::ATTEMPTS,
-            JobParameters::JOB_NAME   => DummyJob::JOB_NAME,
-            JobParameters::CREATED_AT => DummyJob::CREATED_AT,
-            JobParameters::PARAMETERS => [DummyJob::PARAMETER_FOO => 'bar'],
+            JobParameters::UUID => ExampleJob::UUID,
+            JobParameters::ATTEMPTS => ExampleJob::ATTEMPTS,
+            JobParameters::JOB_NAME => ExampleJob::JOB_NAME,
+            JobParameters::CREATED_AT => ExampleJob::CREATED_AT,
+            JobParameters::PARAMETERS => [ExampleJob::PARAMETER_FOO => 'bar'],
         ];
 
         /** @var SimpleJob $simpleJob */
         $simpleJob = $jobLoader->loadJob(Json::encode($messageBodyData));
 
-        self::assertEquals('bar', $simpleJob->getParameter('foo'));
-        self::assertEquals(DummyJob::UUID, $simpleJob->getUuid());
-        self::assertEquals(DummyJob::JOB_NAME, $simpleJob->getName());
-        self::assertEquals(DummyJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
-        self::assertEquals(DummyJob::ATTEMPTS, $simpleJob->getAttempts());
-        DateTimeAssertions::assertDateTimeAtomEqualsDateTime(DummyJob::CREATED_AT, $simpleJob->getCreatedAt());
-        self::assertEquals($dummyJobDefinition, $simpleJob->getJobDefinition());
+        Assert::assertSame('bar', $simpleJob->getParameter('foo'));
+        Assert::assertSame(ExampleJob::UUID, $simpleJob->getUuid());
+        Assert::assertSame(ExampleJob::JOB_NAME, $simpleJob->getName());
+        Assert::assertSame(ExampleJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());
+        Assert::assertSame(ExampleJob::ATTEMPTS, $simpleJob->getAttempts());
+        DateTimeAssertions::assertDateTimeAtomEqualsDateTime(ExampleJob::CREATED_AT, $simpleJob->getCreatedAt());
+        Assert::assertSame($exampleJobDefinition, $simpleJob->getJobDefinition());
     }
 
 
@@ -84,21 +85,21 @@ class JobLoaderTest extends TestCase
         $jobLoader = $this->createJobLoader();
 
         $this->jobTerminatorMock->shouldReceive('shouldBeTerminated')
-            ->with(DummyJob::UUID, 31)
+            ->with(ExampleJob::UUID, 31)
             ->once()
             ->andReturnTrue();
 
         $this->jobTerminatorMock->shouldReceive('terminate')
-            ->with(DummyJob::UUID)
+            ->with(ExampleJob::UUID)
             ->once();
 
         $messageBodyData = [
-            JobParameters::UUID     => DummyJob::UUID,
+            JobParameters::UUID => ExampleJob::UUID,
             JobParameters::ATTEMPTS => 31,
         ];
 
         $this->expectException(BlacklistedJobUuidException::class);
-        $this->expectExceptionMessage('Job ' . DummyJob::UUID . ' blacklisted');
+        $this->expectExceptionMessage('Job ' . ExampleJob::UUID . ' blacklisted');
 
         $jobLoader->loadJob(Json::encode($messageBodyData));
     }

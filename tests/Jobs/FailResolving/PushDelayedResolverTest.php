@@ -11,10 +11,10 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-class PushDelayedResolverTest extends TestCase
+final class PushDelayedResolverTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -39,43 +39,43 @@ class PushDelayedResolverTest extends TestCase
 
     public function testPushDelayedInSeconds(): void
     {
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $exampleJobDefinition = ExampleJobDefinition::create()
             ->withDelayRule(new ConstantDelayRule(5));
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
         $this->queueManagerMock->shouldReceive('pushDelayedWithMilliSeconds')
-            ->with($dummyJob, 5000)
+            ->with($exampleJob, 5000)
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
             ->with('Job requeued [delay: 5.000]')
             ->once();
 
-        $pushDelayedResolver->resolve($dummyJob, new Exception());
+        $pushDelayedResolver->resolve($exampleJob, new Exception());
     }
 
 
     public function testPushDelayedInMilliSeconds(): void
     {
-        $dummyJobDefinition = DummyJobDefinition::create()
+        $exampleJobDefinition = ExampleJobDefinition::create()
             ->withDelayRule(new ConstantDelayRuleWithMilliseconds(3500));
 
-        $dummyJob = new DummyJob($dummyJobDefinition);
+        $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
         $this->queueManagerMock->shouldReceive('pushDelayedWithMilliSeconds')
-            ->with($dummyJob, 3500)
+            ->with($exampleJob, 3500)
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
             ->with('Job requeued [delay: 3.500]')
             ->once();
 
-        $pushDelayedResolver->resolve($dummyJob, new Exception());
+        $pushDelayedResolver->resolve($exampleJob, new Exception());
     }
 
 

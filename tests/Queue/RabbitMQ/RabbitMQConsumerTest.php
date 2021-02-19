@@ -16,9 +16,9 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Tests\BE\QueueManagement\Jobs\DummyJob;
+use Tests\BE\QueueManagement\Jobs\ExampleJob;
 
-class RabbitMQConsumerTest extends TestCase
+final class RabbitMQConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -63,15 +63,15 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testSuccessExecution(): void
     {
-        $dummyJob = new DummyJob();
+        $exampleJob = new ExampleJob();
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')
             ->once()
-            ->andReturn($dummyJob);
+            ->andReturn($exampleJob);
 
         $this->jobExecutorMock->shouldReceive('execute')
-            ->with($dummyJob)
+            ->with($exampleJob)
             ->once();
 
         $this->amqpChannelMock->shouldReceive('basic_ack')
@@ -87,7 +87,7 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testRequeueUnknownJobDefinition(): void
     {
-        $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName(DummyJob::JOB_NAME);
+        $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName(ExampleJob::JOB_NAME);
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')
@@ -96,7 +96,7 @@ class RabbitMQConsumerTest extends TestCase
 
         $this->loggerMock->shouldReceive('error')
             ->with(
-                'Consumer failed, job requeued: Job definition (dummyJob) not found, maybe you forget to register it',
+                'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
                 ['exception' => $unknownJobDefinitionException]
             )
             ->once();
@@ -106,7 +106,7 @@ class RabbitMQConsumerTest extends TestCase
             ->once();
 
         $this->expectException(UnknownJobDefinitionException::class);
-        $this->expectExceptionMessage('Job definition (dummyJob) not found, maybe you forget to register it');
+        $this->expectExceptionMessage('Job definition (exampleJob) not found, maybe you forget to register it');
 
         $amqpMessage = $this->createAmqpMessage(['a' => 'b']);
 
@@ -117,7 +117,7 @@ class RabbitMQConsumerTest extends TestCase
 
     public function testRejectBlacklistedJob(): void
     {
-        $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(DummyJob::UUID);
+        $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(ExampleJob::UUID);
 
         $this->jobLoaderMock->shouldReceive('loadJob')
             ->with('{"a":"b"}')
@@ -148,10 +148,8 @@ class RabbitMQConsumerTest extends TestCase
     private function createAmqpMessage(array $messageData): AMQPMessage
     {
         $amqpMessage = new AMQPMessage(Json::encode($messageData));
-        $amqpMessage->delivery_info = [
-            'channel'      => $this->amqpChannelMock,
-            'delivery_tag' => self::AMQP_TAG,
-        ];
+        $amqpMessage->setChannel($this->amqpChannelMock);
+        $amqpMessage->setDeliveryTag(self::AMQP_TAG);
 
         return $amqpMessage;
     }

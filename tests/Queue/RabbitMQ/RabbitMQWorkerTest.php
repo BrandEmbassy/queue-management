@@ -9,9 +9,9 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
-use Tests\BE\QueueManagement\Jobs\JobDefinitions\DummyJobDefinition;
+use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-class RabbitMQWorkerTest extends TestCase
+final class RabbitMQWorkerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -41,10 +41,10 @@ class RabbitMQWorkerTest extends TestCase
         $customConsumeParameters = ['foo' => 'bar'];
 
         $this->rabbitMQQueueManagerMock->shouldReceive('consumeMessages')
-            ->with($this->rabbitMQConsumerMock, DummyJobDefinition::QUEUE_NAME, $customConsumeParameters)
+            ->with($this->rabbitMQConsumerMock, ExampleJobDefinition::QUEUE_NAME, $customConsumeParameters)
             ->once();
 
-        $rabbitMQWorker->start(DummyJobDefinition::QUEUE_NAME, $customConsumeParameters);
+        $rabbitMQWorker->start(ExampleJobDefinition::QUEUE_NAME, $customConsumeParameters);
     }
 
 
