@@ -2,12 +2,13 @@
 
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
+use BE\QueueManagement\Queue\QueueManagerInterface;
 use BE\QueueManagement\Queue\WorkerInterface;
 
 class RabbitMQWorker implements WorkerInterface
 {
     /**
-     * @var RabbitMQQueueManager
+     * @var QueueManagerInterface
      */
     private $queueManager;
 
@@ -17,7 +18,7 @@ class RabbitMQWorker implements WorkerInterface
     private $consumer;
 
 
-    public function __construct(RabbitMQQueueManager $queueManager, RabbitMQConsumerInterface $consumer)
+    public function __construct(QueueManagerInterface $queueManager, RabbitMQConsumerInterface $consumer)
     {
         $this->queueManager = $queueManager;
         $this->consumer = $consumer;
