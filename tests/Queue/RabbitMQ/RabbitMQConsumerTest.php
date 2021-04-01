@@ -5,6 +5,7 @@ namespace Tests\BE\QueueManagement\Queue\RabbitMQ;
 use BE\QueueManagement\Jobs\BlacklistedJobUuidException;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
+use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQConsumer;
@@ -17,6 +18,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 
 final class RabbitMQConsumerTest extends TestCase
 {
@@ -133,6 +135,89 @@ final class RabbitMQConsumerTest extends TestCase
 
         $this->amqpChannelMock->shouldReceive('basic_nack')
             ->with(self::AMQP_TAG)
+            ->once();
+
+        $amqpMessage = $this->createAmqpMessage(['a' => 'b']);
+
+        $rabbitMqConsumer = $this->createRabbitMqConsumer();
+        $rabbitMqConsumer($amqpMessage);
+    }
+
+
+    public function testRequeueDelayableProcessFail(): void
+    {
+        $exampleJob = new ExampleJob();
+        $unableToProcessLoadedJobException = new UnableToProcessLoadedJobException(
+            $exampleJob,
+            'Unable to process loaded job'
+        );
+
+        $this->jobLoaderMock->shouldReceive('loadJob')
+            ->with('{"a":"b"}')
+            ->once()
+            ->andReturn($exampleJob);
+
+        $this->jobExecutorMock->shouldReceive('execute')
+            ->with($exampleJob)
+            ->once()
+            ->andThrow($unableToProcessLoadedJobException);
+
+        $this->amqpChannelMock->shouldReceive('basic_ack')
+            ->with(self::AMQP_TAG)
+            ->once();
+
+        $this->loggerMock->shouldReceive('error')
+            ->with(
+                'Job execution failed [attempts: 1], reason: Unable to process loaded job',
+                [
+                    'exception' => $unableToProcessLoadedJobException,
+                    'previousException' => null,
+                ]
+            )
+            ->once();
+
+        $this->pushDelayedResolverMock->shouldReceive('resolve')
+            ->with($exampleJob, $unableToProcessLoadedJobException)
+            ->once();
+
+        $amqpMessage = $this->createAmqpMessage(['a' => 'b']);
+
+        $rabbitMqConsumer = $this->createRabbitMqConsumer();
+        $rabbitMqConsumer($amqpMessage);
+    }
+
+
+    public function testRequeueDelayableProcessFailWarningOnly(): void
+    {
+        $exampleJob = new ExampleJob();
+        $exampleWarningOnlyException = ExampleWarningOnlyException::create($exampleJob);
+
+        $this->jobLoaderMock->shouldReceive('loadJob')
+            ->with('{"a":"b"}')
+            ->once()
+            ->andReturn($exampleJob);
+
+        $this->jobExecutorMock->shouldReceive('execute')
+            ->with($exampleJob)
+            ->once()
+            ->andThrow($exampleWarningOnlyException);
+
+        $this->amqpChannelMock->shouldReceive('basic_ack')
+            ->with(self::AMQP_TAG)
+            ->once();
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with(
+                'Job execution failed [attempts: 1], reason: I will be logged as a warning',
+                [
+                    'exception' => $exampleWarningOnlyException,
+                    'previousException' => null,
+                ]
+            )
+            ->once();
+
+        $this->pushDelayedResolverMock->shouldReceive('resolve')
+            ->with($exampleJob, $exampleWarningOnlyException)
             ->once();
 
         $amqpMessage = $this->createAmqpMessage(['a' => 'b']);
