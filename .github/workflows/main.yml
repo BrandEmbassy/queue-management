@@ -32,7 +32,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer config github-oauth.github.com ${{ secrets.COMPOSER_TOKEN }}
           composer install --no-progress --prefer-dist --optimize-autoloader
       - name: Run phpstan
         run: composer phpstan
@@ -63,7 +62,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer config github-oauth.github.com ${{ secrets.COMPOSER_TOKEN }}
           composer install --no-progress --prefer-dist --optimize-autoloader
       - name: Run phpstan
         run: composer phpcs
@@ -99,7 +97,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer config github-oauth.github.com ${{ secrets.COMPOSER_TOKEN }}
           composer install --no-progress --prefer-dist --optimize-autoloader
       - name: Run phpunit
         run: composer phpunit
