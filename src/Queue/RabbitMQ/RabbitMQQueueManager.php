@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 use function count;
 use function sprintf;
 
-class RabbitMQQueueManager implements QueueManagerInterface
+final class RabbitMQQueueManager implements QueueManagerInterface
 {
     public const PREFETCH_COUNT = 'prefetchCount';
     public const NO_ACK = 'noAck';
@@ -55,6 +55,13 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
+    private function setUpChannel(int $prefetchCount, string $queueName, bool $noAck, callable $consumer): void
+    {
+        $this->getChannel()->basic_qos(0, $prefetchCount, false);
+        $this->getChannel()->basic_consume($queueName, '', false, $noAck, false, false, $consumer);
+    }
+
+
     /**
      * @param mixed[] $parameters
      */
@@ -65,14 +72,15 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $this->declareQueueIfNotDeclared($queueName);
 
-        $this->getChannel()->basic_qos(0, $prefetchCount, false);
-        $this->getChannel()->basic_consume($queueName, '', false, $noAck, false, false, $consumer);
+        $this->setUpChannel($prefetchCount, $queueName, $noAck, $consumer);
 
         while (count($this->getChannel()->callbacks) > 0) {
             try {
                 $this->getChannel()->wait();
             } catch (AMQPRuntimeException $exception) {
                 $this->reconnect();
+
+                $this->setUpChannel($prefetchCount, $queueName, $noAck, $consumer);
             }
         }
 

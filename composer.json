@@ -28,7 +28,7 @@
     "scripts": {
         "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests",
         "phpcbf": "./vendor/bin/phpcbf --standard=BrandEmbassyCodingStandard src tests",
-        "phpstan": "./vendor/bin/phpstan analyze -c phpstan.neon src tests",
+        "phpstan": "./vendor/bin/phpstan analyze -c phpstan.neon src tests --memory-limit=-1",
         "phpunit": "./vendor/bin/phpunit tests --no-coverage",
         "phpunit-cc": "./vendor/bin/phpunit tests"
     }

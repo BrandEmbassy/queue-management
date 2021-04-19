@@ -224,11 +224,11 @@ final class RabbitMQQueueManagerTest extends TestCase
 
         $amqpChannelMock->shouldReceive('basic_qos')
             ->with(0, 2, false)
-            ->once();
+            ->twice();
 
         $amqpChannelMock->shouldReceive('basic_consume')
             ->with(ExampleJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
-            ->once();
+            ->twice();
 
         $callbackMock = static function (): void {
         };

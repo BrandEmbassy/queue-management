@@ -16,12 +16,12 @@ final class RabbitMQWorkerTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     /**
-     * @var RabbitMQQueueManager|MockInterface
+     * @var RabbitMQQueueManager&MockInterface
      */
     private $rabbitMQQueueManagerMock;
 
     /**
-     * @var RabbitMQConsumer|MockInterface
+     * @var RabbitMQConsumer&MockInterface
      */
     private $rabbitMQConsumerMock;
 
