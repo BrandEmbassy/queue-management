@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 use function count;
 use function sprintf;
 
-final class RabbitMQQueueManager implements QueueManagerInterface
+class RabbitMQQueueManager implements QueueManagerInterface
 {
     public const PREFETCH_COUNT = 'prefetchCount';
     public const NO_ACK = 'noAck';
