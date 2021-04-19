@@ -78,8 +78,12 @@ final class RabbitMQQueueManager implements QueueManagerInterface
             try {
                 $this->getChannel()->wait();
             } catch (AMQPRuntimeException $exception) {
-                $this->reconnect();
+                $this->logger->warning(
+                    'AMQPChannel disconnected: ' . $exception->getMessage(),
+                    ['exception' => $exception]
+                );
 
+                $this->reconnect();
                 $this->setUpChannel($prefetchCount, $queueName, $noAck, $consumer);
             }
         }
