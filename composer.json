@@ -23,7 +23,7 @@
         "brandembassy/mockery-tools": "^2.0",
         "mockery/mockery": "^1.2",
         "phpunit/phpunit": "^8.5",
-        "roave/security-advisories": "dev-master"
+        "roave/security-advisories": "dev-latest"
     },
     "scripts": {
         "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests",
