@@ -224,19 +224,20 @@ final class RabbitMQQueueManagerTest extends TestCase
 
         $amqpChannelMock->shouldReceive('basic_qos')
             ->with(0, 2, false)
-            ->once();
+            ->twice();
 
         $amqpChannelMock->shouldReceive('basic_consume')
             ->with(ExampleJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
-            ->once();
+            ->twice();
 
         $callbackMock = static function (): void {
         };
 
         $amqpChannelMock->callbacks = [$callbackMock];
+        $brokenPipeException = new AMQPRuntimeException('Broken pipe');
         $amqpChannelMock->shouldReceive('wait')
             ->once()
-            ->andThrow(new AMQPRuntimeException('Broken pipe'));
+            ->andThrow($brokenPipeException);
         $amqpChannelMock->shouldReceive('wait')
             ->once()
             ->andReturnUsing(
@@ -251,6 +252,10 @@ final class RabbitMQQueueManagerTest extends TestCase
 
         $this->amqpStreamConnectionMock->shouldReceive('close')
             ->withNoArgs()
+            ->once();
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('AMQPChannel disconnected: Broken pipe', ['exception' => $brokenPipeException])
             ->once();
 
         $queueManager = $this->createQueueManager();

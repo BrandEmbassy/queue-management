@@ -27,17 +27,17 @@ final class RabbitMQConsumerTest extends TestCase
     private const AMQP_TAG = 'someAmqpTag';
 
     /**
-     * @var LoggerInterface|MockInterface
+     * @var LoggerInterface&MockInterface
      */
     private $loggerMock;
 
     /**
-     * @var JobExecutorInterface|MockInterface
+     * @var JobExecutorInterface&MockInterface
      */
     private $jobExecutorMock;
 
     /**
-     * @var PushDelayedResolver|MockInterface
+     * @var PushDelayedResolver&MockInterface
      */
     private $pushDelayedResolverMock;
 

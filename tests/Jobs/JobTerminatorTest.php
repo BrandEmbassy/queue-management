@@ -7,6 +7,7 @@ use BE\QueueManagement\Jobs\JobUuidBlacklistInterface;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
+use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -17,12 +18,12 @@ final class JobTerminatorTest extends TestCase
     private const MINIMUM_ATTEMPTS = 20;
 
     /**
-     * @var JobUuidBlacklistInterface|MockInterface
+     * @var JobUuidBlacklistInterface&MockInterface
      */
     private $jobUuidBlacklistMock;
 
     /**
-     * @var MockInterface|LoggerInterface
+     * @var MockInterface&LoggerInterface
      */
     private $loggerMock;
 
@@ -39,9 +40,9 @@ final class JobTerminatorTest extends TestCase
     {
         $jobTerminator = $this->createJobTerminator();
 
-        self::assertFalse($jobTerminator->shouldBeTerminated('some-uuid', 20));
-        self::assertFalse($jobTerminator->shouldBeTerminated('some-uuid', 19));
-        self::assertFalse($jobTerminator->shouldBeTerminated('some-uuid', 1));
+        Assert::assertFalse($jobTerminator->shouldBeTerminated('some-uuid', 20));
+        Assert::assertFalse($jobTerminator->shouldBeTerminated('some-uuid', 19));
+        Assert::assertFalse($jobTerminator->shouldBeTerminated('some-uuid', 1));
     }
 
 
@@ -54,7 +55,7 @@ final class JobTerminatorTest extends TestCase
             ->once()
             ->andReturnTrue();
 
-        self::assertTrue($jobTerminator->shouldBeTerminated('some-uuid', 21));
+        Assert::assertTrue($jobTerminator->shouldBeTerminated('some-uuid', 21));
     }
 
 

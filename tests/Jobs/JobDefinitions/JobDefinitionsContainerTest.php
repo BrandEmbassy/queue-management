@@ -41,9 +41,9 @@ final class JobDefinitionsContainerTest extends TestCase
 
         $simpleJobDefinition = $jobDefinitionContainer->get(self::SIMPLE_JOB_NAME);
 
-        self::assertTrue($jobDefinitionContainer->has(self::SIMPLE_JOB_NAME));
-        self::assertFalse($jobDefinitionContainer->has('unknownJobName'));
-        self::assertNull($simpleJobDefinition->getMaxAttempts());
+        Assert::assertTrue($jobDefinitionContainer->has(self::SIMPLE_JOB_NAME));
+        Assert::assertFalse($jobDefinitionContainer->has('unknownJobName'));
+        Assert::assertNull($simpleJobDefinition->getMaxAttempts());
         Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
         Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
         Assert::assertSame($exampleJobProcessor, $simpleJobDefinition->getJobProcessor());
