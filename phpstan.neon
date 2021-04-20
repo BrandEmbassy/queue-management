@@ -3,6 +3,3 @@ includes:
 
 parameters:
     ignoreErrors:
-        -
-            message: '#PHPDoc tag \@var for property Tests\\BE\\QueueManagement\\Queue\\RabbitMQ\\RabbitMQWorkerTest\:\:\$rabbitMQQueueManagerMock contains unresolvable type.#'
-            path: 'tests\Queue\RabbitMQ\RabbitMQWorkerTest.php'
