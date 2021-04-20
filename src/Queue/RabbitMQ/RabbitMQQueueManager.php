@@ -67,7 +67,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
      */
     public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void
     {
-        $prefetchCount = $parameters[self::PREFETCH_COUNT] ?? 1;
+        $prefetchCount = (int)($parameters[self::PREFETCH_COUNT] ?? 1);
         $noAck = $parameters[self::NO_ACK] ?? false;
 
         $this->declareQueueIfNotDeclared($queueName);
