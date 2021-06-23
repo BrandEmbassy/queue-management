@@ -8,6 +8,7 @@ use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
+use BE\QueueManagement\Queue\MessageConsumer;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQConsumer;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -242,11 +243,13 @@ final class RabbitMQConsumerTest extends TestCase
 
     private function createRabbitMqConsumer(): RabbitMQConsumer
     {
-        return new RabbitMQConsumer(
-            $this->loggerMock,
+        $messageConsumer = new MessageConsumer(
+            $this->jobLoaderMock,
             $this->jobExecutorMock,
             $this->pushDelayedResolverMock,
-            $this->jobLoaderMock
+            $this->loggerMock
         );
+
+        return new RabbitMQConsumer($messageConsumer, $this->loggerMock);
     }
 }
