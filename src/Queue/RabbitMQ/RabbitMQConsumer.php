@@ -4,7 +4,7 @@ namespace BE\QueueManagement\Queue\RabbitMQ;
 
 use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
-use BE\QueueManagement\Queue\MessageConsumer;
+use BE\QueueManagement\Queue\MessageConsumerInterface;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
@@ -13,7 +13,7 @@ use function assert;
 class RabbitMQConsumer implements RabbitMQConsumerInterface
 {
     /**
-     * @var MessageConsumer
+     * @var MessageConsumerInterface
      */
     private $messageConsumer;
 
@@ -24,7 +24,7 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
 
 
     public function __construct(
-        MessageConsumer $messageConsumer,
+        MessageConsumerInterface $messageConsumer,
         LoggerInterface $logger
     ) {
         $this->messageConsumer = $messageConsumer;
