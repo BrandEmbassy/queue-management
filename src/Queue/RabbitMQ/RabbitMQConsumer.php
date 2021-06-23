@@ -10,7 +10,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
 use function assert;
 
-final class RabbitMQConsumer implements RabbitMQConsumerInterface
+class RabbitMQConsumer implements RabbitMQConsumerInterface
 {
     /**
      * @var MessageConsumer
