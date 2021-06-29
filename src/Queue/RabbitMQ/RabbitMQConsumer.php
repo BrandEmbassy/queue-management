@@ -3,64 +3,46 @@
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
 use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
-use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
-use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
-use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
-use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
-use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Queue\MessageConsumerInterface;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
-use function sprintf;
+use function assert;
 
 class RabbitMQConsumer implements RabbitMQConsumerInterface
 {
     /**
+     * @var MessageConsumerInterface
+     */
+    private $messageConsumer;
+
+    /**
      * @var LoggerInterface
      */
-    protected $logger;
-
-    /**
-     * @var PushDelayedResolver
-     */
-    protected $pushDelayedResolver;
-
-    /**
-     * @var JobExecutorInterface
-     */
-    protected $jobExecutor;
-
-    /**
-     * @var JobLoaderInterface
-     */
-    protected $jobLoader;
+    private $logger;
 
 
     public function __construct(
-        LoggerInterface $logger,
-        JobExecutorInterface $jobExecutor,
-        PushDelayedResolver $pushDelayedResolver,
-        JobLoaderInterface $jobLoader
+        MessageConsumerInterface $messageConsumer,
+        LoggerInterface $logger
     ) {
+        $this->messageConsumer = $messageConsumer;
         $this->logger = $logger;
-        $this->pushDelayedResolver = $pushDelayedResolver;
-        $this->jobExecutor = $jobExecutor;
-        $this->jobLoader = $jobLoader;
     }
 
 
     public function __invoke(AMQPMessage $message): void
     {
-        /** @var AMQPChannel $channel */
-        $channel = $message->delivery_info['channel'];
+        $channel = $message->getChannel();
+        assert($channel instanceof AMQPChannel);
 
         try {
-            $this->executeJob($message);
+            $this->messageConsumer->consume($message->getBody());
 
-            $channel->basic_ack($message->delivery_info['delivery_tag']);
+            $channel->basic_ack($message->getDeliveryTag());
         } catch (ConsumerFailedExceptionInterface $exception) {
-            $channel->basic_reject($message->delivery_info['delivery_tag'], true);
+            $channel->basic_reject($message->getDeliveryTag(), true);
 
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
@@ -74,43 +56,7 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
                 ['exception' => $exception]
             );
 
-            $channel->basic_nack($message->delivery_info['delivery_tag']);
+            $channel->basic_nack($message->getDeliveryTag());
         }
-    }
-
-
-    private function executeJob(AMQPMessage $message): void
-    {
-        try {
-            $job = $this->jobLoader->loadJob($message->getBody());
-
-            $this->jobExecutor->execute($job);
-        } catch (DelayableProcessFailExceptionInterface $exception) {
-            $this->logDelayableProcessFailException($exception);
-
-            $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
-        }
-    }
-
-
-    private function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception): void
-    {
-        $message = sprintf(
-            'Job execution failed [attempts: %s], reason: %s',
-            $exception->getJob()->getAttempts(),
-            $exception->getMessage()
-        );
-        $context = [
-            'exception' => $exception,
-            'previousException' => $exception->getPrevious(),
-        ];
-
-        if ($exception instanceof WarningOnlyExceptionInterface) {
-            $this->logger->warning($message, $context);
-
-            return;
-        }
-
-        $this->logger->error($message, $context);
     }
 }
