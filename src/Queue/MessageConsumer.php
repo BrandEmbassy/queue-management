@@ -12,7 +12,7 @@ use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
-final class MessageConsumer
+final class MessageConsumer implements MessageConsumerInterface
 {
     /**
      * @var JobLoaderInterface
