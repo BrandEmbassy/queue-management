@@ -2,12 +2,10 @@
 
 namespace BE\QueueManagement\Queue\SimpleQueueService;
 
-use Aws\Exception\AwsException;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Ramsey\Uuid\Uuid;
-use const PHP_EOL;
 
 final class SQSQueueManager implements QueueManagerInterface
 {
@@ -41,7 +39,6 @@ final class SQSQueueManager implements QueueManagerInterface
             $resultMessage = $receiveResult->get('Messages')[0] ?? null;
 
             if ($resultMessage === null) {
-                echo 'No messages in queue.' . PHP_EOL;
                 continue;
             }
 
@@ -65,10 +62,6 @@ final class SQSQueueManager implements QueueManagerInterface
             'MessageBody' => $job->toJson(),
             'QueueUrl' => $queueUrl,
             'MessageAttributes' => [
-                'Attempts' => [
-                    'DataType' => 'Number',
-                    'StringValue' => (string)$job->getAttempts(),
-                ],
                 'JobUuid' => [
                     'DataType' => 'String',
                     'StringValue' => $job->getUuid(),
@@ -78,24 +71,19 @@ final class SQSQueueManager implements QueueManagerInterface
             'MessageDeduplicationId' => Uuid::uuid4()->toString(),
         ];
 
-        try {
-            $result = $this->sqsClient->sendMessage($params);
-        } catch (AwsException $e) {
-            // output error message if fails
-            error_log($e->getMessage());
-        }
+        $this->sqsClient->sendMessage($params);
     }
 
 
     public function pushDelayed(JobInterface $job, int $delayInSeconds): void
     {
-        // TODO: Implement pushDelayed() method.
+        $this->push($job);
     }
 
 
     public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void
     {
-        // TODO: Implement pushDelayedWithMilliseconds() method.
+        $this->push($job);
     }
 
 
