@@ -39,11 +39,17 @@ final class ExampleJobDefinition implements JobDefinitionInterface
      */
     private $jobProcessor;
 
+    /**
+     * @var string
+     */
+    private $queueName;
 
-    public function __construct(string $jobName, string $jobClass)
+
+    public function __construct(string $jobName, string $jobClass, ?string $queueName = null)
     {
         $this->jobName = $jobName;
         $this->jobClass = $jobClass;
+        $this->queueName = $queueName ?? self::QUEUE_NAME;
     }
 
 
@@ -94,7 +100,7 @@ final class ExampleJobDefinition implements JobDefinitionInterface
 
     public function getQueueName(): string
     {
-        return self::QUEUE_NAME;
+        return $this->queueName;
     }
 
 
