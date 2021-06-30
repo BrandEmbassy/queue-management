@@ -7,5 +7,5 @@ use Throwable;
 
 interface DelayRuleInterface
 {
-    public function getDelay(JobInterface $job, Throwable $exception): int;
+    public function getDelayInMilliseconds(JobInterface $job, Throwable $exception): int;
 }
