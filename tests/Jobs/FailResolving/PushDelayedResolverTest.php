@@ -46,12 +46,12 @@ final class PushDelayedResolverTest extends TestCase
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
-        $this->queueManagerMock->shouldReceive('pushDelayedWithMilliSeconds')
+        $this->queueManagerMock->shouldReceive('push')
             ->with($exampleJob, 5000)
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
-            ->with('Job requeued [delay: 5.000]')
+            ->with('Job requeued [delay: 5.000s]')
             ->once();
 
         $pushDelayedResolver->resolve($exampleJob, new Exception());
@@ -67,12 +67,12 @@ final class PushDelayedResolverTest extends TestCase
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
-        $this->queueManagerMock->shouldReceive('pushDelayedWithMilliSeconds')
+        $this->queueManagerMock->shouldReceive('push')
             ->with($exampleJob, 3500)
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
-            ->with('Job requeued [delay: 3.500]')
+            ->with('Job requeued [delay: 3.500s]')
             ->once();
 
         $pushDelayedResolver->resolve($exampleJob, new Exception());

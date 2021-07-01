@@ -12,13 +12,7 @@ interface QueueManagerInterface
     public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void;
 
 
-    public function push(JobInterface $job): void;
-
-
-    public function pushDelayed(JobInterface $job, int $delayInSeconds): void;
-
-
-    public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void;
+    public function push(JobInterface $job, int $delayInMilliseconds = 0, ?string $queueName = null): void;
 
 
     public function checkConnection(): bool;

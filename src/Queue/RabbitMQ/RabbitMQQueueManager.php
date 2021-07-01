@@ -55,13 +55,6 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
-    private function setUpChannel(int $prefetchCount, string $queueName, bool $noAck, callable $consumer): void
-    {
-        $this->getChannel()->basic_qos(0, $prefetchCount, false);
-        $this->getChannel()->basic_consume($queueName, '', false, $noAck, false, false, $consumer);
-    }
-
-
     /**
      * @param mixed[] $parameters
      */
@@ -72,7 +65,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $this->declareQueueIfNotDeclared($queueName);
 
-        $this->setUpChannel($prefetchCount, $queueName, $noAck, $consumer);
+        $this->setUpChannelAndStartConsuming($prefetchCount, $queueName, $noAck, $consumer);
 
         while (count($this->getChannel()->callbacks) > 0) {
             try {
@@ -84,7 +77,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
                 );
 
                 $this->reconnect();
-                $this->setUpChannel($prefetchCount, $queueName, $noAck, $consumer);
+                $this->setUpChannelAndStartConsuming($prefetchCount, $queueName, $noAck, $consumer);
             }
         }
 
@@ -92,44 +85,44 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
-    public function push(JobInterface $job): void
+    private function setUpChannelAndStartConsuming(
+        int $prefetchCount,
+        string $queueName,
+        bool $noAck,
+        callable $consumer
+    ): void {
+        $this->getChannel()->basic_qos(0, $prefetchCount, false);
+        $this->getChannel()->basic_consume($queueName, '', false, $noAck, false, false, $consumer);
+    }
+
+
+    public function push(JobInterface $job, int $delayInMilliseconds = 0, ?string $queueName = null): void
     {
-        $queueName = $job->getJobDefinition()->getQueueName();
+        $queueName = $queueName ?? $job->getJobDefinition()->getQueueName();
 
         $this->declareQueueIfNotDeclared($queueName);
 
-        $this->publishMessage($job->toJson(), $queueName);
+        $parameters = [];
+
+        if ($delayInMilliseconds !== 0) {
+            $parameters = [
+                'application_headers' => new AMQPTable(
+                    ['x-delay' => $delayInMilliseconds]
+                ),
+            ];
+        }
+
+        $this->publishMessage($job->toJson(), $queueName, $parameters);
 
         $this->logger->info(
             sprintf(
-                'Job (%s) [%s] pushed into %s queue',
+                'Job (%s) [%s] pushed into %s queue, delay: %dms',
                 $job->getName(),
                 $job->getUuid(),
-                $queueName
+                $queueName,
+                $delayInMilliseconds
             )
         );
-    }
-
-
-    public function pushDelayed(JobInterface $job, int $delayInSeconds): void
-    {
-        $this->pushDelayedWithMilliseconds($job, $delayInSeconds * 1000);
-    }
-
-
-    public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void
-    {
-        $queueName = $job->getJobDefinition()->getQueueName();
-
-        $this->declareQueueIfNotDeclared($queueName);
-
-        $parameters = [
-            'application_headers' => new AMQPTable(
-                ['x-delay' => $delayInMilliseconds]
-            ),
-        ];
-
-        $this->publishMessage($job->toJson(), $queueName, $parameters);
     }
 
 

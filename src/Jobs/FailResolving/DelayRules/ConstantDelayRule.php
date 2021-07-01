@@ -19,8 +19,8 @@ class ConstantDelayRule implements DelayRuleInterface
     }
 
 
-    public function getDelay(JobInterface $job, Throwable $exception): int
+    public function getDelayInMilliseconds(JobInterface $job, Throwable $exception): int
     {
-        return $this->constantDelayInSeconds;
+        return $this->constantDelayInSeconds * 1000;
     }
 }

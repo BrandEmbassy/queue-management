@@ -58,7 +58,7 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->expectSetUpConnection();
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue, delay: 0ms')
             ->once();
 
         $exampleJob = $this->createExampleJob();
@@ -104,14 +104,18 @@ final class RabbitMQQueueManagerTest extends TestCase
             )
             ->once();
 
+        $this->loggerMock->shouldReceive('info')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue, delay: 5000ms')
+            ->once();
+
         $queueManager = $this->createQueueManager();
-        $queueManager->pushDelayed($exampleJob, 5);
+        $queueManager->push($exampleJob, 5000);
     }
 
 
-    public function testPushDelayedWithMilliSeconds(): void
+    public function testPushDelayedWithDifferentQueue(): void
     {
-        $this->expectSetUpConnection();
+        $this->expectSetUpConnection(1, 1, 'new-queue-name');
 
         $exampleJob = $this->createExampleJob();
 
@@ -129,12 +133,16 @@ final class RabbitMQQueueManagerTest extends TestCase
                             && $applicationHeaders->getNativeData() === $expectedNativeData;
                     }
                 ),
-                ExampleJobDefinition::QUEUE_NAME . '.sync'
+                'new-queue-name.sync'
             )
             ->once();
 
+        $this->loggerMock->shouldReceive('info')
+            ->with('Job (exampleJob) [some-job-uud] pushed into new-queue-name queue, delay: 500ms')
+            ->once();
+
         $queueManager = $this->createQueueManager();
-        $queueManager->pushDelayedWithMilliseconds($exampleJob, 500);
+        $queueManager->push($exampleJob, 500, 'new-queue-name');
     }
 
 
@@ -143,7 +151,7 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->expectSetUpConnection(2, 2);
 
         $this->loggerMock->shouldReceive('info')
-            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue, delay: 0ms')
             ->once();
 
         $exampleJob = $this->createExampleJob();
@@ -315,8 +323,11 @@ final class RabbitMQQueueManagerTest extends TestCase
     }
 
 
-    private function expectSetUpConnection(int $connectionIsCreatedTimes = 1, int $channelIsCreatedTimes = 1): void
-    {
+    private function expectSetUpConnection(
+        int $connectionIsCreatedTimes = 1,
+        int $channelIsCreatedTimes = 1,
+        string $queueName = ExampleJobDefinition::QUEUE_NAME
+    ): void {
         $this->amqpStreamConnectionMock->shouldReceive('channel')
             ->withNoArgs()
             ->times($channelIsCreatedTimes)
@@ -328,12 +339,12 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->andReturn($this->amqpStreamConnectionMock);
 
         $this->amqpChannelMock->shouldReceive('queue_declare')
-            ->with(ExampleJobDefinition::QUEUE_NAME, false, true, false, false, false, [])
+            ->with($queueName, false, true, false, false, false, [])
             ->once();
 
         $this->amqpChannelMock->shouldReceive('exchange_declare')
             ->with(
-                ExampleJobDefinition::QUEUE_NAME . '.sync',
+                $queueName . '.sync',
                 'x-delayed-message',
                 false,
                 true,
@@ -345,7 +356,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $this->amqpChannelMock->shouldReceive('queue_bind')
-            ->with(ExampleJobDefinition::QUEUE_NAME, ExampleJobDefinition::QUEUE_NAME . '.sync')
+            ->with($queueName, $queueName . '.sync')
             ->once();
     }
 }
