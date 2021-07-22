@@ -8,7 +8,7 @@ use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
-use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Jobs\FailResolving\JobFailResolver;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
@@ -25,7 +25,7 @@ final class MessageConsumer implements MessageConsumerInterface
     private $jobExecutor;
 
     /**
-     * @var PushDelayedResolver
+     * @var JobFailResolver
      */
     private $pushDelayedResolver;
 
@@ -38,7 +38,7 @@ final class MessageConsumer implements MessageConsumerInterface
     public function __construct(
         JobLoaderInterface $jobLoader,
         JobExecutorInterface $jobExecutor,
-        PushDelayedResolver $pushDelayedResolver,
+        JobFailResolver $pushDelayedResolver,
         LoggerInterface $logger
     ) {
         $this->jobLoader = $jobLoader;

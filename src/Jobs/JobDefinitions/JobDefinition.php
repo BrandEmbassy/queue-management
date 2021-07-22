@@ -3,7 +3,7 @@
 namespace BE\QueueManagement\Jobs\JobDefinitions;
 
 use BE\QueueManagement\Jobs\Execution\JobProcessorInterface;
-use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleInterface;
+use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\FailResolveStrategy;
 use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 
 class JobDefinition implements JobDefinitionInterface
@@ -29,9 +29,9 @@ class JobDefinition implements JobDefinitionInterface
     private $jobLoader;
 
     /**
-     * @var DelayRuleInterface
+     * @var FailResolveStrategy
      */
-    private $delayRule;
+    private $resolveStrategy;
 
     /**
      * @var JobProcessorInterface
@@ -50,7 +50,7 @@ class JobDefinition implements JobDefinitionInterface
         string $queueName,
         ?int $maxAttempts,
         JobLoaderInterface $jobLoader,
-        DelayRuleInterface $delayRule,
+        FailResolveStrategy $resolveStrategy,
         JobProcessorInterface $jobProcessor
     ) {
         $this->jobName = $jobName;
@@ -58,7 +58,7 @@ class JobDefinition implements JobDefinitionInterface
         $this->queueName = $queueName;
         $this->maxAttempts = $maxAttempts;
         $this->jobLoader = $jobLoader;
-        $this->delayRule = $delayRule;
+        $this->resolveStrategy = $resolveStrategy;
         $this->jobProcessor = $jobProcessor;
     }
 
@@ -93,9 +93,9 @@ class JobDefinition implements JobDefinitionInterface
     }
 
 
-    public function getDelayRule(): DelayRuleInterface
+    public function getFailResolveStrategy(): FailResolveStrategy
     {
-        return $this->delayRule;
+        return $this->resolveStrategy;
     }
 
 

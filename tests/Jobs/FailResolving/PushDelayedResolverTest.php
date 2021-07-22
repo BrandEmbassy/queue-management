@@ -2,8 +2,9 @@
 
 namespace Tests\BE\QueueManagement\Jobs\FailResolving;
 
-use BE\QueueManagement\Jobs\FailResolving\DelayRules\ConstantDelayRule;
-use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\ConstantDelayFailResolveStrategy;
+use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\DifferentQueueFailResolveStrategy;
+use BE\QueueManagement\Jobs\FailResolving\JobFailResolver;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Exception;
 use Mockery;
@@ -40,14 +41,14 @@ final class PushDelayedResolverTest extends TestCase
     public function testPushDelayedInSeconds(): void
     {
         $exampleJobDefinition = ExampleJobDefinition::create()
-            ->withDelayRule(new ConstantDelayRule(5));
+            ->withFailResolveStrategy(new ConstantDelayFailResolveStrategy(5));
 
         $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
         $this->queueManagerMock->shouldReceive('push')
-            ->with($exampleJob, 5000)
+            ->with($exampleJob, 5000, 'exampleJobQueue')
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
@@ -58,29 +59,29 @@ final class PushDelayedResolverTest extends TestCase
     }
 
 
-    public function testPushDelayedInMilliSeconds(): void
+    public function testPushToDifferentQueue(): void
     {
         $exampleJobDefinition = ExampleJobDefinition::create()
-            ->withDelayRule(new ConstantDelayRuleWithMilliseconds(3500));
+            ->withFailResolveStrategy(new DifferentQueueFailResolveStrategy('new-queue-name'));
 
         $exampleJob = new ExampleJob($exampleJobDefinition);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
         $this->queueManagerMock->shouldReceive('push')
-            ->with($exampleJob, 3500)
+            ->with($exampleJob, 0, 'new-queue-name')
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
-            ->with('Job requeued [delay: 3.500s]')
+            ->with('Job requeued [delay: 0.000s]')
             ->once();
 
         $pushDelayedResolver->resolve($exampleJob, new Exception());
     }
 
 
-    private function createPushDelayedResolver(): PushDelayedResolver
+    private function createPushDelayedResolver(): JobFailResolver
     {
-        return new PushDelayedResolver($this->queueManagerMock, $this->loggerMock);
+        return new JobFailResolver($this->queueManagerMock, $this->loggerMock);
     }
 }

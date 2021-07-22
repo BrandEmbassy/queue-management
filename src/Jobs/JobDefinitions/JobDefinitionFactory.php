@@ -29,7 +29,7 @@ class JobDefinitionFactory implements JobDefinitionFactoryInterface
             $jobDefinition[self::QUEUE_NAME],
             $jobDefinition[self::MAX_ATTEMPTS] ?? null,
             $jobDefinition[self::JOB_LOADER] ?? $this->defaultJobLoader,
-            $jobDefinition[self::JOB_DELAY_RULE],
+            $jobDefinition[self::JOB_FAIL_RESOLVE_STRATEGY],
             $jobDefinition[self::JOB_PROCESSOR]
         );
     }

@@ -8,7 +8,7 @@ interface JobDefinitionFactoryInterface
     public const QUEUE_NAME = 'queueName';
     public const MAX_ATTEMPTS = 'maxAttempts';
     public const JOB_LOADER = 'jobLoader';
-    public const JOB_DELAY_RULE = 'jobDelayRule';
+    public const JOB_FAIL_RESOLVE_STRATEGY = 'jobFailResolveStrategy';
     public const JOB_PROCESSOR = 'jobProcessor';
 
 

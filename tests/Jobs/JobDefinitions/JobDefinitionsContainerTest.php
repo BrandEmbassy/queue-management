@@ -2,7 +2,7 @@
 
 namespace Tests\BE\QueueManagement\Jobs\JobDefinitions;
 
-use BE\QueueManagement\Jobs\FailResolving\DelayRules\ConstantDelayRule;
+use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\ConstantDelayFailResolveStrategy;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactory;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactoryInterface;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
@@ -25,7 +25,7 @@ final class JobDefinitionsContainerTest extends TestCase
     {
         $exampleJobProcessor = new ExampleJobProcessor();
         $simpleJobLoader = new SimpleJobLoader();
-        $constantDelayRule = new ConstantDelayRule(10);
+        $constantDelayRule = new ConstantDelayFailResolveStrategy(10);
 
         $jobDefinitionsConfig = [
             self::SIMPLE_JOB_NAME => [
@@ -34,7 +34,7 @@ final class JobDefinitionsContainerTest extends TestCase
                 JobDefinitionFactoryInterface::MAX_ATTEMPTS => null,
                 JobDefinitionFactoryInterface::JOB_PROCESSOR => $exampleJobProcessor,
                 JobDefinitionFactoryInterface::JOB_LOADER => $simpleJobLoader,
-                JobDefinitionFactoryInterface::JOB_DELAY_RULE => $constantDelayRule,
+                JobDefinitionFactoryInterface::JOB_FAIL_RESOLVE_STRATEGY => $constantDelayRule,
             ],
         ];
         $jobDefinitionContainer = $this->createJobDefinitionsContainer($jobDefinitionsConfig);
@@ -48,7 +48,7 @@ final class JobDefinitionsContainerTest extends TestCase
         Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
         Assert::assertSame($exampleJobProcessor, $simpleJobDefinition->getJobProcessor());
         Assert::assertSame($simpleJobLoader, $simpleJobDefinition->getJobLoader());
-        Assert::assertSame($constantDelayRule, $simpleJobDefinition->getDelayRule());
+        Assert::assertSame($constantDelayRule, $simpleJobDefinition->getFailResolveStrategy());
     }
 
 

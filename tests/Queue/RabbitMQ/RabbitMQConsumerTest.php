@@ -6,7 +6,7 @@ use BE\QueueManagement\Jobs\BlacklistedJobUuidException;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
-use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Jobs\FailResolving\JobFailResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
 use BE\QueueManagement\Queue\MessageConsumer;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQConsumer;
@@ -38,7 +38,7 @@ final class RabbitMQConsumerTest extends TestCase
     private $jobExecutorMock;
 
     /**
-     * @var PushDelayedResolver&MockInterface
+     * @var JobFailResolver&MockInterface
      */
     private $pushDelayedResolverMock;
 
@@ -58,7 +58,7 @@ final class RabbitMQConsumerTest extends TestCase
         parent::setUp();
         $this->loggerMock = Mockery::mock(LoggerInterface::class);
         $this->jobExecutorMock = Mockery::mock(JobExecutorInterface::class);
-        $this->pushDelayedResolverMock = Mockery::mock(PushDelayedResolver::class);
+        $this->pushDelayedResolverMock = Mockery::mock(JobFailResolver::class);
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
         $this->amqpChannelMock = Mockery::mock(AMQPChannel::class);
     }
