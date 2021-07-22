@@ -40,7 +40,7 @@ final class RabbitMQConsumerTest extends TestCase
     /**
      * @var JobFailResolver&MockInterface
      */
-    private $pushDelayedResolverMock;
+    private $jobFailResolverMock;
 
     /**
      * @var JobLoaderInterface|MockInterface
@@ -58,7 +58,7 @@ final class RabbitMQConsumerTest extends TestCase
         parent::setUp();
         $this->loggerMock = Mockery::mock(LoggerInterface::class);
         $this->jobExecutorMock = Mockery::mock(JobExecutorInterface::class);
-        $this->pushDelayedResolverMock = Mockery::mock(JobFailResolver::class);
+        $this->jobFailResolverMock = Mockery::mock(JobFailResolver::class);
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
         $this->amqpChannelMock = Mockery::mock(AMQPChannel::class);
     }
@@ -177,7 +177,7 @@ final class RabbitMQConsumerTest extends TestCase
             )
             ->once();
 
-        $this->pushDelayedResolverMock->shouldReceive('resolve')
+        $this->jobFailResolverMock->shouldReceive('resolve')
             ->with($exampleJob, $unableToProcessLoadedJobException)
             ->once();
 
@@ -217,7 +217,7 @@ final class RabbitMQConsumerTest extends TestCase
             )
             ->once();
 
-        $this->pushDelayedResolverMock->shouldReceive('resolve')
+        $this->jobFailResolverMock->shouldReceive('resolve')
             ->with($exampleJob, $exampleWarningOnlyException)
             ->once();
 
@@ -246,7 +246,7 @@ final class RabbitMQConsumerTest extends TestCase
         $messageConsumer = new MessageConsumer(
             $this->jobLoaderMock,
             $this->jobExecutorMock,
-            $this->pushDelayedResolverMock,
+            $this->jobFailResolverMock,
             $this->loggerMock
         );
 
