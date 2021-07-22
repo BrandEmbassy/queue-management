@@ -27,7 +27,7 @@ final class MessageConsumer implements MessageConsumerInterface
     /**
      * @var JobFailResolver
      */
-    private $pushDelayedResolver;
+    private $jobFailResolver;
 
     /**
      * @var LoggerInterface
@@ -38,12 +38,12 @@ final class MessageConsumer implements MessageConsumerInterface
     public function __construct(
         JobLoaderInterface $jobLoader,
         JobExecutorInterface $jobExecutor,
-        JobFailResolver $pushDelayedResolver,
+        JobFailResolver $jobFailResolver,
         LoggerInterface $logger
     ) {
         $this->jobLoader = $jobLoader;
         $this->jobExecutor = $jobExecutor;
-        $this->pushDelayedResolver = $pushDelayedResolver;
+        $this->jobFailResolver = $jobFailResolver;
         $this->logger = $logger;
     }
 
@@ -61,7 +61,7 @@ final class MessageConsumer implements MessageConsumerInterface
         } catch (DelayableProcessFailExceptionInterface $exception) {
             $this->logDelayableProcessFailException($exception);
 
-            $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
+            $this->jobFailResolver->resolve($exception->getJob(), $exception);
         }
     }
 
