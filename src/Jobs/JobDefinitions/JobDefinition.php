@@ -31,7 +31,7 @@ class JobDefinition implements JobDefinitionInterface
     /**
      * @var FailResolveStrategy
      */
-    private $resolveStrategy;
+    private $failResolveStrategy;
 
     /**
      * @var JobProcessorInterface
@@ -50,7 +50,7 @@ class JobDefinition implements JobDefinitionInterface
         string $queueName,
         ?int $maxAttempts,
         JobLoaderInterface $jobLoader,
-        FailResolveStrategy $resolveStrategy,
+        FailResolveStrategy $failResolveStrategy,
         JobProcessorInterface $jobProcessor
     ) {
         $this->jobName = $jobName;
@@ -58,7 +58,7 @@ class JobDefinition implements JobDefinitionInterface
         $this->queueName = $queueName;
         $this->maxAttempts = $maxAttempts;
         $this->jobLoader = $jobLoader;
-        $this->resolveStrategy = $resolveStrategy;
+        $this->failResolveStrategy = $failResolveStrategy;
         $this->jobProcessor = $jobProcessor;
     }
 
@@ -95,7 +95,7 @@ class JobDefinition implements JobDefinitionInterface
 
     public function getFailResolveStrategy(): FailResolveStrategy
     {
-        return $this->resolveStrategy;
+        return $this->failResolveStrategy;
     }
 
 
