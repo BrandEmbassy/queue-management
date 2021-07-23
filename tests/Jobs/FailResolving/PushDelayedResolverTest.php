@@ -2,7 +2,7 @@
 
 namespace Tests\BE\QueueManagement\Jobs\FailResolving;
 
-use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\ConstantDelayFailResolveStrategy;
+use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\ConstantDelayInSecondsFailResolveStrategy;
 use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\DifferentQueueFailResolveStrategy;
 use BE\QueueManagement\Jobs\FailResolving\JobFailResolver;
 use BE\QueueManagement\Queue\QueueManagerInterface;
@@ -41,11 +41,11 @@ final class PushDelayedResolverTest extends TestCase
     public function testPushDelayedInSeconds(): void
     {
         $exampleJobDefinition = ExampleJobDefinition::create()
-            ->withFailResolveStrategy(new ConstantDelayFailResolveStrategy(5));
+            ->withFailResolveStrategy(new ConstantDelayInSecondsFailResolveStrategy(5));
 
         $exampleJob = new ExampleJob($exampleJobDefinition);
 
-        $pushDelayedResolver = $this->createPushDelayedResolver();
+        $jobFailResolver = $this->createJobFailResolver();
 
         $this->queueManagerMock->shouldReceive('push')
             ->with($exampleJob, 5000, 'exampleJobQueue')
@@ -55,7 +55,7 @@ final class PushDelayedResolverTest extends TestCase
             ->with('Job requeued [delay: 5.000s]')
             ->once();
 
-        $pushDelayedResolver->resolve($exampleJob, new Exception());
+        $jobFailResolver->resolve($exampleJob, new Exception());
     }
 
 
@@ -66,7 +66,7 @@ final class PushDelayedResolverTest extends TestCase
 
         $exampleJob = new ExampleJob($exampleJobDefinition);
 
-        $pushDelayedResolver = $this->createPushDelayedResolver();
+        $jobFailResolver = $this->createJobFailResolver();
 
         $this->queueManagerMock->shouldReceive('push')
             ->with($exampleJob, 0, 'new-queue-name')
@@ -76,11 +76,11 @@ final class PushDelayedResolverTest extends TestCase
             ->with('Job requeued [delay: 0.000s]')
             ->once();
 
-        $pushDelayedResolver->resolve($exampleJob, new Exception());
+        $jobFailResolver->resolve($exampleJob, new Exception());
     }
 
 
-    private function createPushDelayedResolver(): JobFailResolver
+    private function createJobFailResolver(): JobFailResolver
     {
         return new JobFailResolver($this->queueManagerMock, $this->loggerMock);
     }

@@ -25,7 +25,7 @@ final class DifferentQueueFailResolveStrategy implements FailResolveStrategy
     }
 
 
-    public function getQueueName(JobInterface $job, Throwable $exception): string
+    public function getTargetQueueName(JobInterface $job, Throwable $exception): string
     {
         return $this->newQueueName;
     }

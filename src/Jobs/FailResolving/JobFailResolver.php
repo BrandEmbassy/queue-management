@@ -35,7 +35,7 @@ class JobFailResolver
         $failResolveStrategy = $job->getJobDefinition()->getFailResolveStrategy();
 
         $pushDelayInMilliseconds = $failResolveStrategy->getDelayInMilliseconds($job, $exception);
-        $queueName = $failResolveStrategy->getQueueName($job, $exception);
+        $queueName = $failResolveStrategy->getTargetQueueName($job, $exception);
 
         $this->queueManager->push($job, $pushDelayInMilliseconds, $queueName);
 

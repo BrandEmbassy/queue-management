@@ -5,7 +5,7 @@ namespace BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy;
 use BE\QueueManagement\Jobs\JobInterface;
 use Throwable;
 
-final class ConstantDelayFailResolveStrategy implements FailResolveStrategy
+final class ConstantDelayInSecondsFailResolveStrategy implements FailResolveStrategy
 {
     /**
      * @var int
@@ -25,7 +25,7 @@ final class ConstantDelayFailResolveStrategy implements FailResolveStrategy
     }
 
 
-    public function getQueueName(JobInterface $job, Throwable $exception): string
+    public function getTargetQueueName(JobInterface $job, Throwable $exception): string
     {
         return $job->getJobDefinition()->getQueueName();
     }

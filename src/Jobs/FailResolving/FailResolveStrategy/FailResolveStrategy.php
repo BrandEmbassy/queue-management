@@ -10,5 +10,5 @@ interface FailResolveStrategy
     public function getDelayInMilliseconds(JobInterface $job, Throwable $exception): int;
 
 
-    public function getQueueName(JobInterface $job, Throwable $exception): string;
+    public function getTargetQueueName(JobInterface $job, Throwable $exception): string;
 }
