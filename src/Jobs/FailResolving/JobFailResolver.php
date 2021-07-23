@@ -8,7 +8,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use function sprintf;
 
-class PushDelayedResolver
+class JobFailResolver
 {
     /**
      * @var QueueManagerInterface
@@ -32,10 +32,12 @@ class PushDelayedResolver
     {
         $job->incrementAttempts();
 
-        $delayRule = $job->getJobDefinition()->getDelayRule();
-        $pushDelayInMilliseconds = $delayRule->getDelayInMilliseconds($job, $exception);
+        $failResolveStrategy = $job->getJobDefinition()->getFailResolveStrategy();
 
-        $this->queueManager->push($job, $pushDelayInMilliseconds);
+        $pushDelayInMilliseconds = $failResolveStrategy->getDelayInMilliseconds($job, $exception);
+        $queueName = $failResolveStrategy->getTargetQueueName($job, $exception);
+
+        $this->queueManager->push($job, $pushDelayInMilliseconds, $queueName);
 
         $this->logger->warning(sprintf('Job requeued [delay: %.3fs]', $pushDelayInMilliseconds / 1000));
     }

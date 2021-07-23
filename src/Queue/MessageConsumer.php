@@ -8,7 +8,7 @@ use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
-use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Jobs\FailResolving\JobFailResolver;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
@@ -25,9 +25,9 @@ final class MessageConsumer implements MessageConsumerInterface
     private $jobExecutor;
 
     /**
-     * @var PushDelayedResolver
+     * @var JobFailResolver
      */
-    private $pushDelayedResolver;
+    private $jobFailResolver;
 
     /**
      * @var LoggerInterface
@@ -38,12 +38,12 @@ final class MessageConsumer implements MessageConsumerInterface
     public function __construct(
         JobLoaderInterface $jobLoader,
         JobExecutorInterface $jobExecutor,
-        PushDelayedResolver $pushDelayedResolver,
+        JobFailResolver $jobFailResolver,
         LoggerInterface $logger
     ) {
         $this->jobLoader = $jobLoader;
         $this->jobExecutor = $jobExecutor;
-        $this->pushDelayedResolver = $pushDelayedResolver;
+        $this->jobFailResolver = $jobFailResolver;
         $this->logger = $logger;
     }
 
@@ -61,7 +61,7 @@ final class MessageConsumer implements MessageConsumerInterface
         } catch (DelayableProcessFailExceptionInterface $exception) {
             $this->logDelayableProcessFailException($exception);
 
-            $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
+            $this->jobFailResolver->resolve($exception->getJob(), $exception);
         }
     }
 

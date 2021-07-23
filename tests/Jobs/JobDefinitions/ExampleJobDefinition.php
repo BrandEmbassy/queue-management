@@ -3,7 +3,7 @@
 namespace Tests\BE\QueueManagement\Jobs\JobDefinitions;
 
 use BE\QueueManagement\Jobs\Execution\JobProcessorInterface;
-use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleInterface;
+use BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\FailResolveStrategy;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 use RuntimeException;
@@ -30,9 +30,9 @@ final class ExampleJobDefinition implements JobDefinitionInterface
     private $jobClass;
 
     /**
-     * @var DelayRuleInterface|null
+     * @var FailResolveStrategy|null
      */
-    private $delayRule;
+    private $failResolveStrategy;
 
     /**
      * @var JobProcessorInterface|null
@@ -62,10 +62,10 @@ final class ExampleJobDefinition implements JobDefinitionInterface
     }
 
 
-    public function withDelayRule(DelayRuleInterface $delayRule): self
+    public function withFailResolveStrategy(FailResolveStrategy $failResolveStrategy): self
     {
         $clone = clone $this;
-        $clone->delayRule = $delayRule;
+        $clone->failResolveStrategy = $failResolveStrategy;
 
         return $clone;
     }
@@ -114,10 +114,10 @@ final class ExampleJobDefinition implements JobDefinitionInterface
     }
 
 
-    public function getDelayRule(): DelayRuleInterface
+    public function getFailResolveStrategy(): FailResolveStrategy
     {
-        if ($this->delayRule !== null) {
-            return $this->delayRule;
+        if ($this->failResolveStrategy !== null) {
+            return $this->failResolveStrategy;
         }
 
         throw new RuntimeException('Not implemented');

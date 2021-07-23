@@ -57,8 +57,8 @@ parameters:
                     queueName: example_queue
                     maxAttempts: 20 # null means no limit
                     jobLoader: YourApp\JobLoaders\ExampleJobLoader() # if not set default job loader is used
-                    jobDelayRule: BE\QueueManagement\Jobs\FailResolving\DelayRules\ConstantDelayRule()
-                    jobProcessorService: queue.processors.exampleJobProcessor
+                    jobFailResolveStrategy: \BE\QueueManagement\Jobs\FailResolving\FailResolveStrategy\ConstantDelayInSecondsFailResolveStrategy(10)
+                    jobProcessor: @queue.processors.exampleJobProcessor
 
 services:
     queue.processors.exampleJobProcessor: YourApp\JobProcessors\ExampleJobProcessor 
