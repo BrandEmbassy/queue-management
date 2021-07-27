@@ -50,37 +50,19 @@ final class DefinedDelayRule implements DelayRuleInterface
         $currentJobAttempts = $job->getAttempts();
         $delay = 0;
 
-        foreach ($this->getConstantDelayDefinition() as $attempts => $delayInSeconds) {
+        foreach ($this->constantDelayDefinition as $attempts => $delayInSeconds) {
             if ($currentJobAttempts >= $attempts) {
                 $delay = $delayInSeconds;
             }
         }
 
-        foreach ($this->getLinearDelayDefinition() as $attempts => $delayInSeconds) {
+        foreach ($this->linearDelayDefinition as $attempts => $delayInSeconds) {
             if ($currentJobAttempts >= $attempts) {
                 $delay += ($currentJobAttempts - $attempts) * $delayInSeconds;
             }
         }
 
         return $delay > $this->maximumDelay ? $this->maximumDelay : $delay;
-    }
-
-
-    /**
-     * @return int[]
-     */
-    public function getConstantDelayDefinition(): array
-    {
-        return $this->constantDelayDefinition;
-    }
-
-
-    /**
-     * @return int[]
-     */
-    public function getLinearDelayDefinition(): array
-    {
-        return $this->linearDelayDefinition;
     }
 
 
