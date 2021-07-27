@@ -15,10 +15,6 @@ final class DefinedDelayRule implements DelayRuleInterface
      */
     private $maximumDelay;
 
-    /**
-     * @var int[]
-     */
-    private $constantDelayDefinition;
 
     /**
      * @var int[]
@@ -27,20 +23,15 @@ final class DefinedDelayRule implements DelayRuleInterface
 
 
     /**
-     * @param int[] $constantDelayDefinition [attempts limit => delay in seconds]
      * @param int[] $linearDelayDefinition   [attempts limit => delay in seconds]
      */
     public function __construct(
         int $maximumDelay,
-        array $constantDelayDefinition,
         array $linearDelayDefinition
     ) {
         $this->maximumDelay = $maximumDelay;
 
-        $this->validateDefinition($constantDelayDefinition);
         $this->validateDefinition($linearDelayDefinition);
-
-        $this->constantDelayDefinition = $constantDelayDefinition;
         $this->linearDelayDefinition = $linearDelayDefinition;
     }
 
@@ -48,21 +39,15 @@ final class DefinedDelayRule implements DelayRuleInterface
     public function getDelay(JobInterface $job, Throwable $exception): int
     {
         $currentJobAttempts = $job->getAttempts();
-        $delay = 0;
 
-        foreach ($this->constantDelayDefinition as $attempts => $delayInSeconds) {
-            if ($currentJobAttempts >= $attempts) {
-                $delay = $delayInSeconds;
+        foreach ($this->linearDelayDefinition as $definedAttemptLimits => $delayInSeconds) {
+            if ($currentJobAttempts >= $definedAttemptLimits) {
+                $delay = $currentJobAttempts * $delayInSeconds;
+                return $delay > $this->maximumDelay ? $this->maximumDelay : $delay;
             }
         }
 
-        foreach ($this->linearDelayDefinition as $attempts => $delayInSeconds) {
-            if ($currentJobAttempts >= $attempts) {
-                $delay += ($currentJobAttempts - $attempts) * $delayInSeconds;
-            }
-        }
-
-        return $delay > $this->maximumDelay ? $this->maximumDelay : $delay;
+        throw DelayRuleException::byNotAbleToCalculateDelay();
     }
 
 

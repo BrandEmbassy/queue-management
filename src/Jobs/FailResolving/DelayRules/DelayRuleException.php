@@ -6,6 +6,12 @@ use Exception;
 
 final class DelayRuleException extends Exception
 {
+    public static function byNotAbleToCalculateDelay(): self
+    {
+        return new self('Unable to resolve delay, probably missing validation for definition');
+    }
+
+
     public static function byMissingDefinitionForZeroAttempts(): self
     {
         return new self('Missing definition for 0 attempts');
