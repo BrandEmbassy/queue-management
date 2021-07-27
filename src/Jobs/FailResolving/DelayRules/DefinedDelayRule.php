@@ -15,7 +15,6 @@ final class DefinedDelayRule implements DelayRuleInterface
      */
     private $maximumDelay;
 
-
     /**
      * @var int[]
      */
@@ -23,7 +22,7 @@ final class DefinedDelayRule implements DelayRuleInterface
 
 
     /**
-     * @param int[] $linearDelayDefinition   [attempts limit => delay in seconds]
+     * @param int[] $linearDelayDefinition [attempts limit => delay in seconds]
      */
     public function __construct(
         int $maximumDelay,
@@ -43,6 +42,7 @@ final class DefinedDelayRule implements DelayRuleInterface
         foreach ($this->linearDelayDefinition as $definedAttemptLimits => $delayInSeconds) {
             if ($currentJobAttempts >= $definedAttemptLimits) {
                 $delay = $currentJobAttempts * $delayInSeconds;
+
                 return $delay > $this->maximumDelay ? $this->maximumDelay : $delay;
             }
         }
