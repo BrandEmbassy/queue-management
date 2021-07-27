@@ -75,7 +75,7 @@ final class DefinedDelayRule implements DelayRuleInterface
         $attemptsDefinitionCount = count($attemptsDefinition);
 
         if (!in_array(0, $attemptsDefinition, true)) {
-            throw DelayRuleException::byMissingDefinitionForZero();
+            throw DelayRuleException::byMissingDefinitionForZeroAttempts();
         }
 
         for ($i = 1; $i < $attemptsDefinitionCount; $i++) {

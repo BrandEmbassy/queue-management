@@ -6,7 +6,7 @@ use Exception;
 
 final class DelayRuleException extends Exception
 {
-    public static function byMissingDefinitionForZero(): self
+    public static function byMissingDefinitionForZeroAttempts(): self
     {
         return new self('Missing definition for 0 attempts');
     }
