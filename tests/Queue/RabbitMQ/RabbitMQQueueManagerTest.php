@@ -15,6 +15,7 @@ use PhpAmqpLib\Wire\AMQPTable;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
@@ -259,6 +260,51 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
+        $queueManager->consumeMessages(
+            $expectedCallback,
+            ExampleJobDefinition::QUEUE_NAME,
+            [
+                RabbitMQQueueManager::PREFETCH_COUNT => 2,
+                RabbitMQQueueManager::NO_ACK => true,
+            ]
+        );
+    }
+
+    public function testConsumeWithMaximumReconnectLimitReached(): void
+    {
+        $this->expectSetUpConnection(4, 4);
+
+        $expectedCallback = static function (AMQPMessage $message): void {
+        };
+
+        $amqpChannelMock = $this->amqpChannelMock;
+
+        $amqpChannelMock->shouldReceive('basic_qos')
+            ->with(0, 2, false)
+            ->times(4);
+
+        $amqpChannelMock->shouldReceive('basic_consume')
+            ->with(ExampleJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
+            ->times(4);
+
+        $callbackMock = static function (): void {
+        };
+
+        $amqpChannelMock->callbacks = [$callbackMock];
+        $brokenPipeException = new AMQPRuntimeException('Broken pipe');
+        $amqpChannelMock->shouldReceive('wait')
+            ->times(4)
+            ->andThrow($brokenPipeException);
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('AMQPChannel disconnected: Broken pipe', ['exception' => $brokenPipeException])
+            ->times(4);
+
+        $queueManager = $this->createQueueManager();
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Maximum reconnects limit reached');
+
         $queueManager->consumeMessages(
             $expectedCallback,
             ExampleJobDefinition::QUEUE_NAME,
