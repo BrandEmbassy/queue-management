@@ -270,6 +270,7 @@ final class RabbitMQQueueManagerTest extends TestCase
         );
     }
 
+
     public function testConsumeWithMaximumReconnectLimitReached(): void
     {
         $this->expectSetUpConnection(4, 4);
