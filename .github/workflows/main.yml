@@ -7,6 +7,10 @@ jobs:
     name: CI PHPStan
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        php-version: [ '7.0', '7.1', '7.2' ]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -14,7 +18,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.2
+          php-version: ${{ matrix.php-version }}
           extensions: mbstring, sockets
 
       - name: Get composer cache directory
@@ -38,6 +42,11 @@ jobs:
   code-sniffer:
     name: CI Code sniffer
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-version: [ '7.0', '7.1', '7.2' ]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -45,7 +54,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 7.2
+          php-version: ${{ matrix.php-version }}
           extensions: mbstring, sockets
 
       - name: Get composer cache directory
@@ -72,7 +81,7 @@ jobs:
 
     strategy:
       matrix:
-        php-version: [ '7.2', '7.4' ]
+        php-version: [ '7.0', '7.1', '7.2', '7.4' ]
 
     steps:
       - name: Checkout
