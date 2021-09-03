@@ -74,6 +74,7 @@ jobs:
     strategy:
       matrix:
         php-version: [ '7.2', '7.4' ]
+        composer-cmd: [ 'install', 'update --prefer-lowest' ]
 
     steps:
       - name: Checkout
@@ -98,7 +99,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer install --no-progress --prefer-dist --optimize-autoloader
+          composer ${{ matrix.composer-cmd }} --no-progress --prefer-dist --optimize-autoloader
 
       - name: Run phpunit
         run: composer phpunit
