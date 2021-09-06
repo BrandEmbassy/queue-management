@@ -12,7 +12,6 @@ use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use function count;
 use function sprintf;
 
@@ -72,6 +71,8 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     /**
      * @param mixed[] $parameters
+     *
+     * @throws ConnectionException
      */
     public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void
     {
@@ -197,6 +198,8 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     /**
      * @param mixed[] $properties
+     *
+     * @throws ConnectionException
      */
     private function publishMessage(string $message, string $queueName, array $properties = []): void
     {
@@ -221,10 +224,13 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
+    /**
+     * @throws ConnectionException
+     */
     private function reconnect(): void
     {
         if ($this->reconnectCounter >= self::MAX_RECONNECTS) {
-            throw new RuntimeException('Maximum reconnects limit reached');
+            throw ConnectionException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
         }
 
         $this->connection = $this->createConnection();

@@ -2,6 +2,7 @@
 
 namespace Tests\BE\QueueManagement\Queue\RabbitMQ;
 
+use BE\QueueManagement\Queue\RabbitMQ\ConnectionException;
 use BE\QueueManagement\Queue\RabbitMQ\ConnectionFactory;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQQueueManager;
 use Mockery;
@@ -303,8 +304,8 @@ final class RabbitMQQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager();
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Maximum reconnects limit reached');
+        $this->expectException(ConnectionException::class);
+        $this->expectExceptionMessage('Maximum reconnects limit (3) reached');
 
         $queueManager->consumeMessages(
             $expectedCallback,
