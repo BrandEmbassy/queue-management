@@ -20,6 +20,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
     public const PREFETCH_COUNT = 'prefetchCount';
     public const NO_ACK = 'noAck';
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
+    private const MAX_RECONNECTS = 3;
 
     /**
      * @var ConnectionFactoryInterface
@@ -46,12 +47,18 @@ class RabbitMQQueueManager implements QueueManagerInterface
      */
     private $connection;
 
+    /**
+     * @var int
+     */
+    private $reconnectCounter;
+
 
     public function __construct(ConnectionFactoryInterface $connectionFactory, LoggerInterface $logger)
     {
         $this->connectionFactory = $connectionFactory;
         $this->logger = $logger;
         $this->declaredQueues = new ArrayCollection();
+        $this->reconnectCounter = 0;
     }
 
 
@@ -64,6 +71,8 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     /**
      * @param mixed[] $parameters
+     *
+     * @throws ConnectionException
      */
     public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void
     {
@@ -189,6 +198,8 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     /**
      * @param mixed[] $properties
+     *
+     * @throws ConnectionException
      */
     private function publishMessage(string $message, string $queueName, array $properties = []): void
     {
@@ -213,10 +224,18 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
+    /**
+     * @throws ConnectionException
+     */
     private function reconnect(): void
     {
+        if ($this->reconnectCounter >= self::MAX_RECONNECTS) {
+            throw ConnectionException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
+        }
+
         $this->connection = $this->createConnection();
         $this->channel = $this->createChannel();
+        $this->reconnectCounter++;
     }
 
 

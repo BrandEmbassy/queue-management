@@ -2,6 +2,7 @@
 
 namespace Tests\BE\QueueManagement\Queue\RabbitMQ;
 
+use BE\QueueManagement\Queue\RabbitMQ\ConnectionException;
 use BE\QueueManagement\Queue\RabbitMQ\ConnectionFactory;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQQueueManager;
 use Mockery;
@@ -259,6 +260,52 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->once();
 
         $queueManager = $this->createQueueManager();
+        $queueManager->consumeMessages(
+            $expectedCallback,
+            ExampleJobDefinition::QUEUE_NAME,
+            [
+                RabbitMQQueueManager::PREFETCH_COUNT => 2,
+                RabbitMQQueueManager::NO_ACK => true,
+            ]
+        );
+    }
+
+
+    public function testConsumeWithMaximumReconnectLimitReached(): void
+    {
+        $this->expectSetUpConnection(4, 4);
+
+        $expectedCallback = static function (AMQPMessage $message): void {
+        };
+
+        $amqpChannelMock = $this->amqpChannelMock;
+
+        $amqpChannelMock->shouldReceive('basic_qos')
+            ->with(0, 2, false)
+            ->times(4);
+
+        $amqpChannelMock->shouldReceive('basic_consume')
+            ->with(ExampleJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
+            ->times(4);
+
+        $callbackMock = static function (): void {
+        };
+
+        $amqpChannelMock->callbacks = [$callbackMock];
+        $brokenPipeException = new AMQPRuntimeException('Broken pipe');
+        $amqpChannelMock->shouldReceive('wait')
+            ->times(4)
+            ->andThrow($brokenPipeException);
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('AMQPChannel disconnected: Broken pipe', ['exception' => $brokenPipeException])
+            ->times(4);
+
+        $queueManager = $this->createQueueManager();
+
+        $this->expectException(ConnectionException::class);
+        $this->expectExceptionMessage('Maximum reconnects limit (3) reached');
+
         $queueManager->consumeMessages(
             $expectedCallback,
             ExampleJobDefinition::QUEUE_NAME,
