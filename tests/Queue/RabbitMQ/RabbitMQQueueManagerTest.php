@@ -174,6 +174,13 @@ final class RabbitMQQueueManagerTest extends TestCase
             )
             ->once();
 
+        $this->loggerMock->shouldReceive('warning')
+            ->with(
+                'Reconnecting: Broken pipe',
+                Mockery::hasKey('queueName')
+            )
+            ->once();
+
         $queueManager = $this->createQueueManager();
         $queueManager->push($exampleJob);
     }
@@ -259,6 +266,10 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->with('AMQPChannel disconnected: Broken pipe', ['exception' => $brokenPipeException])
             ->once();
 
+        $this->loggerMock->shouldReceive('warning')
+            ->with('Reconnecting: Broken pipe', Mockery::hasKey('queueName'))
+            ->once();
+
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(
             $expectedCallback,
@@ -273,7 +284,7 @@ final class RabbitMQQueueManagerTest extends TestCase
 
     public function testConsumeWithMaximumReconnectLimitReached(): void
     {
-        $this->expectSetUpConnection(4, 4);
+        $this->expectSetUpConnection(16, 16);
 
         $expectedCallback = static function (AMQPMessage $message): void {
         };
@@ -282,11 +293,11 @@ final class RabbitMQQueueManagerTest extends TestCase
 
         $amqpChannelMock->shouldReceive('basic_qos')
             ->with(0, 2, false)
-            ->times(4);
+            ->times(16);
 
         $amqpChannelMock->shouldReceive('basic_consume')
             ->with(ExampleJobDefinition::QUEUE_NAME, '', false, true, false, false, $expectedCallback)
-            ->times(4);
+            ->times(16);
 
         $callbackMock = static function (): void {
         };
@@ -294,17 +305,21 @@ final class RabbitMQQueueManagerTest extends TestCase
         $amqpChannelMock->callbacks = [$callbackMock];
         $brokenPipeException = new AMQPRuntimeException('Broken pipe');
         $amqpChannelMock->shouldReceive('wait')
-            ->times(4)
+            ->times(16)
             ->andThrow($brokenPipeException);
 
         $this->loggerMock->shouldReceive('warning')
             ->with('AMQPChannel disconnected: Broken pipe', ['exception' => $brokenPipeException])
-            ->times(4);
+            ->times(16);
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('Reconnecting: Broken pipe', Mockery::hasKey('queueName'))
+            ->times(15);
 
         $queueManager = $this->createQueueManager();
 
         $this->expectException(ConnectionException::class);
-        $this->expectExceptionMessage('Maximum reconnects limit (3) reached');
+        $this->expectExceptionMessage('Maximum reconnects limit (15) reached');
 
         $queueManager->consumeMessages(
             $expectedCallback,

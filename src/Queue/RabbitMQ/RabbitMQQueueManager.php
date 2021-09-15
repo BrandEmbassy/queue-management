@@ -12,6 +12,7 @@ use PhpAmqpLib\Exception\AMQPRuntimeException;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use Psr\Log\LoggerInterface;
+use Throwable;
 use function count;
 use function sprintf;
 
@@ -20,7 +21,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
     public const PREFETCH_COUNT = 'prefetchCount';
     public const NO_ACK = 'noAck';
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
-    private const MAX_RECONNECTS = 3;
+    private const MAX_RECONNECTS = 15;
 
     /**
      * @var ConnectionFactoryInterface
@@ -92,7 +93,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
                     ['exception' => $exception]
                 );
 
-                $this->reconnect();
+                $this->reconnect($exception, $queueName);
                 $this->setUpChannel($prefetchCount, $queueName, $noAck, $consumer);
             }
         }
@@ -210,7 +211,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
         try {
             $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
         } catch (AMQPRuntimeException $exception) {
-            $this->reconnect();
+            $this->reconnect($exception, $queueName);
 
             $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
         }
@@ -227,7 +228,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
     /**
      * @throws ConnectionException
      */
-    private function reconnect(): void
+    private function reconnect(Throwable $exception, string $queueName): void
     {
         if ($this->reconnectCounter >= self::MAX_RECONNECTS) {
             throw ConnectionException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
@@ -236,6 +237,14 @@ class RabbitMQQueueManager implements QueueManagerInterface
         $this->connection = $this->createConnection();
         $this->channel = $this->createChannel();
         $this->reconnectCounter++;
+
+        $this->logger->warning(
+            'Reconnecting: ' . $exception->getMessage(),
+            [
+                'queueName' => $queueName,
+                'exception' => $exception->getTraceAsString(),
+            ]
+        );
     }
 
 
