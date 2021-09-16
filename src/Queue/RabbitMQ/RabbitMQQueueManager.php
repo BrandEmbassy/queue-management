@@ -238,9 +238,6 @@ class RabbitMQQueueManager implements QueueManagerInterface
         } catch (ErrorException $exception) {
             $this->logger->warning('Connection was already closed: ' . $exception->getMessage());
         }
-
-        $this->getChannel()->close();
-        $this->getConnection()->close();
     }
 
 
