@@ -99,7 +99,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
             }
         }
 
-        $this->closeConnection();
+        $this->clearConnection($queueName);
     }
 
 
@@ -219,10 +219,42 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
+    public function clearConnection(string $queueName): void
+    {
+        $this->closeConnection();
+        $this->closeChannel();
+        $this->declaredQueues->removeElement($queueName);
+    }
+
+
     public function closeConnection(): void
     {
+        if ($this->connection === null) {
+            return;
+        }
+
+        try {
+            $this->connection->close();
+        } catch (ErrorException $exception) {
+            $this->logger->warning('Connection was already closed: ' . $exception->getMessage());
+        }
+
         $this->getChannel()->close();
         $this->getConnection()->close();
+    }
+
+
+    public function closeChannel(): void
+    {
+        if ($this->channel === null) {
+            return;
+        }
+
+        try {
+            $this->channel->close();
+        } catch (ErrorException $exception) {
+            $this->logger->warning('Channel was already closed: ' . $exception->getMessage());
+        }
     }
 
 
@@ -235,7 +267,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
             throw ConnectionException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
         }
 
-        $this->tryToCloseConnection();
+        $this->clearConnection($queueName);
         $this->connection = $this->createConnection();
         $this->channel = $this->createChannel();
         $this->reconnectCounter++;
@@ -247,20 +279,6 @@ class RabbitMQQueueManager implements QueueManagerInterface
                 'exception' => $exception->getTraceAsString(),
             ]
         );
-    }
-
-
-    private function tryToCloseConnection(): void
-    {
-        if ($this->connection === null) {
-            return;
-        }
-
-        try {
-            $this->connection->close();
-        } catch (ErrorException $exception) {
-            $this->logger->warning('Connection was already closed: ' . $exception->getMessage());
-        }
     }
 
 
