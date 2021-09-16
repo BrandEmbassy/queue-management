@@ -181,6 +181,14 @@ final class RabbitMQQueueManagerTest extends TestCase
             )
             ->once();
 
+        $this->amqpChannelMock->shouldReceive('close')
+            ->withNoArgs()
+            ->twice();
+
+        $this->amqpStreamConnectionMock->shouldReceive('close')
+            ->withNoArgs()
+            ->twice();
+
         $queueManager = $this->createQueueManager();
         $queueManager->push($exampleJob);
     }
@@ -203,11 +211,11 @@ final class RabbitMQQueueManagerTest extends TestCase
 
         $this->amqpChannelMock->shouldReceive('close')
             ->withNoArgs()
-            ->once();
+            ->twice();
 
         $this->amqpStreamConnectionMock->shouldReceive('close')
             ->withNoArgs()
-            ->once();
+            ->twice();
 
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(
@@ -256,11 +264,11 @@ final class RabbitMQQueueManagerTest extends TestCase
 
         $amqpChannelMock->shouldReceive('close')
             ->withNoArgs()
-            ->once();
+            ->times(4);
 
         $this->amqpStreamConnectionMock->shouldReceive('close')
             ->withNoArgs()
-            ->once();
+            ->times(4);
 
         $this->loggerMock->shouldReceive('warning')
             ->with('AMQPChannel disconnected: Broken pipe', ['exception' => $brokenPipeException])
@@ -317,6 +325,14 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->times(15);
 
         $queueManager = $this->createQueueManager();
+
+        $this->amqpStreamConnectionMock->shouldReceive('close')
+            ->withNoArgs()
+            ->times(30);
+
+        $this->amqpChannelMock->shouldReceive('close')
+            ->withNoArgs()
+            ->times(30);
 
         $this->expectException(ConnectionException::class);
         $this->expectExceptionMessage('Maximum reconnects limit (15) reached');
