@@ -6,6 +6,7 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use ErrorException;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Exception\AMQPRuntimeException;
@@ -98,7 +99,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
             }
         }
 
-        $this->closeConnection();
+        $this->clearConnection($queueName);
     }
 
 
@@ -218,10 +219,39 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
+    public function clearConnection(string $queueName): void
+    {
+        $this->closeConnection();
+        $this->closeChannel();
+        $this->declaredQueues->removeElement($queueName);
+    }
+
+
     public function closeConnection(): void
     {
-        $this->getChannel()->close();
-        $this->getConnection()->close();
+        if ($this->connection === null) {
+            return;
+        }
+
+        try {
+            $this->connection->close();
+        } catch (ErrorException $exception) {
+            $this->logger->warning('Connection was already closed: ' . $exception->getMessage());
+        }
+    }
+
+
+    public function closeChannel(): void
+    {
+        if ($this->channel === null) {
+            return;
+        }
+
+        try {
+            $this->channel->close();
+        } catch (ErrorException $exception) {
+            $this->logger->warning('Channel was already closed: ' . $exception->getMessage());
+        }
     }
 
 
@@ -234,6 +264,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
             throw ConnectionException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
         }
 
+        $this->clearConnection($queueName);
         $this->connection = $this->createConnection();
         $this->channel = $this->createChannel();
         $this->reconnectCounter++;
