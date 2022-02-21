@@ -2,8 +2,6 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-use Aws\Result;
-
 /**
  * 
  * Represent SQS Message
@@ -15,11 +13,23 @@ use Aws\Result;
 final class SqsMessage {
 
     /**
-     * @var \Aws\Result
+     * @var mixed[]
      */
-    private $awsResult;
+    private $messageAttributes;
 
-    public function __construct(Result $awsResult) {
-        $this->awsResult = $awsResult;
+    /**
+     * @param mixed[] $messageAttributes
+     */    
+    public function __construct(array $messageAttributes) 
+    {
+        $this->messageAttributes = $messageAttributes;
+    }
+
+    /**
+     * @return mixed
+     */    
+    public function getReceiptHandle() 
+    {
+        return $this->messageAttributes['ReceiptHandle'];
     }
 }
