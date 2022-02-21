@@ -32,4 +32,17 @@ final class SqsMessage {
     {
         return $this->messageAttributes['ReceiptHandle'];
     }
+
+    public function getMessageBody(): string
+    {
+        return $this->messageAttributes['MessageBody'];
+    }    
+
+    /**
+     * @return mixed[]
+     */    
+    public function getMessageAttributes() 
+    {
+        return $this->messageAttributes['MessageAttributes'];
+    }
 }
