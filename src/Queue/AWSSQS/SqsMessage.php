@@ -45,4 +45,10 @@ final class SqsMessage {
     {
         return $this->messageAttributes['MessageAttributes'];
     }
+
+    public function getQueueUrl(): string
+    {
+        return $this->messageAttributes['QueueUrl'];
+    }    
+
 }

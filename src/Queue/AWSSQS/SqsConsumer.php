@@ -9,6 +9,7 @@ use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use Aws\Sqs\SqsClient;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
@@ -34,17 +35,24 @@ class SqsConsumer implements SqsConsumerInterface
      * @var JobLoaderInterface
      */
     protected $jobLoader;
+
+    /**
+     * @var SqsClient
+     */
+    protected $sqsClient;    
     
     public function __construct(
         LoggerInterface $logger,
         JobExecutorInterface $jobExecutor,
         PushDelayedResolver $pushDelayedResolver,
-        JobLoaderInterface $jobLoader
+        JobLoaderInterface $jobLoader,
+        SqsClient $sqsClient
     ) {
         $this->logger = $logger;
         $this->pushDelayedResolver = $pushDelayedResolver;
         $this->jobExecutor = $jobExecutor;
         $this->jobLoader = $jobLoader;
+        $this->sqsClient = $sqsClient;
     }
     
 
@@ -53,11 +61,13 @@ class SqsConsumer implements SqsConsumerInterface
         try {
             $this->executeJob($message);
 
-            // TODO: ack message here
+            $this->sqsClient->deleteMessage([
+                'QueueUrl' => $message->getQueueUrl(),
+                'ReceiptHandle' => $message->getReceiptHandle()
+            ]);
         } catch (ConsumerFailedExceptionInterface $exception) {
-            //TODO: reject & do not delete message. 
-            // Afer visibility timeout should be visible to other consumers.
-
+            // do not delete message. 
+            // Afer visibility timeout message should be visible to other consumers.
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
                 ['exception' => $exception]
@@ -70,7 +80,10 @@ class SqsConsumer implements SqsConsumerInterface
                 ['exception' => $exception]
             );
 
-            // TODO: reject & remove from queue via message ReceiptHandle
+            $this->sqsClient->deleteMessage([
+                'QueueUrl' => $message->getQueueUrl(),
+                'ReceiptHandle' => $message->getReceiptHandle()
+            ]);
         }
     }
 
@@ -109,5 +122,4 @@ class SqsConsumer implements SqsConsumerInterface
 
         $this->logger->error($message, $context);
     }    
-
 }
