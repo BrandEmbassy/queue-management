@@ -40,8 +40,15 @@ class SqsClientFactory implements SqsClientFactoryInterface
         $this->connectionConfig = $connectionConfig;
     }
 
-    public function create(): SqsClient {
-        // TBD
+    public function create(): SqsClient 
+    {
+        $this->checkConfig($this->connectionConfig);
+
+        try {
+            return new SqsClient($this->connectionConfig);
+        } catch (Throwable $exception) {
+            throw SqsClientException::createUnableToConnect($exception);
+        }
     }
 
     /**
