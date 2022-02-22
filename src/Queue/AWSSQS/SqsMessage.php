@@ -15,14 +15,20 @@ final class SqsMessage {
     /**
      * @var mixed[]
      */
-    private $messageAttributes;
+    private $message;
+
+    /**
+     * @var string
+     */
+    private $queueUrl;
 
     /**
      * @param mixed[] $messageAttributes
      */    
-    public function __construct(array $messageAttributes) 
+    public function __construct(array $message, string $queueUrl) 
     {
-        $this->messageAttributes = $messageAttributes;
+        $this->message = $message;
+        $this->queueUrl = $queueUrl;
     }
 
     /**
@@ -30,25 +36,27 @@ final class SqsMessage {
      */    
     public function getReceiptHandle() 
     {
-        return $this->messageAttributes['ReceiptHandle'];
+        return $this->message['ReceiptHandle'];
     }
 
-    public function getMessageBody(): string
+    public function getBody(): string
     {
-        return $this->messageAttributes['MessageBody'];
+        return $this->message['Body'];
     }    
 
     /**
      * @return mixed[]
      */    
-    public function getMessageAttributes() 
+    public function getAttributes() 
     {
-        return $this->messageAttributes['MessageAttributes'];
+        return $this->message['Attributes'];
     }
 
+    /**
+     * @return string
+     */    
     public function getQueueUrl(): string
     {
-        return $this->messageAttributes['QueueUrl'];
+        return $this->queueUrl;
     }    
-
 }

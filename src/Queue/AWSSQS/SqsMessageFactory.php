@@ -9,7 +9,7 @@ class SqsMessageFactory {
     /**
      * @return SqsMessage[]
      */
-    public static function fromAwsResult(Result $awsResult): array {
+    public static function fromAwsResult(Result $awsResult, string $queueUrl): array {
 
         /**
          * @var SqsMessage[] 
@@ -17,7 +17,7 @@ class SqsMessageFactory {
         $sqsMessages = []; 
 
         foreach ($awsResult->get('Messages') as $message) {
-            array_push($stack, new SqsMessage($message));
+            array_push($stack, new SqsMessage($message, $queueUrl));
         }
         
         return $sqsMessages;
