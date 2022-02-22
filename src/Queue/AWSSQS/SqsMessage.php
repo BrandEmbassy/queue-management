@@ -45,12 +45,22 @@ final class SqsMessage {
     }    
 
     /**
+     * Returns system attributes
      * @return mixed[]
      */    
     public function getAttributes() 
     {
         return $this->message['Attributes'];
     }
+    
+    /**
+     * Returns custom message attributes
+     * @return mixed[]
+     */    
+    public function getMessageAttributes() 
+    {
+        return $this->message['MessageAttributes'];
+    }    
 
     /**
      * @return string
