@@ -6,10 +6,11 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Aws\Sqs\SqsClient;
 use ErrorException;
+use Aws\Exception\AwsException;
 use Psr\Log\LoggerInterface;
 use Throwable;
-use function count;
 use function sprintf;
 
 class SqsQueueManager implements QueueManagerInterface
@@ -22,13 +23,25 @@ class SqsQueueManager implements QueueManagerInterface
     public const MAX_NUMBER_OF_MESSAGES = 'MaxNumberOfMessages';
 
     public const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
-    
+
+    public const DELAY_SECONDS = 'DelaySeconds';
+
+    // SQS allows maximum message delay of 15 minutes
+    public const MAX_DELAY_SECONDS = 15 * 60;
+
     private const MAX_RECONNECTS = 15;
 
     /**
      * @var SqsClientFactoryInterface
      */
     private $sqsClientFactory;
+
+
+        /**
+     * @var SqsClient
+     */
+    private $sqsClient;
+
 
     /**
      * @var Collection<int, string>|string[]
@@ -50,6 +63,7 @@ class SqsQueueManager implements QueueManagerInterface
     public function __construct(SqsClientFactoryInterface $sqsClientFactory, LoggerInterface $logger)
     {
         $this->sqsClientFactory = $sqsClientFactory;
+        $this->sqsClient = $this->sqsClientFactory->create();
         $this->logger = $logger;
         $this->declaredQueues = new ArrayCollection();
         $this->reconnectCounter = 0;
@@ -64,16 +78,14 @@ class SqsQueueManager implements QueueManagerInterface
      */
     public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void
     {
-        $maxNumberOfMessages = (int)($parameters[self::MAX_NUMBER_OF_MESSAGES] ?? 1);
+        $maxNumberOfMessages = (int)($parameters[self::MAX_NUMBER_OF_MESSAGES] ?? 10);
         $waitTimeSeconds = (int)($parameters[self::WAIT_TIME_SECONDS] ?? 10);
         
         $this->declareQueueIfNotDeclared($queueName);
 
-        $sqsClient = $this->sqsClientFactory->create();
-
         while(true) {
             try {
-                $result = $client->receiveMessage(array(
+                $result = $this->sqsClient->receiveMessage(array(
                     'AttributeNames' => ['All'],
                     'MaxNumberOfMessages' => maxNumberOfMessages,
                     'MessageAttributeNames' => ['All'],
@@ -87,18 +99,15 @@ class SqsQueueManager implements QueueManagerInterface
                         $consumer($sqsMessage);
                     }
                 }
-
-            } catch(RuntimeException $exception) {
+            } catch(AwsException $exception) {
                 $this->logger->warning(
-                    'SQS receiveMessage runtime exception: ' . $exception->getMessage(),
+                    'AwsException: ' . $exception->getMessage(),
                     ['exception' => $exception]
                 );
 
                 $this->reconnect($exception, $queueName);
             }
         }
-
-        $this->clearConnection($queueName);
     }
 
 
@@ -121,22 +130,20 @@ class SqsQueueManager implements QueueManagerInterface
     }
 
 
-    public function pushDelayed(JobInterface $job, int $delayInSeconds): void
+    public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void
     {
-        $this->pushDelayedWithMilliseconds($job, $delayInSeconds * 1000);
+        $this->pushDelayed($job, $delayInMilliseconds / 1000);
     }
 
 
-    public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void
+    public function pushDelayed(JobInterface $job, int $delayInSeconds): void
     {
         $queueName = $job->getJobDefinition()->getQueueName();
 
         $this->declareQueueIfNotDeclared($queueName);
 
         $parameters = [
-            'application_headers' => new AMQPTable(
-                ['x-delay' => $delayInMilliseconds]
-            ),
+            self::DELAY_SECONDS => $delayInSeconds,
         ];
 
         $this->publishMessage($job->toJson(), $queueName, $parameters);
@@ -158,11 +165,17 @@ class SqsQueueManager implements QueueManagerInterface
 
 
     /**
+     * Creates SQS queue. Tags not supported yet. No validation of passed arguments.
+     * See: https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sqs-2012-11-05.html#createqueue
      * @param mixed[] $arguments
+     * @throws AwsException
      */
     protected function declareQueue(string $queueName, array $arguments = []): void
     {
-        // TBD: https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sqs-2012-11-05.html#createqueue
+        $this->sqsClient->createQueue([
+            'Attributes' => $arguments,
+            'QueueName' => $queueName
+        ]);
         $this->declaredQueues->add($queueName);
     }
 
@@ -172,58 +185,50 @@ class SqsQueueManager implements QueueManagerInterface
     /**
      * @param mixed[] $properties
      *
-     * @throws ConnectionException
+     * @throws AwsException
+     * @throws SqsClientException
      */
     private function publishMessage(string $message, string $queueName, array $properties = []): void
     {
-        $properties['delivery_mode'] = AMQPMessage::DELIVERY_MODE_PERSISTENT;
+        $delaySeconds = (int)($parameters[self::DELAY_SECONDS] ?? 0);
 
-        $amqpMessage = new AMQPMessage($message, $properties);
+        if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
+            throw SqsClientException::createMaximumReconnectLimitReached($delaySeconds);
+        }
+        
+        $sqsMessage = [
+            'DelaySeconds' => $delaySeconds,
+            'MessageAttributes' => [
+                'QueueUrl' => [
+                    'DataType' => 'String',
+                    // queueName might be handy here if we want to consume 
+                    // from mutliple queues in parallel via promises. 
+                    // Then we need queue in message directly so that we can delete it.
+                    'StringValue' => $queueName 
+                ]
+            ],
+            'MessageBody' => $message,
+            'QueueUrl' => $queueName
+        ];
 
         try {
-            $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
-        } catch (AMQPRuntimeException $exception) {
+            $this->sqsClient->sendMessage($sqsMessage);
+        } catch (AwsException $exception) {
             $this->reconnect($exception, $queueName);
-
-            $this->getChannel()->basic_publish($amqpMessage, $this->getQueueExchangeName($queueName));
+            $this->sqsClient->sendMessage($sqsMessage);
         }
     }
-
-
-    public function clearConnection(string $queueName): void
-    {
-        $this->closeConnection();
-        $this->closeChannel();
-        $this->declaredQueues->removeElement($queueName);
-    }
-
-
-    public function closeConnection(): void
-    {
-        if ($this->connection === null) {
-            return;
-        }
-
-        try {
-            $this->connection->close();
-        } catch (ErrorException $exception) {
-            $this->logger->warning('Connection was already closed: ' . $exception->getMessage());
-        }
-    }
-
 
     /**
-     * @throws ConnectionException
+     * @throws SqsClientException
      */
     private function reconnect(Throwable $exception, string $queueName): void
     {
         if ($this->reconnectCounter >= self::MAX_RECONNECTS) {
-            throw ConnectionException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
+            throw SqsClientException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
         }
 
-        $this->clearConnection($queueName);
-        $this->connection = $this->createConnection();
-        $this->channel = $this->createChannel();
+        $this->sqsClient = $this->sqsClientFactory->create();
         $this->reconnectCounter++;
 
         $this->logger->warning(
@@ -235,25 +240,10 @@ class SqsQueueManager implements QueueManagerInterface
         );
     }
 
-
-    private function getConnection(): AMQPStreamConnection
-    {
-        if ($this->connection === null) {
-            $this->connection = $this->createConnection();
-        }
-
-        return $this->connection;
-    }
-
-
-    private function createConnection(): AMQPStreamConnection
-    {
-        return $this->connectionFactory->create();
-    }
-
-
     public function checkConnection(): bool
     {
-        return $this->getConnection()->isConnected();
+        // No checkConn method in SqsClient. For now just providing fake response
+        // in the future we might want to check somehow whether we still have connectivity.
+        return true;
     }
 }
