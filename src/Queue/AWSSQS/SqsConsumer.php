@@ -90,7 +90,7 @@ class SqsConsumer implements SqsConsumerInterface
     private function executeJob(SqsMessage $message): void
     {
         try {
-            $job = $this->jobLoader->loadJob($message->getMessageBody());
+            $job = $this->jobLoader->loadJob($message->getBody());
 
             $this->jobExecutor->execute($job);
         } catch (DelayableProcessFailExceptionInterface $exception) {
