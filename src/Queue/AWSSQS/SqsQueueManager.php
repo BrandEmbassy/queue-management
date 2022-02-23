@@ -155,6 +155,7 @@ class SqsQueueManager implements QueueManagerInterface
      */
     protected function declareQueueIfNotDeclared(string $queueName, array $arguments = []): void
     {
+        return; // TODO: this function will be probably removed completely
         if ($this->declaredQueues->contains($queueName)) {
             return;
         }
