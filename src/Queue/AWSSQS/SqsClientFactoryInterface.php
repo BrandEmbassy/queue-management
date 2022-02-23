@@ -12,7 +12,7 @@ use Aws\Sqs\SqsClient;
  * 
  * https://docs.aws.amazon.com/aws-sdk-php/v3/api/class-Aws.Sqs.SqsClient.html
  */
-interface ConnectionFactoryInterface
+interface SqsClientFactoryInterface
 {
     public function create(): SqsClient;
 }
