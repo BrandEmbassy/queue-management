@@ -17,7 +17,7 @@ class SqsMessageFactory {
         $sqsMessages = []; 
 
         foreach ($awsResult->get('Messages') as $message) {
-            array_push($stack, new SqsMessage($message, $queueUrl));
+            array_push($sqsMessages, new SqsMessage($message, $queueUrl));
         }
         
         return $sqsMessages;
