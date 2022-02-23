@@ -25,6 +25,7 @@ final class SqsConsumerTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     public const DUMMY_QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
+    public const DUMMY_RECEIPT_HANDLE = '123456777';
 
     /**
      * @var LoggerInterface&MockInterface
@@ -46,6 +47,12 @@ final class SqsConsumerTest extends TestCase
      */
     private $jobLoaderMock;
 
+
+    /**
+     * @var SqsClient&MockInterface
+     */    
+    private $sqsClientMock;
+
     public function setUp(): void
     {
         parent::setUp();
@@ -53,6 +60,7 @@ final class SqsConsumerTest extends TestCase
         $this->jobExecutorMock = Mockery::mock(JobExecutorInterface::class);
         $this->pushDelayedResolverMock = Mockery::mock(PushDelayedResolver::class);
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
+        $this->sqsClientMock = Mockery::mock(SqsClient::class);
     }
 
 
@@ -69,53 +77,32 @@ final class SqsConsumerTest extends TestCase
             ->with($exampleJob)
             ->once();
 
-        /*$this->amqpChannelMock->shouldReceive('basic_ack')
-            ->with(self::AMQP_TAG)
-            ->once();*/
+        $this->sqsClientMock->shouldReceive('deleteMessage')
+            ->with([
+                'QueueUrl' => self::DUMMY_QUEUE_URL ,
+                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
+            ])
+            ->once();
 
-        $sqsMessage = [
-            'DelaySeconds' => 0,
+        $sqsMessageData = [
             'MessageAttributes' => [
                 'QueueUrl' => [
                     'DataType' => 'String',
                     'StringValue' => self::DUMMY_QUEUE_URL 
                 ]
             ],
-            'MessageBody' => Json::encode(['foo' => 'bar']),
-            'QueueUrl' => self::DUMMY_QUEUE_URL
+            'Body' => Json::encode(['foo' => 'bar']),
+            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
         ];
 
-        // $sqsMessage = $this->createSqsMessage(['a' => 'b']);
+        $sqsMessage = new SqsMessage($sqsMessageData, self::DUMMY_QUEUE_URL);
 
-        $sqsConsumer = $this->createSqsConsumer();
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
         $sqsConsumer($sqsMessage);
     }
 
-
-    /**
-     * @param mixed[] $messageData
-     */
-    private function createSqsMessage(array $messageData): SqsMessage
+    private function createSqsConsumer(SqsClient $sqsClient): SqsConsumer
     {
-        $sqsMessage = new SqsMessage($messageData, self::DUMMY_QUEUE_URL);
-        //$amqpMessage->setChannel($this->amqpChannelMock);
-        //$amqpMessage->setDeliveryTag(self::AMQP_TAG);
-
-        return $sqsMessage;
-    }
-
-
-
-    private function createSqsConsumer(): SqsConsumer
-    {
-        $sqsClient = new SqsClient([
-            'region'  => 'eu-central-1',
-            'version' => '2012-11-05',
-            'http' => [
-               'verify' => false,
-            ]
-        ]);
-
         return new SqsConsumer(
             $this->loggerMock,
             $this->jobExecutorMock,
