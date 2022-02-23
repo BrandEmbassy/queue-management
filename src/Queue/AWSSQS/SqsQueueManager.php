@@ -87,10 +87,10 @@ class SqsQueueManager implements QueueManagerInterface
             try {
                 $result = $this->sqsClient->receiveMessage(array(
                     'AttributeNames' => ['All'],
-                    'MaxNumberOfMessages' => maxNumberOfMessages,
+                    'MaxNumberOfMessages' => $maxNumberOfMessages,
                     'MessageAttributeNames' => ['All'],
                     'QueueUrl' => $queueName,
-                    'WaitTimeSeconds' => waitTimeSeconds,
+                    'WaitTimeSeconds' => $waitTimeSeconds,
                 ));
 
                 if (!empty($result->get('Messages'))) {
