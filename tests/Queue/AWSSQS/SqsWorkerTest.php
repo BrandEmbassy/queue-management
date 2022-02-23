@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace Tests\BE\QueueManagement\Queue\Sqs;
+namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
