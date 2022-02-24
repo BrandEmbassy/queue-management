@@ -84,6 +84,44 @@ final class SqsConsumerTest extends TestCase
             ])
             ->once();
 
+        
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+        $sqsConsumer($sqsMessage);
+    }
+
+    public function testRequeueUnknownJobDefinition(): void
+    {
+        $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName(ExampleJob::JOB_NAME);
+
+        $this->jobLoaderMock->shouldReceive('loadJob')
+            ->with('{"foo":"bar"}')
+            ->once()
+            ->andThrow($unknownJobDefinitionException);
+
+        $this->loggerMock->shouldReceive('error')
+            ->with(
+                'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
+                ['exception' => $unknownJobDefinitionException]
+            )
+            ->once();
+
+        $this->sqsClientMock->shouldNotReceive('deleteMessage');
+
+        $this->expectException(UnknownJobDefinitionException::class);
+        $this->expectExceptionMessage('Job definition (exampleJob) not found, maybe you forget to register it');
+
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+        $sqsConsumer($sqsMessage);
+    }
+
+
+
+    /**
+     * @return mixed[]
+     */
+    private function getSqsMessageData() {
         $sqsMessageData = [
             'MessageAttributes' => [
                 'QueueUrl' => [
@@ -95,11 +133,18 @@ final class SqsConsumerTest extends TestCase
             'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
         ];
 
-        $sqsMessage = new SqsMessage($sqsMessageData, self::DUMMY_QUEUE_URL);
-
-        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+        return $sqsMessageData;
     }
+
+    /**
+     * @param mixed[] $messageData
+     */
+    private function createSqsMessage(array $messageData): SqsMessage
+    {
+        $sqsMessage = new SqsMessage($messageData, self::DUMMY_QUEUE_URL);
+        return $sqsMessage;
+    }
+
 
     private function createSqsConsumer(SqsClient $sqsClient): SqsConsumer
     {
