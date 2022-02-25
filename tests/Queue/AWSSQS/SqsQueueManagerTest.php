@@ -264,6 +264,48 @@ final class SqsQueueManagerTest extends TestCase
         );
     }    
 
+    public function testConsumeWithMaximumReconnectLimitReached(): void
+    {
+        $this->expectSetUpConnection(16);
+
+        $expectedCallback = function (SqsMessage $message): void {};
+
+        $awsException = new AwsException('Some nasty error',  $this->awsCommandMock);
+
+
+        $this->sqsClientMock->shouldReceive('receiveMessage')
+            ->with([
+                'AttributeNames' => ['All'],
+                'MaxNumberOfMessages' => 10,
+                'MessageAttributeNames' => ['All'],
+                'QueueUrl' => self::DUMMY_QUEUE_URL,
+                'WaitTimeSeconds' => 10,
+            ])
+            ->times(16)
+            ->andThrow($awsException);
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('AwsException: Some nasty error', ['exception' => $awsException])
+            ->times(16);
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('Reconnecting: Some nasty error', Mockery::hasKey('queueName'))
+            ->times(15);
+
+        $this->expectException(SqsClientException::class);
+        $this->expectExceptionMessage('Maximum reconnects limit (15) reached');
+    
+        $queueManager = $this->createQueueManager();
+        $queueManager->consumeMessages(
+            $expectedCallback,
+            self::DUMMY_QUEUE_URL,
+            [
+                SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
+                SqsQueueManager::UNIT_TEST_CONTEXT => true // this will end consumer loop after first iteration
+            ]
+        );
+    }        
+
     /**
      * @return array<mixed>
      */
