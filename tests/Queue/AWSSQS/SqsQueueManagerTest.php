@@ -15,6 +15,8 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 use Aws\Sqs\SqsClient;
+use Aws\Exception\AwsException;
+use Aws\CommandInterface;
 
 final class SqsQueueManagerTest extends TestCase
 {
@@ -35,6 +37,11 @@ final class SqsQueueManagerTest extends TestCase
      */    
     private $sqsClientMock;
 
+    /**
+     * @var CommandInterface;&MockInterface
+     */    
+    private $awsCommandMock;
+
 
     public function setUp(): void
     {
@@ -42,6 +49,7 @@ final class SqsQueueManagerTest extends TestCase
         $this->sqsClientFactoryMock = Mockery::mock(SqsClientFactory::class);
         $this->loggerMock = Mockery::mock(LoggerInterface::class);
         $this->sqsClientMock = Mockery::mock(SqsClient::class);
+        $this->awsCommandMock = Mockery::mock(CommandInterface::class);
     }
 
     public function testPush(): void
@@ -58,10 +66,7 @@ final class SqsQueueManagerTest extends TestCase
             ->with(
                 Mockery::on(
                     static function (array $message) use ($exampleJob): bool {
-                        return $message['MessageBody'] === $exampleJob->toJson()
-                            && $message[SqsMessage::ATTR_DELAYSECONDS] === 0
-                            && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
-                            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+                        return SqsQueueManagerTest::messageCheckOk($message, $exampleJob, 0);
                     }
                 )
             )
@@ -81,10 +86,7 @@ final class SqsQueueManagerTest extends TestCase
             ->with(
                 Mockery::on(
                     static function (array $message) use ($exampleJob): bool {
-                        return $message['MessageBody'] === $exampleJob->toJson()
-                            && $message[SqsMessage::ATTR_DELAYSECONDS] === 5
-                            && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
-                            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+                        return SqsQueueManagerTest::messageCheckOk($message, $exampleJob, 5);
                     }
                 )
             )
@@ -104,10 +106,7 @@ final class SqsQueueManagerTest extends TestCase
             ->with(
                 Mockery::on(
                     static function (array $message) use ($exampleJob): bool {
-                        return $message['MessageBody'] === $exampleJob->toJson()
-                            && $message[SqsMessage::ATTR_DELAYSECONDS] === 5
-                            && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
-                            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+                        return SqsQueueManagerTest::messageCheckOk($message, $exampleJob, 5);
                     }
                 )
             )
@@ -117,6 +116,58 @@ final class SqsQueueManagerTest extends TestCase
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
     }
 
+    public function testPushWithReconnect(): void
+    {
+        $this->expectSetUpConnection(2);
+
+        $this->loggerMock->shouldReceive('info')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
+            ->once();
+
+        $exampleJob = $this->createExampleJob();
+        
+        $awsException = new AwsException('Some nasty error',  $this->awsCommandMock);
+        
+        $this->sqsClientMock->shouldReceive('sendMessage')
+            ->with(
+                Mockery::on(
+                    static function (array $message) use ($exampleJob): bool {
+                        return SqsQueueManagerTest::messageCheckOk($message, $exampleJob, 0);
+                    }
+                )
+            )
+            ->once()
+            ->andThrow($awsException);
+
+        $this->sqsClientMock->shouldReceive('sendMessage')
+            ->with(
+                Mockery::on(
+                    static function (array $message) use ($exampleJob): bool {
+                        return SqsQueueManagerTest::messageCheckOk($message, $exampleJob, 0);
+                    }
+                )
+            )
+            ->once();
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with(
+                'Reconnecting: Some nasty error',
+                Mockery::hasKey('queueName')
+            )
+            ->once();
+
+        $queueManager = $this->createQueueManager();
+        $queueManager->push($exampleJob);
+    }    
+
+
+    private static function messageCheckOk(array $message, ExampleJob $exampleJob, int $delay): bool
+    {
+        return $message['MessageBody'] === $exampleJob->toJson()
+            && $message[SqsMessage::ATTR_DELAYSECONDS] === $delay
+            && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
+            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;        
+    }
     
 
     private function createExampleJob(): ExampleJob
@@ -130,7 +181,7 @@ final class SqsQueueManagerTest extends TestCase
         return new SqsQueueManager($this->sqsClientFactoryMock, $this->loggerMock);
     }
 
-    private function expectSetUpConnection(int $connectionIsCreatedTimes = 1, int $channelIsCreatedTimes = 1): void
+    private function expectSetUpConnection(int $connectionIsCreatedTimes = 1): void
     {
         $this->sqsClientFactoryMock->shouldReceive('create')
             ->withNoArgs()
