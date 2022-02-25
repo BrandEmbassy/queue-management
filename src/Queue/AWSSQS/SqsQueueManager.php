@@ -191,7 +191,7 @@ class SqsQueueManager implements QueueManagerInterface
      */
     private function publishMessage(string $message, string $queueName, array $properties = []): void
     {
-        $delaySeconds = (int)($parameters[self::DELAY_SECONDS] ?? 0);
+        $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
         if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
             throw SqsClientException::createMaximumReconnectLimitReached($delaySeconds);

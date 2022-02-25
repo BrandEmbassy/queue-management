@@ -69,7 +69,55 @@ final class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager();
         $queueManager->push($exampleJob);
-    }        
+    }  
+    
+    public function testPushDelayed(): void
+    {
+        $this->expectSetUpConnection();
+
+        $exampleJob = $this->createExampleJob();
+
+        $this->sqsClientMock->shouldReceive('sendMessage')
+            ->with(
+                Mockery::on(
+                    static function (array $message) use ($exampleJob): bool {
+                        return $message['MessageBody'] === $exampleJob->toJson()
+                            && $message[SqsMessage::ATTR_DELAYSECONDS] === 5
+                            && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
+                            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+                    }
+                )
+            )
+            ->once();
+
+        $queueManager = $this->createQueueManager();
+        $queueManager->pushDelayed($exampleJob, 5);
+    }
+
+    public function testPushDelayedWithMilliSeconds(): void
+    {
+        $this->expectSetUpConnection();
+
+        $exampleJob = $this->createExampleJob();
+
+        $this->sqsClientMock->shouldReceive('sendMessage')
+            ->with(
+                Mockery::on(
+                    static function (array $message) use ($exampleJob): bool {
+                        return $message['MessageBody'] === $exampleJob->toJson()
+                            && $message[SqsMessage::ATTR_DELAYSECONDS] === 5
+                            && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
+                            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+                    }
+                )
+            )
+            ->once();
+
+        $queueManager = $this->createQueueManager();
+        $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
+    }
+
+    
 
     private function createExampleJob(): ExampleJob
     {
