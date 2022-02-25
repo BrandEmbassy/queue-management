@@ -2,21 +2,20 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-use Aws\Result;
-
 class SqsMessageFactory {
 
     /**
+     * @param array<mixed> $awsResultMessages
      * @return SqsMessage[]
      */
-    public static function fromAwsResult(Result $awsResult, string $queueUrl): array {
+    public static function fromAwsResultMessages(array $awsResultMessages, string $queueUrl): array {
 
         /**
          * @var SqsMessage[] 
          */
         $sqsMessages = []; 
 
-        foreach ($awsResult->get('Messages') as $message) {
+        foreach ($awsResultMessages as $message) {
             array_push($sqsMessages, new SqsMessage($message, $queueUrl));
         }
         

@@ -31,6 +31,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private const MAX_RECONNECTS = 15;
 
+    public const UNIT_TEST_CONTEXT = '_unit_test_ctx_';
+
     /**
      * @var SqsClientFactoryInterface
      */
@@ -80,7 +82,8 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $maxNumberOfMessages = (int)($parameters[self::MAX_NUMBER_OF_MESSAGES] ?? 10);
         $waitTimeSeconds = (int)($parameters[self::WAIT_TIME_SECONDS] ?? 10);
-        
+        $isUnitTest = (bool)($parameters[self::UNIT_TEST_CONTEXT] ?? false);
+
         $this->declareQueueIfNotDeclared($queueName);
 
         while(true) {
@@ -93,12 +96,17 @@ class SqsQueueManager implements QueueManagerInterface
                     'WaitTimeSeconds' => $waitTimeSeconds,
                 ));
 
-                if (!empty($result->get('Messages'))) {
-                    $sqsMessages = SqsMessageFactory::fromAwsResult($result, $queueName);
+                $messages = $result->get('Messages');
+                if (!empty($messages)) {
+                    $sqsMessages = SqsMessageFactory::fromAwsResultMessages($messages, $queueName);
                     foreach ($sqsMessages as $sqsMessage) {
                         $consumer($sqsMessage);
                     }
                 }
+
+                // call only once in unit test!
+                if ($isUnitTest) break;
+
             } catch(AwsException $exception) {
                 $this->logger->warning(
                     'AwsException: ' . $exception->getMessage(),
