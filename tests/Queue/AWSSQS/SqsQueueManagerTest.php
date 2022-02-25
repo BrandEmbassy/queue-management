@@ -176,28 +176,9 @@ final class SqsQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection();
 
-        $expectedCallback = function (SqsMessage $message): void {
-        };
+        $expectedCallback = function (SqsMessage $message): void {};
 
-        $messages = array([
-            'MessageId' => 'c176f71b-ea77-4b0e-af6a-d76246d77057',
-            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
-            'MD5OfBody' => 'e0001b05d30f529eaf4bbbf585280a4c',
-            'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
-            'Attributes' => [
-                'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:GroupAccessArchitectsSession',
-                'ApproximateFirstReceiveTimestamp'=>'1645787771287',
-                'ApproximateReceiveCount' => '1',
-                'SentTimestamp'=>'1645787708045',
-            ],
-            'MD5OfMessageAttributes'=>'e4849a650dbb07b06723f9cf0ebe1f68',
-            'MessageAttributes'=> [
-            'QueueUrl' => [
-                'StringValue' => self::DUMMY_QUEUE_URL,
-                'DataType' => 'String'
-                ]
-            ]                    
-        ]);
+        $messages = $this->getSampleSqsMessages();
 
         $this->awsResultMock->shouldReceive('get')
             ->with('Messages')
@@ -226,6 +207,88 @@ final class SqsQueueManagerTest extends TestCase
         );
     }
 
+    public function testConsumeWithReconnect(): void
+    {
+        $this->expectSetUpConnection(2);
+
+        $expectedCallback = function (SqsMessage $message): void {};
+
+        $awsException = new AwsException('Some nasty error',  $this->awsCommandMock);
+
+
+        $this->sqsClientMock->shouldReceive('receiveMessage')
+            ->with([
+                'AttributeNames' => ['All'],
+                'MaxNumberOfMessages' => 10,
+                'MessageAttributeNames' => ['All'],
+                'QueueUrl' => self::DUMMY_QUEUE_URL,
+                'WaitTimeSeconds' => 10,
+            ])
+            ->once()
+            ->andThrow($awsException);
+
+         $messages = $this->getSampleSqsMessages();
+
+         $this->awsResultMock->shouldReceive('get')
+            ->with('Messages')
+            ->andReturn($messages)
+            ->once();
+
+        $this->sqsClientMock->shouldReceive('receiveMessage')
+            ->with([
+                'AttributeNames' => ['All'],
+                'MaxNumberOfMessages' => 10,
+                'MessageAttributeNames' => ['All'],
+                'QueueUrl' => self::DUMMY_QUEUE_URL,
+                'WaitTimeSeconds' => 10,
+            ])
+            ->once()
+            ->andReturn($this->awsResultMock);
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('AwsException: Some nasty error', ['exception' => $awsException])
+            ->once();
+
+        $this->loggerMock->shouldReceive('warning')
+            ->with('Reconnecting: Some nasty error', Mockery::hasKey('queueName'))
+            ->once();
+
+        $queueManager = $this->createQueueManager();
+        $queueManager->consumeMessages(
+            $expectedCallback,
+            self::DUMMY_QUEUE_URL,
+            [
+                SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
+                SqsQueueManager::UNIT_TEST_CONTEXT => true // this will end consumer loop after first iteration
+            ]
+        );
+    }    
+
+    /**
+     * @return array<mixed>
+     */
+    private function getSampleSqsMessages(): array {
+        $messages = array([
+            'MessageId' => 'c176f71b-ea77-4b0e-af6a-d76246d77057',
+            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+            'MD5OfBody' => 'e0001b05d30f529eaf4bbbf585280a4c',
+            'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
+            'Attributes' => [
+                'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:GroupAccessArchitectsSession',
+                'ApproximateFirstReceiveTimestamp'=>'1645787771287',
+                'ApproximateReceiveCount' => '1',
+                'SentTimestamp'=>'1645787708045',
+            ],
+            'MD5OfMessageAttributes'=>'e4849a650dbb07b06723f9cf0ebe1f68',
+            'MessageAttributes'=> [
+            'QueueUrl' => [
+                'StringValue' => self::DUMMY_QUEUE_URL,
+                'DataType' => 'String'
+                ]
+            ]                    
+        ]);
+        return $messages;
+    }
 
     private static function messageCheckOk(array $message, ExampleJob $exampleJob, int $delay): bool
     {
