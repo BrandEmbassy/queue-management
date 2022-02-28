@@ -75,4 +75,12 @@ final class SqsMessage {
     {
         return $this->queueUrl;
     }    
+
+    /**
+     * @return string
+     */    
+    public function getMessageId(): string
+    {
+        return $this->message['MessageId'];
+    }        
 }

@@ -5,7 +5,9 @@ namespace BE\QueueManagement\Redis;
 use Predis\Client;
 use Predis\Response\Status;
 use Throwable;
+use function gettype;
 use function sprintf;
+use function is_string;
 
 final class RedisClient
 {
@@ -44,11 +46,10 @@ final class RedisClient
     public function setWithTTL(
         string $key,
         string $value,
-        RedisKeyExpirationTimeResolutionKeyword $keyExpireTimeResolution,
-        int $timeToLive
+        int $timeToLiveSec
     ): void {
         try {
-            $result = $this->client->set($key, $value, 'EX', $timeToLive);
+            $result = $this->client->set($key, $value, 'EX', $timeToLiveSec);
         } catch (Throwable $exception) {
             $message = sprintf(
                 'Unexpected exception during setting of value with time to live: %s',
@@ -104,6 +105,32 @@ final class RedisClient
             throw new RedisClientException($message);
         }
     }
+
+    /**
+     * @param mixed $fetchedValue
+     *
+     * @throws RedisClientException
+     */
+    private function assertFetchedValueIsValid($fetchedValue): void
+    {
+        $isValidValue = $this->checkFetchedValueIsValid($fetchedValue);
+
+        if (!$isValidValue) {
+            $message = sprintf('Redis client returned invalid value of type: %s.', gettype($fetchedValue));
+
+            throw new RedisClientException($message);
+        }
+    }
+
+    /**
+     *
+     * @param mixed $fetchedValue
+     */
+    private function checkFetchedValueIsValid($fetchedValue): bool
+    {
+        return $fetchedValue === null || is_string($fetchedValue);
+    }    
+
 
    public function getRedisClient(): Client
    {

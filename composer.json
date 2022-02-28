@@ -18,7 +18,8 @@
         "php-amqplib/php-amqplib": "^2.12.2",
         "brandembassy/datetime": "^3.0",
         "nette/utils": "^3.0",
-        "aws/aws-sdk-php": "^3.209"
+        "aws/aws-sdk-php": "^3.209",
+        "malkusch/lock": "^2.2"
     },
     "require-dev": {
         "brandembassy/coding-standard": "^8.1",
