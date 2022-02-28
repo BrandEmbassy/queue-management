@@ -61,7 +61,7 @@ final class MessageDeduplicationRedis implements MessageDeduplicationInterface
         $queueName = $this->queueName;
 
         try {
-            $msgAlreadySeen = $mutex->check(function () use ($messageId, $redisClient, $queueName): bool {
+            $isDuplicate = $mutex->check(function () use ($messageId, $redisClient, $queueName): bool {
                 $rk = self::REDIS_DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
                 return !$redisClient->checkFetchedValueIsValid($dedupKeyVal);
@@ -72,7 +72,7 @@ final class MessageDeduplicationRedis implements MessageDeduplicationInterface
                 return false;
             });        
     
-            return $msgAlreadySeen;
+            return $isDuplicate;
 
         } catch (LockReleaseException $unlockException) {
             $code_result = $unlockException->getCodeResult();
@@ -83,7 +83,7 @@ final class MessageDeduplicationRedis implements MessageDeduplicationInterface
                 return $code_result;                
             } else {
                 // if code result is not known we rather prefer to process message twice 
-                // than to discard potentially unprocessed message -> indicate message has been not seen yet
+                // than to discard potentially unprocessed message -> indicate message has been not yet seen yet
                 return false;
             }
         }
