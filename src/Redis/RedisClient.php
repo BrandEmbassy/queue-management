@@ -126,7 +126,7 @@ final class RedisClient
      *
      * @param mixed $fetchedValue
      */
-    private function checkFetchedValueIsValid($fetchedValue): bool
+    public function checkFetchedValueIsValid($fetchedValue): bool
     {
         return $fetchedValue === null || is_string($fetchedValue);
     }    

@@ -55,7 +55,6 @@ final class MessageDeduplicationRedis implements MessageDeduplicationInterface
     {
         $mutex = new PredisMutex([$this->redisClient->getRedisClient()], self::PREDIS_MUTEX_NAME, $this->lockExpirationTimeoutSec);
         
-
         $messageId = $message->getMessageId();
         $redisClient = $this->redisClient;
         $queueName = $this->queueName;
@@ -64,7 +63,7 @@ final class MessageDeduplicationRedis implements MessageDeduplicationInterface
             $isDuplicate = $mutex->check(function () use ($messageId, $redisClient, $queueName): bool {
                 $rk = self::REDIS_DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
-                return !$redisClient->checkFetchedValueIsValid($dedupKeyVal);
+                return $dedupKeyVal === null;
             })->then(function () use ($messageId, $redisClient, $queueName): int {
                 $rk = self::REDIS_DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $redisClient->setWithTTL($rk, "1", self::DEFAULT_DEDUP_INTERVAL_SEC);
