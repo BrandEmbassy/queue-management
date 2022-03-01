@@ -4,14 +4,15 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 
 use Psr\Log\LoggerInterface;
 use BE\QueueManagement\Redis\RedisClient;
-use malkusch\lock\mutex\PredisMutex;
+use malkusch\lock\mutex\Mutex;
 use malkusch\lock\exception\LockReleaseException;
  
 
 /**
- * Redis based SQS message deduplicator. Combination of distributed locks (aka redlocks) with self-expiring keys is used
+ * Default SQS message deduplicator. Combination of locks (via php-lock/lock) with self-expiring redis keys is used
+ * to deliver fixed-size deduplication time window/frame for SQS message (messageId used as deduplication key).
  */
-final class MessageDeduplicationRedis implements MessageDeduplicationInterface
+final class MessageDeduplicationDefault implements MessageDeduplicationInterface
 {
 
     private const REDIS_DEDUP_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
@@ -33,45 +34,45 @@ final class MessageDeduplicationRedis implements MessageDeduplicationInterface
      */    
     private $queueName;
 
-
     /**
-     * @var int
+     * @var Mutex
      */    
-    private $lockExpirationTimeoutSec;
+    private $mutex;
+
     
     public function __construct(
         LoggerInterface $logger,
         RedisClient $redisClient,
-        int $lockExpirationTimeoutSec = 3,
+        Mutex $mutex,
         string $queueName
     ) {
         $this->logger = $logger;
         $this->redisClient = $redisClient;
-        $this->lockExpirationTimeoutSec = $lockExpirationTimeoutSec;
         $this->queueName = $queueName;
+        $this->mutex = $mutex;
     }
 
     public function isDuplicate(SqsMessage $message): bool
     {
-        $mutex = new PredisMutex([$this->redisClient->getRedisClient()], self::PREDIS_MUTEX_NAME, $this->lockExpirationTimeoutSec);
+        $mutex = $this->mutex;
         
         $messageId = $message->getMessageId();
         $redisClient = $this->redisClient;
         $queueName = $this->queueName;
 
         try {
-            $isDuplicate = $mutex->check(function () use ($messageId, $redisClient, $queueName): bool {
+            $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName): bool {
                 $rk = self::REDIS_DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
-                return $dedupKeyVal === null;
-            })->then(function () use ($messageId, $redisClient, $queueName): int {
-                $rk = self::REDIS_DEDUP_KEY_PREFIX . $queueName . $messageId;
-                $redisClient->setWithTTL($rk, "1", self::DEFAULT_DEDUP_INTERVAL_SEC);
-            
-                return false;
+                if ($dedupKeyVal === null) {
+                    $redisClient->setWithTTL($rk, "1", self::DEFAULT_DEDUP_INTERVAL_SEC);
+                    return false;
+                } else {
+                    return true;
+                }
             });        
     
-            return $isDuplicate;
+            return $alreadySeen;
 
         } catch (LockReleaseException $unlockException) {
             $code_result = $unlockException->getCodeResult();
