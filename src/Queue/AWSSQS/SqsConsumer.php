@@ -63,7 +63,13 @@ class SqsConsumer implements SqsConsumerInterface
         try {
 
             if ($this->dedupSvc->isDuplicate($message)) {
-                $this->logger->warn('Duplicate message detected: ' . $message->getBody());
+                $this->logger->warning('Duplicate message detected: ' . $message->getBody());
+
+                $this->sqsClient->deleteMessage([
+                    'QueueUrl' => $message->getQueueUrl(),
+                    'ReceiptHandle' => $message->getReceiptHandle()
+                ]);                
+
                 return;
             }
 
