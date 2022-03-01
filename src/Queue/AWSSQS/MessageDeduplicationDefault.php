@@ -15,7 +15,7 @@ use malkusch\lock\exception\LockReleaseException;
 final class MessageDeduplicationDefault implements MessageDeduplicationInterface
 {
 
-    private const REDIS_DEDUP_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
+    private const DEDUP_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
     private const PREDIS_MUTEX_NAME = 'predis_sqs_dedup_mutex';
     private const DEFAULT_DEDUP_INTERVAL_SEC = 300;
 
@@ -39,17 +39,24 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
      */    
     private $mutex;
 
+    /**
+     * @var int
+     */
+    private $dedupWindowSizeSec;
+
     
     public function __construct(
         LoggerInterface $logger,
         RedisClient $redisClient,
         Mutex $mutex,
-        string $queueName
+        string $queueName,
+        int $dedupWindowSizeSec = 300
     ) {
         $this->logger = $logger;
         $this->redisClient = $redisClient;
         $this->queueName = $queueName;
         $this->mutex = $mutex;
+        $this->dedupWindowSizeSec = $dedupWindowSizeSec;
     }
 
     public function isDuplicate(SqsMessage $message): bool
@@ -59,13 +66,14 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
         $messageId = $message->getMessageId();
         $redisClient = $this->redisClient;
         $queueName = $this->queueName;
+        $dedupWindowSizeSec = $this->dedupWindowSizeSec;
 
         try {
-            $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName): bool {
-                $rk = self::REDIS_DEDUP_KEY_PREFIX . $queueName . $messageId;
+            $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName, $dedupWindowSizeSec): bool {
+                $rk = self::DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
                 if ($dedupKeyVal === null) {
-                    $redisClient->setWithTTL($rk, "1", self::DEFAULT_DEDUP_INTERVAL_SEC);
+                    $redisClient->setWithTTL($rk, "1", $dedupWindowSizeSec);
                     return false;
                 } else {
                     return true;
