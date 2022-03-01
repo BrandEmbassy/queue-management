@@ -1,0 +1,45 @@
+parameters:
+    rabbitConnection:
+        host: localhost 
+        port: 5672
+        user: guest
+        password: guest
+    queue:
+        jobs:
+            defaultJobLoader: BE\QueueManagement\Jobs\Loading\SimpleJobLoader()
+            jobDefinitions:
+                exampleJob:
+                    class: BE\QueueExample\Rabbit\ExampleJob
+                    queueName: example_queue
+                    maxAttempts: 20 # null means no limit
+                    # jobLoader: BE\QueueExample\Rabbit\ExampleJobLoader() # if not set default job loader is used
+                    jobDelayRule: BE\QueueManagement\Jobs\FailResolving\DelayRules\ConstantDelayRule(10)
+                    jobProcessor: BE\QueueExample\Rabbit\ExampleJobProcessor()
+
+services:
+    queue.jobDefinitionsContainer: BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer(%queue.jobs.jobDefinitions%)
+
+    #common
+    loggerFactory: BE\QueueExample\Common\LoggerFactory
+    logger: @loggerFactory::create('common')
+
+    # pusher
+    simpleJobLoader: BE\QueueManagement\Jobs\Loading\SimpleJobLoader
+    jobDefinitionFactory: BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactory
+    rabbitMQQueueManager: BE\QueueManagement\Queue\RabbitMQ\RabbitMQQueueManager
+    connectionFactory: BE\QueueManagement\Queue\RabbitMQ\ConnectionFactory(%rabbitConnection%)
+
+    pusherService: BE\QueueExample\Rabbit\JobPusher
+
+    # worker
+    rabbitMQWorker: BE\QueueManagement\Queue\RabbitMQ\RabbitMQWorker
+    rabbitMQConsumer: BE\QueueManagement\Queue\RabbitMQ\RabbitMQConsumer
+    
+    jobExecutor: BE\QueueManagement\Jobs\Execution\JobExecutor
+    pushDelayedResolver: BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver
+    jobLoader: BE\QueueManagement\Jobs\Execution\JobLoader
+    dateFactory: BE\QueueExample\Common\DateFactory
+    jobTerminator: BE\QueueManagement\Jobs\JobTerminator(5, _, _)
+    jobUuidBlacklist: BE\QueueExample\Common\JobUuidBlacklist
+    
+    workerService: BE\QueueExample\Rabbit\Worker    

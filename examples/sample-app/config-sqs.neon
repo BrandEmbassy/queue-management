@@ -1,0 +1,52 @@
+parameters:
+    sqsConnectionParams:
+        region: 'eu-central-1' 
+        version: '2012-11-05'
+        http:
+            verify: false
+    queue:
+        jobs:
+            defaultJobLoader: BE\QueueManagement\Jobs\Loading\SimpleJobLoader()
+            jobDefinitions:
+                exampleSqsJob:
+                    class: BE\QueueExample\Sqs\SampleSqsJob
+                    queueName: 'https://sqs.eu-central-1.amazonaws.com/583027634990/MyQueue1'
+                    maxAttempts: 20 # null means no limit
+                    # jobLoader: BE\QueueExample\Rabbit\ExampleJobLoader() # if not set default job loader is used
+                    jobDelayRule: BE\QueueManagement\Jobs\FailResolving\DelayRules\ConstantDelayRule(10)
+                    jobProcessor: BE\QueueExample\Sqs\SampleSqsJobProcessor()
+
+services:
+    queue.jobDefinitionsContainer: BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer(%queue.jobs.jobDefinitions%)
+
+    #common
+    loggerFactory: BE\QueueExample\Common\LoggerFactory
+    logger: @loggerFactory::create('common')
+
+    sqsClientFactory: BE\QueueManagement\Queue\AWSSQS\SqsClientFactory(%sqsConnectionParams%)
+    sqsClient: @sqsClientFactory::create
+
+    # pusher
+    simpleJobLoader: BE\QueueManagement\Jobs\Loading\SimpleJobLoader
+    jobDefinitionFactory: BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactory
+    sqsQueueManager: BE\QueueManagement\Queue\AWSSQS\SqsQueueManager
+
+    pusherService: BE\QueueExample\Sqs\JobPusher
+
+    # worker
+    sqsWorker: BE\QueueManagement\Queue\AWSSQS\SqsWorker
+    sqsConsumer: BE\QueueManagement\Queue\AWSSQS\SqsConsumer
+
+    jobExecutor: BE\QueueManagement\Jobs\Execution\JobExecutor
+    pushDelayedResolver: BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver
+    jobLoader: BE\QueueManagement\Jobs\Execution\JobLoader
+    dateFactory: BE\QueueExample\Common\DateFactory
+    jobTerminator: BE\QueueManagement\Jobs\JobTerminator(5, _, _)
+    jobUuidBlacklist: BE\QueueExample\Common\JobUuidBlacklist
+    
+    predisClient: Predis\Client()
+    mutex: malkusch\lock\mutex\PredisMutex([@predisClient], "mySampleMutex")
+    redisClient: BE\QueueManagement\Redis\RedisClient
+    dedupSvc: BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationDefault(_, _, _, %queue.jobs.jobDefinitions.exampleSqsJob.queueName%, _)
+
+    workerService: BE\QueueExample\Sqs\CustomSqsWorker

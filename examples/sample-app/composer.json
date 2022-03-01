@@ -1,0 +1,36 @@
+{
+    "name": "brandembassy/queue-example",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "BE\\QueueExample\\": "src"
+        }
+    },
+    "require": {
+        "php": ">=7.2.0",
+        "brandembassy/queue-management": "@dev",
+        "nette/di": "^3.0",
+        "monolog/monolog": "^2.3",
+        "psr/log": "^1.1",
+        "aws/aws-sdk-php": "^3.209",
+        "predis/predis": "^1.1",
+        "malkusch/lock": "^2.2"
+    },
+    "require-dev": {
+        "brandembassy/coding-standard": "^8.1",
+        "brandembassy/mockery-tools": "^2.8",
+        "mockery/mockery": "^1.2",
+        "phpunit/phpunit": "^8.5"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./../../../queue-management"
+        }
+    ]
+}
