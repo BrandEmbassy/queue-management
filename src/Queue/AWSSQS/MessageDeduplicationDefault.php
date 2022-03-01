@@ -16,8 +16,6 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
 {
 
     private const DEDUP_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
-    private const PREDIS_MUTEX_NAME = 'predis_sqs_dedup_mutex';
-    private const DEFAULT_DEDUP_INTERVAL_SEC = 300;
 
     /**
      * @var LoggerInterface
