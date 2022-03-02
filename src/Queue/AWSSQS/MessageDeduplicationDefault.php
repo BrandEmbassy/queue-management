@@ -66,7 +66,8 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
             return $alreadySeen;
         } catch (LockReleaseException $unlockException) {
             $code_result = $unlockException->getCodeResult();
-            $this->logger->warning("Error when releasing lock " . $unlockException->getCodeException()->getMessage());
+            $errorMessage = $unlockException->getCodeException() ? $unlockException->getCodeException()->getMessage() ? "";
+            $this->logger->warning("Error when releasing lock " . $errorMessage);
             if ($code_result !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
                 // -> use sync block return value

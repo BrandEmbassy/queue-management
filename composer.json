@@ -27,7 +27,8 @@
         "brandembassy/mockery-tools": "^2.8",
         "mockery/mockery": "^1.2",
         "phpunit/phpunit": "^8.5",
-        "roave/security-advisories": "dev-latest"
+        "roave/security-advisories": "dev-latest",
+        "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2"
     },
     "scripts": {
         "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests",
@@ -35,5 +36,10 @@
         "phpstan": "./vendor/bin/phpstan analyze -c phpstan.neon src tests --memory-limit=-1",
         "phpunit": "./vendor/bin/phpunit tests --no-coverage",
         "phpunit-cc": "./vendor/bin/phpunit tests"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }
