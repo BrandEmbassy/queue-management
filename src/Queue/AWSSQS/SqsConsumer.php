@@ -8,10 +8,9 @@ use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
-use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Queue\Common\CommonUtils;
 use Psr\Log\LoggerInterface;
-use function sprintf;
 
 class SqsConsumer implements SqsConsumerInterface
 {
@@ -95,34 +94,9 @@ class SqsConsumer implements SqsConsumerInterface
 
             $this->jobExecutor->execute($job);
         } catch (DelayableProcessFailExceptionInterface $exception) {
-            $this->logDelayableProcessFailException($exception);
+            CommonUtils::logDelayableProcessFailException($exception, $this->logger);
 
             $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
         }
-    }
-
-
-    /**
-     * TODO: dedup, this is same code as in RabbitMQConsumer, move to generic/parent class
-     */
-    private function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception): void
-    {
-        $message = sprintf(
-            'Job execution failed [attempts: %s], reason: %s',
-            $exception->getJob()->getAttempts(),
-            $exception->getMessage()
-        );
-        $context = [
-            'exception' => $exception,
-            'previousException' => $exception->getPrevious(),
-        ];
-
-        if ($exception instanceof WarningOnlyExceptionInterface) {
-            $this->logger->warning($message, $context);
-
-            return;
-        }
-
-        $this->logger->error($message, $context);
     }
 }
