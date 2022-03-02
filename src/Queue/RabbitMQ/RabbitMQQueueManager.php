@@ -36,6 +36,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     private ?AMQPStreamConnection $connection = null;
 
+
     public function __construct(ConnectionFactoryInterface $connectionFactory, LoggerInterface $logger)
     {
         $this->connectionFactory = $connectionFactory;
