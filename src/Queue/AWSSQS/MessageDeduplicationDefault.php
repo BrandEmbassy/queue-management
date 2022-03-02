@@ -55,7 +55,7 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
                 $rk = self::DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
                 if ($dedupKeyVal === null) {
-                    $redisClient->setWithtlL($rk, '1', $dedupWindowSizeSec);
+                    $redisClient->setWithTtl($rk, '1', $dedupWindowSizeSec);
 
                     return false;
                 } else {
