@@ -60,16 +60,12 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
-      - name: Install DEV dependencies
-        run: |
-          composer install --dev --no-progress --prefer-dist --optimize-autoloader
-
       - name: Install dependencies
         run: |
           composer install --no-progress --prefer-dist --optimize-autoloader
 
       - name: Run phpcs
-        run: composer phpcs --config-set ./vendor/brandembassy/coding-standard/src/BrandEmbassyCodingStandard
+        run: composer phpcs
 
   phpunit:
     name: CI Tests
