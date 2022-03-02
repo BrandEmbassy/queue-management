@@ -29,14 +29,6 @@ class SqsClientException extends RuntimeException
     }
 
 
-    public static function createMaximumReconnectLimitReached(int $reconnectsLimit): self
-    {
-        return new self(
-            sprintf('Maximum reconnects limit (%d) reached', $reconnectsLimit)
-        );
-    }
-
-
     public static function createFromInvalidDelaySeconds(int $delay): self
     {
         return new self(

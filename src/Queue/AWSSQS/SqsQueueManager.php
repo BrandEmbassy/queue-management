@@ -29,8 +29,6 @@ class SqsQueueManager implements QueueManagerInterface
     // SQS allows maximum message delay of 15 minutes
     public const MAX_DELAY_SECONDS = 15 * 60;
 
-    private const MAX_RECONNECTS = 15;
-
     public const UNIT_TEST_CONTEXT = '_unit_test_ctx_';
 
     private SqsClientFactoryInterface $sqsClientFactory;
@@ -44,8 +42,6 @@ class SqsQueueManager implements QueueManagerInterface
 
     private LoggerInterface $logger;
 
-    private int $reconnectCounter;
-
 
     public function __construct(SqsClientFactoryInterface $sqsClientFactory, LoggerInterface $logger)
     {
@@ -53,7 +49,6 @@ class SqsQueueManager implements QueueManagerInterface
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->logger = $logger;
         $this->declaredQueues = new ArrayCollection();
-        $this->reconnectCounter = 0;
     }
 
 
@@ -220,12 +215,7 @@ class SqsQueueManager implements QueueManagerInterface
      */
     private function reconnect(Throwable $exception, string $queueName): void
     {
-        if ($this->reconnectCounter >= self::MAX_RECONNECTS) {
-            throw SqsClientException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
-        }
-
         $this->sqsClient = $this->sqsClientFactory->create();
-        $this->reconnectCounter++;
 
         $this->logger->warning(
             'Reconnecting: ' . $exception->getMessage(),
