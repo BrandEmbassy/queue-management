@@ -22,7 +22,6 @@ class RabbitMQQueueManager implements QueueManagerInterface
     public const PREFETCH_COUNT = 'prefetchCount';
     public const NO_ACK = 'noAck';
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
-    private const MAX_RECONNECTS = 15;
 
     private ConnectionFactoryInterface $connectionFactory;
 
@@ -37,15 +36,11 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
     private ?AMQPStreamConnection $connection = null;
 
-    private int $reconnectCounter;
-
-
     public function __construct(ConnectionFactoryInterface $connectionFactory, LoggerInterface $logger)
     {
         $this->connectionFactory = $connectionFactory;
         $this->logger = $logger;
         $this->declaredQueues = new ArrayCollection();
-        $this->reconnectCounter = 0;
     }
 
 
@@ -245,14 +240,9 @@ class RabbitMQQueueManager implements QueueManagerInterface
      */
     private function reconnect(Throwable $exception, string $queueName): void
     {
-        if ($this->reconnectCounter >= self::MAX_RECONNECTS) {
-            throw ConnectionException::createMaximumReconnectLimitReached(self::MAX_RECONNECTS);
-        }
-
         $this->clearConnection($queueName);
         $this->connection = $this->createConnection();
         $this->channel = $this->createChannel();
-        $this->reconnectCounter++;
 
         $this->logger->warning(
             'Reconnecting: ' . $exception->getMessage(),
