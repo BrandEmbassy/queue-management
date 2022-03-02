@@ -9,7 +9,7 @@ use function gettype;
 use function sprintf;
 use function is_string;
 
-final class RedisClient
+class RedisClient
 {
 
     private const SAVE_SUCCESS = 'OK';

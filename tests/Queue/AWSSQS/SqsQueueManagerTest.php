@@ -9,7 +9,6 @@ use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
-use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
@@ -43,12 +42,12 @@ final class SqsQueueManagerTest extends TestCase
     private $sqsClientMock;
 
     /**
-     * @var CommandInterface&MockInterface
+     * @var CommandInterface<mixed>&MockInterface
      */    
     private $awsCommandMock;
 
     /**
-     * @var Result&MockInterface
+     * @var Result<mixed>&MockInterface
      */    
     private $awsResultMock;
 

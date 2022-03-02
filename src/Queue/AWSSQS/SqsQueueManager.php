@@ -97,7 +97,7 @@ class SqsQueueManager implements QueueManagerInterface
                 ));
 
                 $messages = $result->get('Messages');
-                if (!empty($messages)) {
+                if (count($messages) > 0) {
                     $sqsMessages = SqsMessageFactory::fromAwsResultMessages($messages, $queueName);
                     foreach ($sqsMessages as $sqsMessage) {
                         $consumer($sqsMessage);
@@ -163,7 +163,8 @@ class SqsQueueManager implements QueueManagerInterface
      */
     protected function declareQueueIfNotDeclared(string $queueName, array $arguments = []): void
     {
-        return; // TODO: this function will be probably removed completely
+        return; // TODO: this function will be probably removed completely -> for now ignore "Unreachable statement - code above always terminates"
+        /* @phpstan-ignore-next-line */
         if ($this->declaredQueues->contains($queueName)) {
             return;
         }

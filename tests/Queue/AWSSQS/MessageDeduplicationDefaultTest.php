@@ -74,7 +74,7 @@ final class MessageDeduplicationDefaultTest extends TestCase
         $this->redisClientMock->shouldReceive('setWithTTL')
             ->once();
 
-        $this->assertFalse($messageDeduplicationRedis->isDuplicate($message));
+        Assert::assertFalse($messageDeduplicationRedis->isDuplicate($message));
     }
 
     public function testMessageAlreadySeen(): void
@@ -87,7 +87,7 @@ final class MessageDeduplicationDefaultTest extends TestCase
             ->once()
             ->andReturn("1");
 
-        $this->assertTrue($messageDeduplicationRedis->isDuplicate($message));
+        Assert::assertTrue($messageDeduplicationRedis->isDuplicate($message));
     }    
 
     public function testMessageNotYetSeenThenAlreadySeen(): void
@@ -107,8 +107,8 @@ final class MessageDeduplicationDefaultTest extends TestCase
             ->once()
             ->andReturn("1");
 
-        $this->assertFalse($messageDeduplicationRedis->isDuplicate($message));
-        $this->assertTrue($messageDeduplicationRedis->isDuplicate($message));
+        Assert::assertFalse($messageDeduplicationRedis->isDuplicate($message));
+        Assert::assertTrue($messageDeduplicationRedis->isDuplicate($message));
     }    
 
 
