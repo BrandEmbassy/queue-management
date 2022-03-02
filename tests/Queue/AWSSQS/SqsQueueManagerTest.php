@@ -332,6 +332,9 @@ final class SqsQueueManagerTest extends TestCase
         return $messages;
     }
 
+    /**
+     * @param array<mixed> $message
+     */
     private static function messageCheckOk(array $message, ExampleJob $exampleJob, int $delay): bool
     {
         return $message['MessageBody'] === $exampleJob->toJson()
