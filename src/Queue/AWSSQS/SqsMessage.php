@@ -29,7 +29,7 @@ final class SqsMessage {
     private $queueUrl;
 
     /**
-     * @param mixed[] $messageAttributes
+     * @param array<mixed> $message
      */    
     public function __construct(array $message, string $queueUrl) 
     {
