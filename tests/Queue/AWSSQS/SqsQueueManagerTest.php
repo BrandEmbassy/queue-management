@@ -43,12 +43,12 @@ final class SqsQueueManagerTest extends TestCase
     private $sqsClientMock;
 
     /**
-     * @var CommandInterface;&MockInterface
+     * @var CommandInterface&MockInterface
      */    
     private $awsCommandMock;
 
     /**
-     * @var Result;&MockInterface
+     * @var Result&MockInterface
      */    
     private $awsResultMock;
 
