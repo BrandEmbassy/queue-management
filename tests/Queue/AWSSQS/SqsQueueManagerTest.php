@@ -6,7 +6,6 @@ use Aws\CommandInterface;
 use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\Sqs\SqsClient;
-use BE\QueueManagement\Queue\AWSSQS\SqsClientException;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
@@ -267,6 +266,7 @@ final class SqsQueueManagerTest extends TestCase
             ]
         );
     }
+
 
     /**
      * @return array<mixed>

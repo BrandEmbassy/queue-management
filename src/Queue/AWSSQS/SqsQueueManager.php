@@ -183,7 +183,7 @@ class SqsQueueManager implements QueueManagerInterface
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
         if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
-            throw SqsClientException::createMaximumReconnectLimitReached($delaySeconds);
+            throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
         $sqsMessage = [
@@ -192,7 +192,7 @@ class SqsQueueManager implements QueueManagerInterface
                 'QueueUrl' => [
                     'DataType' => 'String',
                     // queueName might be handy here if we want to consume
-                    // from mutliple queues in parallel via promises.
+                    // from multiple queues in parallel via promises.
                     // Then we need queue in message directly so that we can delete it.
                     'StringValue' => $queueName,
                 ],
