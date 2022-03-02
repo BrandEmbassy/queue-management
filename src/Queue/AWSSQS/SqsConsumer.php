@@ -40,6 +40,11 @@ class SqsConsumer implements SqsConsumerInterface
      * @var SqsClient
      */
     protected $sqsClient;    
+
+    /**
+     * @var MessageDeduplicationInterface
+     */
+    protected $dedupSvc;
     
     public function __construct(
         LoggerInterface $logger,
