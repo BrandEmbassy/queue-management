@@ -9,15 +9,9 @@ use Throwable;
 
 class JobExecutor implements JobExecutorInterface
 {
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected LoggerInterface $logger;
 
-    /**
-     * @var DateTimeImmutableFactory
-     */
-    protected $dateTimeImmutableFactory;
+    protected DateTimeImmutableFactory $dateTimeImmutableFactory;
 
 
     public function __construct(LoggerInterface $logger, DateTimeImmutableFactory $dateTimeImmutableFactory)

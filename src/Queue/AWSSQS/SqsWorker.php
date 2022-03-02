@@ -7,15 +7,9 @@ use BE\QueueManagement\Queue\WorkerInterface;
 
 class SqsWorker implements WorkerInterface
 {
-    /**
-     * @var QueueManagerInterface
-     */
-    private $queueManager;
+    private QueueManagerInterface $queueManager;
 
-    /**
-     * @var SqsConsumerInterface
-     */
-    private $consumer;
+    private SqsConsumerInterface $consumer;
 
 
     public function __construct(QueueManagerInterface $queueManager, SqsConsumerInterface $consumer)

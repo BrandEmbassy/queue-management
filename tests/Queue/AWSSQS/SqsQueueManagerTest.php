@@ -2,10 +2,14 @@
 
 namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
+use Aws\CommandInterface;
+use Aws\Exception\AwsException;
+use Aws\Result;
+use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientException;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
-use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -13,10 +17,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
-use Aws\Sqs\SqsClient;
-use Aws\Exception\AwsException;
-use Aws\CommandInterface;
-use Aws\Result;
 
 final class SqsQueueManagerTest extends TestCase
 {
@@ -24,7 +24,6 @@ final class SqsQueueManagerTest extends TestCase
 
     public const DUMMY_QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     public const DUMMY_RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
-
 
     /**
      * @var SqsClientFactory&MockInterface
@@ -38,17 +37,17 @@ final class SqsQueueManagerTest extends TestCase
 
     /**
      * @var SqsClient&MockInterface
-     */    
+     */
     private $sqsClientMock;
 
     /**
      * @var CommandInterface<mixed>&MockInterface
-     */    
+     */
     private $awsCommandMock;
 
     /**
      * @var Result<mixed>&MockInterface
-     */    
+     */
     private $awsResultMock;
 
 
@@ -61,6 +60,7 @@ final class SqsQueueManagerTest extends TestCase
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
     }
+
 
     public function testPush(): void
     {
@@ -84,8 +84,9 @@ final class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager();
         $queueManager->push($exampleJob);
-    }  
-    
+    }
+
+
     public function testPushDelayed(): void
     {
         $this->expectSetUpConnection();
@@ -105,6 +106,7 @@ final class SqsQueueManagerTest extends TestCase
         $queueManager = $this->createQueueManager();
         $queueManager->pushDelayed($exampleJob, 5);
     }
+
 
     public function testPushDelayedWithMilliSeconds(): void
     {
@@ -126,6 +128,7 @@ final class SqsQueueManagerTest extends TestCase
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
     }
 
+
     public function testPushWithReconnect(): void
     {
         $this->expectSetUpConnection(2);
@@ -135,9 +138,9 @@ final class SqsQueueManagerTest extends TestCase
             ->once();
 
         $exampleJob = $this->createExampleJob();
-        
-        $awsException = new AwsException('Some nasty error',  $this->awsCommandMock);
-        
+
+        $awsException = new AwsException('Some nasty error', $this->awsCommandMock);
+
         $this->sqsClientMock->shouldReceive('sendMessage')
             ->with(
                 Mockery::on(
@@ -168,14 +171,15 @@ final class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager();
         $queueManager->push($exampleJob);
-    }    
+    }
 
 
     public function testConsume(): void
     {
         $this->expectSetUpConnection();
 
-        $expectedCallback = function (SqsMessage $message): void {};
+        $expectedCallback = function (SqsMessage $message): void {
+        };
 
         $messages = $this->getSampleSqsMessages();
 
@@ -201,19 +205,20 @@ final class SqsQueueManagerTest extends TestCase
             self::DUMMY_QUEUE_URL,
             [
                 SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
-                SqsQueueManager::UNIT_TEST_CONTEXT => true // this will end consumer loop after first iteration
+                SqsQueueManager::UNIT_TEST_CONTEXT => true, // this will end consumer loop after first iteration
             ]
         );
     }
+
 
     public function testConsumeWithReconnect(): void
     {
         $this->expectSetUpConnection(2);
 
-        $expectedCallback = function (SqsMessage $message): void {};
+        $expectedCallback = function (SqsMessage $message): void {
+        };
 
-        $awsException = new AwsException('Some nasty error',  $this->awsCommandMock);
-
+        $awsException = new AwsException('Some nasty error', $this->awsCommandMock);
 
         $this->sqsClientMock->shouldReceive('receiveMessage')
             ->with([
@@ -258,19 +263,20 @@ final class SqsQueueManagerTest extends TestCase
             self::DUMMY_QUEUE_URL,
             [
                 SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
-                SqsQueueManager::UNIT_TEST_CONTEXT => true // this will end consumer loop after first iteration
+                SqsQueueManager::UNIT_TEST_CONTEXT => true, // this will end consumer loop after first iteration
             ]
         );
-    }    
+    }
+
 
     public function testConsumeWithMaximumReconnectLimitReached(): void
     {
         $this->expectSetUpConnection(16);
 
-        $expectedCallback = function (SqsMessage $message): void {};
+        $expectedCallback = function (SqsMessage $message): void {
+        };
 
-        $awsException = new AwsException('Some nasty error',  $this->awsCommandMock);
-
+        $awsException = new AwsException('Some nasty error', $this->awsCommandMock);
 
         $this->sqsClientMock->shouldReceive('receiveMessage')
             ->with([
@@ -293,43 +299,49 @@ final class SqsQueueManagerTest extends TestCase
 
         $this->expectException(SqsClientException::class);
         $this->expectExceptionMessage('Maximum reconnects limit (15) reached');
-    
+
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(
             $expectedCallback,
             self::DUMMY_QUEUE_URL,
             [
                 SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
-                SqsQueueManager::UNIT_TEST_CONTEXT => true // this will end consumer loop after first iteration
+                SqsQueueManager::UNIT_TEST_CONTEXT => true, // this will end consumer loop after first iteration
             ]
         );
-    }        
+    }
+
 
     /**
      * @return array<mixed>
      */
-    private function getSampleSqsMessages(): array {
-        $messages = array([
-            'MessageId' => 'c176f71b-ea77-4b0e-af6a-d76246d77057',
-            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
-            'MD5OfBody' => 'e0001b05d30f529eaf4bbbf585280a4c',
-            'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
-            'Attributes' => [
-                'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:GroupAccessArchitectsSession',
-                'ApproximateFirstReceiveTimestamp'=>'1645787771287',
-                'ApproximateReceiveCount' => '1',
-                'SentTimestamp'=>'1645787708045',
+    private function getSampleSqsMessages(): array
+    {
+        $messages = [
+            [
+                'MessageId' => 'c176f71b-ea77-4b0e-af6a-d76246d77057',
+                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+                'MD5OfBody' => 'e0001b05d30f529eaf4bbbf585280a4c',
+                'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
+                'Attributes' => [
+                    'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:GroupAccessArchitectsSession',
+                    'ApproximateFirstReceiveTimestamp' => '1645787771287',
+                    'ApproximateReceiveCount' => '1',
+                    'SentTimestamp' => '1645787708045',
+                ],
+                'MD5OfMessageAttributes' => 'e4849a650dbb07b06723f9cf0ebe1f68',
+                'MessageAttributes' => [
+                    'QueueUrl' => [
+                        'StringValue' => self::DUMMY_QUEUE_URL,
+                        'DataType' => 'String',
+                    ],
+                ],
             ],
-            'MD5OfMessageAttributes'=>'e4849a650dbb07b06723f9cf0ebe1f68',
-            'MessageAttributes'=> [
-            'QueueUrl' => [
-                'StringValue' => self::DUMMY_QUEUE_URL,
-                'DataType' => 'String'
-                ]
-            ]                    
-        ]);
+        ];
+
         return $messages;
     }
+
 
     /**
      * @param array<mixed> $message
@@ -339,9 +351,9 @@ final class SqsQueueManagerTest extends TestCase
         return $message['MessageBody'] === $exampleJob->toJson()
             && $message[SqsMessage::ATTR_DELAYSECONDS] === $delay
             && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
-            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;        
+            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
     }
-    
+
 
     private function createExampleJob(): ExampleJob
     {
@@ -354,11 +366,12 @@ final class SqsQueueManagerTest extends TestCase
         return new SqsQueueManager($this->sqsClientFactoryMock, $this->loggerMock);
     }
 
+
     private function expectSetUpConnection(int $connectionIsCreatedTimes = 1): void
     {
         $this->sqsClientFactoryMock->shouldReceive('create')
             ->withNoArgs()
             ->times($connectionIsCreatedTimes)
             ->andReturn($this->sqsClientMock);
-    }    
+    }
 }

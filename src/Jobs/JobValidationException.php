@@ -9,10 +9,7 @@ use function sprintf;
 
 class JobValidationException extends RuntimeException
 {
-    /**
-     * @var JobInterface
-     */
-    private $job;
+    private JobInterface $job;
 
 
     public function __construct(string $message, JobInterface $job, int $code = 0, ?Throwable $previous = null)

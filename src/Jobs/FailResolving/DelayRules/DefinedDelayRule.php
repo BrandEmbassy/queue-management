@@ -10,15 +10,12 @@ use function in_array;
 
 final class DefinedDelayRule implements DelayRuleInterface
 {
-    /**
-     * @var int
-     */
-    private $maximumDelay;
+    private int $maximumDelay;
 
     /**
      * @var int[]
      */
-    private $linearDelayDefinition;
+    private array $linearDelayDefinition;
 
 
     /**

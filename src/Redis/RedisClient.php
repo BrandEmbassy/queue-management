@@ -6,12 +6,11 @@ use Predis\Client;
 use Predis\Response\Status;
 use Throwable;
 use function gettype;
-use function sprintf;
 use function is_string;
+use function sprintf;
 
 class RedisClient
 {
-
     private const SAVE_SUCCESS = 'OK';
 
     private Client $client;
@@ -63,7 +62,6 @@ class RedisClient
     }
 
 
-
     /**
      * @throws RedisClientException
      */
@@ -106,6 +104,7 @@ class RedisClient
         }
     }
 
+
     /**
      * @param mixed $fetchedValue
      *
@@ -122,18 +121,18 @@ class RedisClient
         }
     }
 
+
     /**
-     *
      * @param mixed $fetchedValue
      */
     public function checkFetchedValueIsValid($fetchedValue): bool
     {
         return $fetchedValue === null || is_string($fetchedValue);
-    }    
+    }
 
 
-   public function getRedisClient(): Client
-   {
-       return $this->client;
-   }
+    public function getRedisClient(): Client
+    {
+        return $this->client;
+    }
 }

@@ -6,10 +6,7 @@ use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 
 class JobDefinitionFactory implements JobDefinitionFactoryInterface
 {
-    /**
-     * @var JobLoaderInterface
-     */
-    protected $defaultJobLoader;
+    protected JobLoaderInterface $defaultJobLoader;
 
 
     public function __construct(JobLoaderInterface $defaultJobLoader)

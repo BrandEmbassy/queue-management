@@ -16,25 +16,13 @@ use function sprintf;
 
 class RabbitMQConsumer implements RabbitMQConsumerInterface
 {
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected LoggerInterface $logger;
 
-    /**
-     * @var PushDelayedResolver
-     */
-    protected $pushDelayedResolver;
+    protected PushDelayedResolver $pushDelayedResolver;
 
-    /**
-     * @var JobExecutorInterface
-     */
-    protected $jobExecutor;
+    protected JobExecutorInterface $jobExecutor;
 
-    /**
-     * @var JobLoaderInterface
-     */
-    protected $jobLoader;
+    protected JobLoaderInterface $jobLoader;
 
 
     public function __construct(

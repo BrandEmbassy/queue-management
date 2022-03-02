@@ -10,17 +10,14 @@ class JobDefinitionsContainer
     /**
      * @var Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
      */
-    private $jobDefinitions;
+    private Collection $jobDefinitions;
 
-    /**
-     * @var JobDefinitionFactoryInterface
-     */
-    private $jobDefinitionFactory;
+    private JobDefinitionFactoryInterface $jobDefinitionFactory;
 
     /**
      * @var mixed[]
      */
-    private $jobDefinitionsConfig;
+    private array $jobDefinitionsConfig;
 
 
     /**

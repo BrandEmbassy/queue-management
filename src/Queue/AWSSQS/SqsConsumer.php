@@ -2,6 +2,7 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
+use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
@@ -9,43 +10,24 @@ use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
-use Aws\Sqs\SqsClient;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
-class SqsConsumer implements SqsConsumerInterface 
+class SqsConsumer implements SqsConsumerInterface
 {
+    protected LoggerInterface $logger;
 
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected PushDelayedResolver $pushDelayedResolver;
 
-    /**
-     * @var PushDelayedResolver
-     */
-    protected $pushDelayedResolver;
+    protected JobExecutorInterface $jobExecutor;
 
-    /**
-     * @var JobExecutorInterface
-     */
-    protected $jobExecutor;
+    protected JobLoaderInterface $jobLoader;
 
-    /**
-     * @var JobLoaderInterface
-     */
-    protected $jobLoader;
+    protected SqsClient $sqsClient;
 
-    /**
-     * @var SqsClient
-     */
-    protected $sqsClient;    
+    protected MessageDeduplicationInterface $dedupSvc;
 
-    /**
-     * @var MessageDeduplicationInterface
-     */
-    protected $dedupSvc;
-    
+
     public function __construct(
         LoggerInterface $logger,
         JobExecutorInterface $jobExecutor,
@@ -61,19 +43,18 @@ class SqsConsumer implements SqsConsumerInterface
         $this->sqsClient = $sqsClient;
         $this->dedupSvc = $dedupSvc;
     }
-    
 
-    public function __invoke(SqsMessage $message): void 
+
+    public function __invoke(SqsMessage $message): void
     {
         try {
-
             if ($this->dedupSvc->isDuplicate($message)) {
                 $this->logger->warning('Duplicate message detected: ' . $message->getBody());
 
                 $this->sqsClient->deleteMessage([
                     'QueueUrl' => $message->getQueueUrl(),
-                    'ReceiptHandle' => $message->getReceiptHandle()
-                ]);                
+                    'ReceiptHandle' => $message->getReceiptHandle(),
+                ]);
 
                 return;
             }
@@ -82,10 +63,10 @@ class SqsConsumer implements SqsConsumerInterface
 
             $this->sqsClient->deleteMessage([
                 'QueueUrl' => $message->getQueueUrl(),
-                'ReceiptHandle' => $message->getReceiptHandle()
+                'ReceiptHandle' => $message->getReceiptHandle(),
             ]);
         } catch (ConsumerFailedExceptionInterface $exception) {
-            // do not delete message. 
+            // do not delete message.
             // Afer visibility timeout message should be visible to other consumers.
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
@@ -101,10 +82,11 @@ class SqsConsumer implements SqsConsumerInterface
 
             $this->sqsClient->deleteMessage([
                 'QueueUrl' => $message->getQueueUrl(),
-                'ReceiptHandle' => $message->getReceiptHandle()
+                'ReceiptHandle' => $message->getReceiptHandle(),
             ]);
         }
     }
+
 
     private function executeJob(SqsMessage $message): void
     {
@@ -140,5 +122,5 @@ class SqsConsumer implements SqsConsumerInterface
         }
 
         $this->logger->error($message, $context);
-    }    
+    }
 }

@@ -7,10 +7,7 @@ use Throwable;
 
 class ConstantDelayRule implements DelayRuleInterface
 {
-    /**
-     * @var int
-     */
-    private $constantDelayInSeconds;
+    private int $constantDelayInSeconds;
 
 
     public function __construct(int $constantDelayInSeconds)

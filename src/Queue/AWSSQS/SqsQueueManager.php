@@ -2,22 +2,22 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
+use Aws\Exception\AwsException;
+use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Aws\Sqs\SqsClient;
-use ErrorException;
-use Aws\Exception\AwsException;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use function count;
 use function sprintf;
 
 class SqsQueueManager implements QueueManagerInterface
 {
     /**
-     * The maximum number of messages to return. 
-     * Amazon SQS never returns more messages than this value (however, fewer messages might be returned). 
+     * The maximum number of messages to return.
+     * Amazon SQS never returns more messages than this value (however, fewer messages might be returned).
      * Valid values: 1 to 10. Default: 1.
      */
     public const MAX_NUMBER_OF_MESSAGES = 'MaxNumberOfMessages';
@@ -33,33 +33,18 @@ class SqsQueueManager implements QueueManagerInterface
 
     public const UNIT_TEST_CONTEXT = '_unit_test_ctx_';
 
-    /**
-     * @var SqsClientFactoryInterface
-     */
-    private $sqsClientFactory;
+    private SqsClientFactoryInterface $sqsClientFactory;
 
-
-        /**
-     * @var SqsClient
-     */
-    private $sqsClient;
-
+    private SqsClient $sqsClient;
 
     /**
      * @var Collection<int, string>|string[]
      */
-    private $declaredQueues;
+    private Collection $declaredQueues;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-
-    /**
-     * @var int
-     */
-    private $reconnectCounter;
+    private int $reconnectCounter;
 
 
     public function __construct(SqsClientFactoryInterface $sqsClientFactory, LoggerInterface $logger)
@@ -70,7 +55,6 @@ class SqsQueueManager implements QueueManagerInterface
         $this->declaredQueues = new ArrayCollection();
         $this->reconnectCounter = 0;
     }
-
 
 
     /**
@@ -86,15 +70,15 @@ class SqsQueueManager implements QueueManagerInterface
 
         $this->declareQueueIfNotDeclared($queueName);
 
-        while(true) {
+        while (true) {
             try {
-                $result = $this->sqsClient->receiveMessage(array(
+                $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],
                     'MaxNumberOfMessages' => $maxNumberOfMessages,
                     'MessageAttributeNames' => ['All'],
                     'QueueUrl' => $queueName,
                     'WaitTimeSeconds' => $waitTimeSeconds,
-                ));
+                ]);
 
                 $messages = $result->get('Messages');
                 if (count($messages) > 0) {
@@ -105,9 +89,10 @@ class SqsQueueManager implements QueueManagerInterface
                 }
 
                 // call only once in unit test!
-                if ($isUnitTest) break;
-
-            } catch(AwsException $exception) {
+                if ($isUnitTest) {
+                    break;
+                }
+            } catch (AwsException $exception) {
                 $this->logger->warning(
                     'AwsException: ' . $exception->getMessage(),
                     ['exception' => $exception]
@@ -177,19 +162,19 @@ class SqsQueueManager implements QueueManagerInterface
     /**
      * Creates SQS queue. Tags not supported yet. No validation of passed arguments.
      * See: https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sqs-2012-11-05.html#createqueue
+     *
      * @param mixed[] $arguments
+     *
      * @throws AwsException
      */
     protected function declareQueue(string $queueName, array $arguments = []): void
     {
         $this->sqsClient->createQueue([
             'Attributes' => $arguments,
-            'QueueName' => $queueName
+            'QueueName' => $queueName,
         ]);
         $this->declaredQueues->add($queueName);
     }
-
-
 
 
     /**
@@ -205,20 +190,20 @@ class SqsQueueManager implements QueueManagerInterface
         if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
             throw SqsClientException::createMaximumReconnectLimitReached($delaySeconds);
         }
-        
+
         $sqsMessage = [
             'DelaySeconds' => $delaySeconds,
             'MessageAttributes' => [
                 'QueueUrl' => [
                     'DataType' => 'String',
-                    // queueName might be handy here if we want to consume 
-                    // from mutliple queues in parallel via promises. 
+                    // queueName might be handy here if we want to consume
+                    // from mutliple queues in parallel via promises.
                     // Then we need queue in message directly so that we can delete it.
-                    'StringValue' => $queueName 
-                ]
+                    'StringValue' => $queueName,
+                ],
             ],
             'MessageBody' => $message,
-            'QueueUrl' => $queueName
+            'QueueUrl' => $queueName,
         ];
 
         try {
@@ -228,6 +213,7 @@ class SqsQueueManager implements QueueManagerInterface
             $this->sqsClient->sendMessage($sqsMessage);
         }
     }
+
 
     /**
      * @throws SqsClientException
@@ -249,6 +235,7 @@ class SqsQueueManager implements QueueManagerInterface
             ]
         );
     }
+
 
     public function checkConnection(): bool
     {

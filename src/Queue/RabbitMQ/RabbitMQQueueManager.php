@@ -24,35 +24,20 @@ class RabbitMQQueueManager implements QueueManagerInterface
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
     private const MAX_RECONNECTS = 15;
 
-    /**
-     * @var ConnectionFactoryInterface
-     */
-    private $connectionFactory;
+    private ConnectionFactoryInterface $connectionFactory;
 
     /**
      * @var Collection<int, string>|string[]
      */
-    private $declaredQueues;
+    private Collection $declaredQueues;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    /**
-     * @var AMQPChannel|null
-     */
-    private $channel;
+    private ?AMQPChannel $channel = null;
 
-    /**
-     * @var AMQPStreamConnection|null
-     */
-    private $connection;
+    private ?AMQPStreamConnection $connection = null;
 
-    /**
-     * @var int
-     */
-    private $reconnectCounter;
+    private int $reconnectCounter;
 
 
     public function __construct(ConnectionFactoryInterface $connectionFactory, LoggerInterface $logger)

@@ -7,29 +7,26 @@ use Throwable;
 use function array_key_exists;
 use function count;
 
-
 /**
- * 
  * Defines SQS client factory.
- * 
+ *
  * Contains technnical validation & creation logic of SqsClient
- * 
+ *
  * See AWS config guide to understand in detail how SqsClient can be initiated:
  * https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/guide_configuration.html
  */
 class SqsClientFactory implements SqsClientFactoryInterface
 {
- 
     public const VERSION = 'version';
     public const REGION = 'region';
-
 
     /**
      * For valid options see:
      *  https://docs.aws.amazon.com/aws-sdk-php/v3/api/class-Aws.Sqs.SqsClient.html#___construct
+     *
      * @var mixed[]
      */
-    private $connectionConfig;
+    private array $connectionConfig;
 
 
     /**
@@ -40,7 +37,8 @@ class SqsClientFactory implements SqsClientFactoryInterface
         $this->connectionConfig = $connectionConfig;
     }
 
-    public function create(): SqsClient 
+
+    public function create(): SqsClient
     {
         $this->checkConfig($this->connectionConfig);
 
@@ -51,6 +49,7 @@ class SqsClientFactory implements SqsClientFactoryInterface
         }
     }
 
+
     /**
      * @param string[]|int[] $connectionConfig
      */
@@ -58,7 +57,7 @@ class SqsClientFactory implements SqsClientFactoryInterface
     {
         $requiredKeys = [
             self::VERSION,
-            self::REGION
+            self::REGION,
         ];
 
         $missing = [];
@@ -75,5 +74,5 @@ class SqsClientFactory implements SqsClientFactoryInterface
         if (count($missing) > 0) {
             throw SqsClientException::createFromMissingParameters($missing);
         }
-    }    
+    }
 }

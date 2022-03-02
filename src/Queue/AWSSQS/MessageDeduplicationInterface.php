@@ -2,6 +2,7 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-interface MessageDeduplicationInterface {
+interface MessageDeduplicationInterface
+{
     public function isDuplicate(SqsMessage $message): bool;
 }

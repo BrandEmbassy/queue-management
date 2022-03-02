@@ -10,7 +10,7 @@ final class SslContextFactory
     /**
      * @var mixed[]
      */
-    private $sslOptions;
+    private array $sslOptions;
 
 
     /**

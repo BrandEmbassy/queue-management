@@ -13,15 +13,9 @@ use Nette\Utils\Json;
 
 class JobLoader implements JobLoaderInterface
 {
-    /**
-     * @var JobDefinitionsContainer
-     */
-    private $jobDefinitionsContainer;
+    private JobDefinitionsContainer $jobDefinitionsContainer;
 
-    /**
-     * @var JobTerminator
-     */
-    private $jobTerminator;
+    private JobTerminator $jobTerminator;
 
 
     public function __construct(JobDefinitionsContainer $jobDefinitionsContainer, JobTerminator $jobTerminator)

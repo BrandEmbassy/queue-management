@@ -29,7 +29,7 @@ class ConnectionFactory implements ConnectionFactoryInterface
     /**
      * @var mixed[]
      */
-    private $connectionConfig;
+    private array $connectionConfig;
 
 
     /**

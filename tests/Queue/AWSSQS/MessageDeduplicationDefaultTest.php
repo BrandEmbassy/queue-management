@@ -2,18 +2,18 @@
 
 namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
+use BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationDefault;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Redis\RedisClient;
+use malkusch\lock\mutex\NoMutex;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationDefault;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
-use BE\QueueManagement\Redis\RedisClient;
-use malkusch\lock\mutex\NoMutex;
 
-final class MessageDeduplicationDefaultTest extends TestCase 
+final class MessageDeduplicationDefaultTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -31,7 +31,7 @@ final class MessageDeduplicationDefaultTest extends TestCase
     public const DUMMY_QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     public const DUMMY_RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
 
-    public const DUMMY_MESSAGES = array(
+    public const DUMMY_MESSAGES = [
         [
             'MessageId' => 'c176f71b-ea77-4b0e-af6a-d76246d77057',
             'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
@@ -39,19 +39,20 @@ final class MessageDeduplicationDefaultTest extends TestCase
             'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
             'Attributes' => [
                 'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:GroupAccessArchitectsSession',
-                'ApproximateFirstReceiveTimestamp'=>'1645787771287',
+                'ApproximateFirstReceiveTimestamp' => '1645787771287',
                 'ApproximateReceiveCount' => '1',
-                'SentTimestamp'=>'1645787708045',
+                'SentTimestamp' => '1645787708045',
             ],
-            'MD5OfMessageAttributes'=>'e4849a650dbb07b06723f9cf0ebe1f68',
-            'MessageAttributes'=> [
+            'MD5OfMessageAttributes' => 'e4849a650dbb07b06723f9cf0ebe1f68',
+            'MessageAttributes' => [
                 'QueueUrl' => [
                     'StringValue' => self::DUMMY_QUEUE_URL,
-                    'DataType' => 'String'
-                ]
-            ]                    
-        ]
-    );    
+                    'DataType' => 'String',
+                ],
+            ],
+        ],
+    ];
+
 
     public function setUp(): void
     {
@@ -63,7 +64,6 @@ final class MessageDeduplicationDefaultTest extends TestCase
 
     public function testMessageNotYetSeen(): void
     {
-
         $message = new SqsMessage(self::DUMMY_MESSAGES[0], self::DUMMY_QUEUE_URL);
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault();
 
@@ -77,22 +77,22 @@ final class MessageDeduplicationDefaultTest extends TestCase
         Assert::assertFalse($messageDeduplicationRedis->isDuplicate($message));
     }
 
+
     public function testMessageAlreadySeen(): void
     {
-
         $message = $this->creaDummyMessage();
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault();
 
         $this->redisClientMock->shouldReceive('get')
             ->once()
-            ->andReturn("1");
+            ->andReturn('1');
 
         Assert::assertTrue($messageDeduplicationRedis->isDuplicate($message));
-    }    
+    }
+
 
     public function testMessageNotYetSeenThenAlreadySeen(): void
     {
-
         $message = $this->creaDummyMessage();
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault();
 
@@ -105,17 +105,18 @@ final class MessageDeduplicationDefaultTest extends TestCase
 
             $this->redisClientMock->shouldReceive('get')
             ->once()
-            ->andReturn("1");
+            ->andReturn('1');
 
         Assert::assertFalse($messageDeduplicationRedis->isDuplicate($message));
         Assert::assertTrue($messageDeduplicationRedis->isDuplicate($message));
-    }    
+    }
 
 
     private function creaDummyMessage(): SqsMessage
     {
-     return new SqsMessage(self::DUMMY_MESSAGES[0], self::DUMMY_QUEUE_URL);   
+        return new SqsMessage(self::DUMMY_MESSAGES[0], self::DUMMY_QUEUE_URL);
     }
+
 
     private function creatMessageDeduplicationDefault(): MessageDeduplicationDefault
     {

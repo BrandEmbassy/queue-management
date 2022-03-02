@@ -2,21 +2,21 @@
 
 namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
+use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\BlacklistedJobUuidException;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
-use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationInterface;
+use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
-use Aws\Sqs\SqsClient;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
@@ -49,16 +49,13 @@ final class SqsConsumerTest extends TestCase
      */
     private $jobLoaderMock;
 
-
     /**
      * @var SqsClient&MockInterface
-     */    
+     */
     private $sqsClientMock;
 
-    /**
-     * @var MessageDeduplicationInterface
-     */
-    private $dedupSvc;
+    private MessageDeduplicationInterface $dedupSvc;
+
 
     public function setUp(): void
     {
@@ -88,15 +85,15 @@ final class SqsConsumerTest extends TestCase
         $this->sqsClientMock->shouldReceive('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
+                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
             ])
             ->once();
 
-        
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
         $sqsConsumer($sqsMessage);
     }
+
 
     public function testRequeueUnknownJobDefinition(): void
     {
@@ -124,6 +121,7 @@ final class SqsConsumerTest extends TestCase
         $sqsConsumer($sqsMessage);
     }
 
+
     public function testRejectBlacklistedJob(): void
     {
         $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(ExampleJob::UUID);
@@ -143,7 +141,7 @@ final class SqsConsumerTest extends TestCase
         $this->sqsClientMock->shouldReceive('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
+                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
             ])
             ->once();
 
@@ -151,6 +149,7 @@ final class SqsConsumerTest extends TestCase
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
         $sqsConsumer($sqsMessage);
     }
+
 
     public function testRequeueDelayableProcessFail(): void
     {
@@ -173,7 +172,7 @@ final class SqsConsumerTest extends TestCase
         $this->sqsClientMock->shouldReceive('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
+                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
             ])
             ->once();
 
@@ -196,6 +195,7 @@ final class SqsConsumerTest extends TestCase
         $sqsConsumer($sqsMessage);
     }
 
+
     public function testRequeueDelayableProcessFailWarningOnly(): void
     {
         $exampleJob = new ExampleJob();
@@ -214,7 +214,7 @@ final class SqsConsumerTest extends TestCase
         $this->sqsClientMock->shouldReceive('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
+                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
             ])
             ->once();
 
@@ -235,25 +235,28 @@ final class SqsConsumerTest extends TestCase
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
         $sqsConsumer($sqsMessage);
-    }    
+    }
+
 
     /**
      * @return mixed[]
      */
-    private function getSqsMessageData() {
+    private function getSqsMessageData(): array
+    {
         $sqsMessageData = [
             'MessageAttributes' => [
                 'QueueUrl' => [
                     'DataType' => 'String',
-                    'StringValue' => self::DUMMY_QUEUE_URL 
-                ]
+                    'StringValue' => self::DUMMY_QUEUE_URL,
+                ],
             ],
             'Body' => Json::encode(['foo' => 'bar']),
-            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE
+            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
         ];
 
         return $sqsMessageData;
     }
+
 
     /**
      * @param mixed[] $messageData
@@ -261,6 +264,7 @@ final class SqsConsumerTest extends TestCase
     private function createSqsMessage(array $messageData): SqsMessage
     {
         $sqsMessage = new SqsMessage($messageData, self::DUMMY_QUEUE_URL);
+
         return $sqsMessage;
     }
 
@@ -275,5 +279,5 @@ final class SqsConsumerTest extends TestCase
             $sqsClient,
             $this->dedupSvc
         );
-    }    
+    }
 }

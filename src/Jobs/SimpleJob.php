@@ -12,35 +12,20 @@ use function array_merge;
 
 class SimpleJob implements JobInterface
 {
-    /**
-     * @var string
-     */
-    private $uuid;
+    private string $uuid;
 
-    /**
-     * @var DateTimeImmutable
-     */
-    private $createdAt;
+    private DateTimeImmutable $createdAt;
 
-    /**
-     * @var int
-     */
-    private $attempts;
+    private int $attempts;
 
     /**
      * @var Collection<string, mixed>|mixed[]
      */
-    private $parameters;
+    private Collection $parameters;
 
-    /**
-     * @var DateTimeImmutable|null
-     */
-    protected $executionStartedAt;
+    protected ?DateTimeImmutable $executionStartedAt = null;
 
-    /**
-     * @var JobDefinitionInterface
-     */
-    protected $jobDefinition;
+    protected JobDefinitionInterface $jobDefinition;
 
 
     /**

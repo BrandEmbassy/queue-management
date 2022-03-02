@@ -2,11 +2,10 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-use Psr\Log\LoggerInterface;
 use BE\QueueManagement\Redis\RedisClient;
-use malkusch\lock\mutex\Mutex;
 use malkusch\lock\exception\LockReleaseException;
- 
+use malkusch\lock\mutex\Mutex;
+use Psr\Log\LoggerInterface;
 
 /**
  * Default SQS message deduplicator. Combination of locks (via php-lock/lock) with self-expiring redis keys is used
@@ -14,35 +13,19 @@ use malkusch\lock\exception\LockReleaseException;
  */
 final class MessageDeduplicationDefault implements MessageDeduplicationInterface
 {
-
     private const DEDUP_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    /**
-     * @var RedisClient
-     */    
-    private $redisClient;
+    private RedisClient $redisClient;
 
-    /**
-     * @var string
-     */    
-    private $queueName;
+    private string $queueName;
 
-    /**
-     * @var Mutex
-     */    
-    private $mutex;
+    private Mutex $mutex;
 
-    /**
-     * @var int
-     */
-    private $dedupWindowSizeSec;
+    private int $dedupWindowSizeSec;
 
-    
+
     public function __construct(
         LoggerInterface $logger,
         RedisClient $redisClient,
@@ -57,10 +40,11 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
         $this->dedupWindowSizeSec = $dedupWindowSizeSec;
     }
 
+
     public function isDuplicate(SqsMessage $message): bool
     {
         $mutex = $this->mutex;
-        
+
         $messageId = $message->getMessageId();
         $redisClient = $this->redisClient;
         $queueName = $this->queueName;
@@ -71,24 +55,24 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
                 $rk = self::DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
                 if ($dedupKeyVal === null) {
-                    $redisClient->setWithTTL($rk, "1", $dedupWindowSizeSec);
+                    $redisClient->setWithTTL($rk, '1', $dedupWindowSizeSec);
+
                     return false;
                 } else {
                     return true;
                 }
-            });        
-    
-            return $alreadySeen;
+            });
 
+            return $alreadySeen;
         } catch (LockReleaseException $unlockException) {
             $code_result = $unlockException->getCodeResult();
 
             if ($code_result !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
                 // -> use sync block return value
-                return $code_result;                
+                return $code_result;
             } else {
-                // if code result is not known we rather prefer to process message twice 
+                // if code result is not known we rather prefer to process message twice
                 // than to discard potentially unprocessed message -> indicate message has been not yet seen yet
                 return false;
             }

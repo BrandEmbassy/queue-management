@@ -9,10 +9,7 @@ use Throwable;
 
 final class ConstantDelayRuleWithMilliseconds implements DelayRuleInterface, DelayRuleWithMillisecondsInterface
 {
-    /**
-     * @var int
-     */
-    private $delayInMilliseconds;
+    private int $delayInMilliseconds;
 
 
     public function __construct(int $delayInMilliseconds)
