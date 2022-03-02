@@ -42,7 +42,7 @@ class RedisClient
     /**
      * @throws RedisClientException
      */
-    public function setWithTTL(
+    public function setWithTtl(
         string $key,
         string $value,
         int $timeToLiveSec

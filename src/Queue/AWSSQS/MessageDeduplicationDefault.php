@@ -55,7 +55,7 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
                 $rk = self::DEDUP_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
                 if ($dedupKeyVal === null) {
-                    $redisClient->setWithTTL($rk, '1', $dedupWindowSizeSec);
+                    $redisClient->setWithtlL($rk, '1', $dedupWindowSizeSec);
 
                     return false;
                 } else {
@@ -66,7 +66,7 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
             return $alreadySeen;
         } catch (LockReleaseException $unlockException) {
             $code_result = $unlockException->getCodeResult();
-
+            $this->logger->warning("Error when releasing lock " . $unlockException->getCodeException()->getMessage());
             if ($code_result !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
                 // -> use sync block return value
