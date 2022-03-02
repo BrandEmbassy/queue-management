@@ -104,8 +104,6 @@ class SqsConsumer implements SqsConsumerInterface
 
     /**
      * TODO: dedup, this is same code as in RabbitMQConsumer, move to generic/parent class
-     * @param DelayableProcessFailExceptionInterface $exception
-     * @return void
      */
     private function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception): void
     {
