@@ -6,8 +6,6 @@ use Aws\Exception\AwsException;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\QueueManagerInterface;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use function count;
@@ -35,11 +33,6 @@ class SqsQueueManager implements QueueManagerInterface
 
     private SqsClient $sqsClient;
 
-    /**
-     * @var Collection<int, string>|string[]
-     */
-    private Collection $declaredQueues;
-
     private LoggerInterface $logger;
 
 
@@ -48,7 +41,6 @@ class SqsQueueManager implements QueueManagerInterface
         $this->sqsClientFactory = $sqsClientFactory;
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->logger = $logger;
-        $this->declaredQueues = new ArrayCollection();
     }
 
 
@@ -62,8 +54,6 @@ class SqsQueueManager implements QueueManagerInterface
         $maxNumberOfMessages = (int)($parameters[self::MAX_NUMBER_OF_MESSAGES] ?? 10);
         $waitTimeSeconds = (int)($parameters[self::WAIT_TIME_SECONDS] ?? 10);
         $isUnitTest = (bool)($parameters[self::UNIT_TEST_CONTEXT] ?? false);
-
-        $this->declareQueueIfNotDeclared($queueName);
 
         while (true) {
             try {
@@ -103,8 +93,6 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $queueName = $job->getJobDefinition()->getQueueName();
 
-        $this->declareQueueIfNotDeclared($queueName);
-
         $this->publishMessage($job->toJson(), $queueName);
 
         $this->logger->info(
@@ -128,47 +116,11 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $queueName = $job->getJobDefinition()->getQueueName();
 
-        $this->declareQueueIfNotDeclared($queueName);
-
         $parameters = [
             self::DELAY_SECONDS => $delayInSeconds,
         ];
 
         $this->publishMessage($job->toJson(), $queueName, $parameters);
-    }
-
-
-    /**
-     * @param mixed[] $arguments
-     */
-    protected function declareQueueIfNotDeclared(string $queueName, array $arguments = []): void
-    {
-        return; // TODO: this function will be probably removed completely -> for now ignore "Unreachable statement - code above always terminates"
-        /* @phpstan-ignore-next-line */
-        if ($this->declaredQueues->contains($queueName)) {
-            return;
-        }
-
-        $this->declareQueue($queueName, $arguments);
-        $this->declaredQueues->add($queueName);
-    }
-
-
-    /**
-     * Creates SQS queue. Tags not supported yet. No validation of passed arguments.
-     * See: https://docs.aws.amazon.com/aws-sdk-php/v3/api/api-sqs-2012-11-05.html#createqueue
-     *
-     * @param mixed[] $arguments
-     *
-     * @throws AwsException
-     */
-    protected function declareQueue(string $queueName, array $arguments = []): void
-    {
-        $this->sqsClient->createQueue([
-            'Attributes' => $arguments,
-            'QueueName' => $queueName,
-        ]);
-        $this->declaredQueues->add($queueName);
     }
 
 
