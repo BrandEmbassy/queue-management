@@ -13,7 +13,7 @@ use Psr\Log\LoggerInterface;
  */
 final class MessageDeduplicationDefault implements MessageDeduplicationInterface
 {
-    private const DEDUP_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
+    private const DEDUPLICATION_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
 
     private LoggerInterface $logger;
 
@@ -52,7 +52,7 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
 
         try {
             $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName, $dedupWindowSizeSec): bool {
-                $rk = self::DEDUP_KEY_PREFIX . $queueName . $messageId;
+                $rk = self::DEDUPLICATION_KEY_PREFIX . $queueName . $messageId;
                 $dedupKeyVal = $redisClient->get($rk);
                 if ($dedupKeyVal === null) {
                     $redisClient->setWithTtl($rk, '1', $dedupWindowSizeSec);
