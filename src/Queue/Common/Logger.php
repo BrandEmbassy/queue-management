@@ -7,7 +7,11 @@ use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
-class CommonUtils
+/**
+ * Utility class holding logging logic that requires more formatting/input preparation/etc. before actual logging
+ * and at the same time is shared across multiple places (typically between RabbitMQ and AWS SQS counterparts).
+ */
+final class Logger
 {
     public static function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception, LoggerInterface $logger): void
     {
@@ -28,5 +32,22 @@ class CommonUtils
         }
 
         $logger->error($message, $context);
+    }
+
+
+    /**
+     * TODO - Currently not used due to unit test issue:
+     * TypeError: Argument 1 passed to BE\QueueManagement\Queue\Common\Logger::logJobPushedIntoQueue() must be an instance of BE\QueueManagement\Queue\Common\JobInterface, instance of Tests\BE\QueueManagement\Jobs\ExampleJob given
+     */
+    public static function logJobPushedIntoQueue(JobInterface $job, string $queueName, LoggerInterface $logger): void
+    {
+        $logger->info(
+            sprintf(
+                'Job (%s) [%s] pushed into %s queue',
+                $job->getName(),
+                $job->getUuid(),
+                $queueName
+            )
+        );
     }
 }

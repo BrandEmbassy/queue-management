@@ -9,7 +9,7 @@ use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
-use BE\QueueManagement\Queue\Common\CommonUtils;
+use BE\QueueManagement\Queue\Common\Logger;
 use Psr\Log\LoggerInterface;
 
 class SqsConsumer implements SqsConsumerInterface
@@ -94,7 +94,7 @@ class SqsConsumer implements SqsConsumerInterface
 
             $this->jobExecutor->execute($job);
         } catch (DelayableProcessFailExceptionInterface $exception) {
-            CommonUtils::logDelayableProcessFailException($exception, $this->logger);
+            Logger::logDelayableProcessFailException($exception, $this->logger);
 
             $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
         }

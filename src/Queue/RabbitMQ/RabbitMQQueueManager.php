@@ -3,6 +3,7 @@
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
 use BE\QueueManagement\Jobs\JobInterface;
+// use BE\QueueManagement\Queue\Common\Logger;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -87,11 +88,9 @@ class RabbitMQQueueManager implements QueueManagerInterface
     public function push(JobInterface $job): void
     {
         $queueName = $job->getJobDefinition()->getQueueName();
-
         $this->declareQueueIfNotDeclared($queueName);
-
         $this->publishMessage($job->toJson(), $queueName);
-
+        // Logger::logJobPushedIntoQueue($job, $queueName, $this->logger);
         $this->logger->info(
             sprintf(
                 'Job (%s) [%s] pushed into %s queue',

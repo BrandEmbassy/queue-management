@@ -56,8 +56,10 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
                 $deduplicationKeyVal = $redisClient->get($rk);
                 if ($deduplicationKeyVal === null) {
                     $redisClient->setWithTtl($rk, '1', $deduplicationWindowSizeSec);
+
                     return false;
                 }
+
                 return true;
             });
 
