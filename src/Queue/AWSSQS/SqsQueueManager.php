@@ -11,7 +11,7 @@ use Throwable;
 use function count;
 use function sprintf;
 
-class SqsQueueManager implements QueueManagerInterface
+final class SqsQueueManager implements QueueManagerInterface
 {
     /**
      * The maximum number of messages to return.
