@@ -48,19 +48,17 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
         $messageId = $message->getMessageId();
         $redisClient = $this->redisClient;
         $queueName = $this->queueName;
-        $dedupWindowSizeSec = $this->deduplicationWindowSizeSec;
+        $deduplicationWindowSizeSec = $this->deduplicationWindowSizeSec;
 
         try {
-            $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName, $dedupWindowSizeSec): bool {
+            $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName, $deduplicationWindowSizeSec): bool {
                 $rk = self::DEDUPLICATION_KEY_PREFIX . $queueName . $messageId;
-                $dedupKeyVal = $redisClient->get($rk);
-                if ($dedupKeyVal === null) {
-                    $redisClient->setWithTtl($rk, '1', $dedupWindowSizeSec);
-
+                $deduplicationKeyVal = $redisClient->get($rk);
+                if ($deduplicationKeyVal === null) {
+                    $redisClient->setWithTtl($rk, '1', $deduplicationWindowSizeSec);
                     return false;
-                } else {
-                    return true;
                 }
+                return true;
             });
 
             return $alreadySeen;
