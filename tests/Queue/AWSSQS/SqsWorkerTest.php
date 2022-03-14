@@ -43,6 +43,10 @@ class SqsWorkerTest extends TestCase
 
         $customConsumeParameters = ['foo' => 'bar'];
 
+        $this->sqsQueueManagerMock->shouldReceive('getConsumeLoopIterationsCount')
+            ->withNoArgs()
+            ->andReturn(1);
+
         $this->sqsQueueManagerMock->shouldReceive('consumeMessages')
             ->with($this->sqsConsumerMock, ExampleJobDefinition::QUEUE_NAME, $customConsumeParameters)
             ->once();

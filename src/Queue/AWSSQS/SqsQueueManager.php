@@ -30,20 +30,27 @@ class SqsQueueManager implements QueueManagerInterface
     // SQS allows maximum message delay of 15 minutes
     public const MAX_DELAY_SECONDS = 15 * 60;
 
-    public const UNIT_TEST_CONTEXT = '_unit_test_ctx_';
-
     private SqsClientFactoryInterface $sqsClientFactory;
 
     private SqsClient $sqsClient;
 
     private LoggerInterface $logger;
 
+    private int $consumeLoopIterationsCount; // -1 = no limit
 
-    public function __construct(SqsClientFactoryInterface $sqsClientFactory, LoggerInterface $logger)
+
+    public function __construct(SqsClientFactoryInterface $sqsClientFactory, LoggerInterface $logger, int $consumeLoopIterationsCount = -1)
     {
         $this->sqsClientFactory = $sqsClientFactory;
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->logger = $logger;
+        $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
+    }
+
+
+    public function getConsumeLoopIterationsCount(): int
+    {
+        return $this->consumeLoopIterationsCount;
     }
 
 
@@ -56,9 +63,11 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $maxNumberOfMessages = (int)($parameters[self::MAX_NUMBER_OF_MESSAGES] ?? 10);
         $waitTimeSeconds = (int)($parameters[self::WAIT_TIME_SECONDS] ?? 10);
-        $isUnitTest = (bool)($parameters[self::UNIT_TEST_CONTEXT] ?? false);
 
-        while (true) {
+        $loopIterationsCounter = 0;
+        $consumeLoopIterationsCount = $this->getConsumeLoopIterationsCount();
+
+        while (($loopIterationsCounter < $consumeLoopIterationsCount) || $consumeLoopIterationsCount === -1) {
             try {
                 $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],
@@ -75,10 +84,8 @@ class SqsQueueManager implements QueueManagerInterface
                         $consumer($sqsMessage);
                     }
                 }
-
-                // call only once in unit test!
-                if ($isUnitTest) {
-                    break;
+                if ($this->consumeLoopIterationsCount !== -1) {
+                    $loopIterationsCounter++;
                 }
             } catch (AwsException $exception) {
                 $this->logger->warning(

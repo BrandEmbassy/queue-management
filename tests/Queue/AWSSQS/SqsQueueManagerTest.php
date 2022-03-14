@@ -207,7 +207,6 @@ class SqsQueueManagerTest extends TestCase
             self::DUMMY_QUEUE_URL,
             [
                 SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
-                SqsQueueManager::UNIT_TEST_CONTEXT => true, // this will end consumer loop after first iteration
             ]
         );
     }
@@ -265,7 +264,6 @@ class SqsQueueManagerTest extends TestCase
             self::DUMMY_QUEUE_URL,
             [
                 SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
-                SqsQueueManager::UNIT_TEST_CONTEXT => true, // this will end consumer loop after first iteration
             ]
         );
     }
@@ -322,7 +320,7 @@ class SqsQueueManagerTest extends TestCase
 
     private function createQueueManager(): SqsQueueManager
     {
-        return new SqsQueueManager($this->sqsClientFactoryMock, $this->loggerMock);
+        return new SqsQueueManager($this->sqsClientFactoryMock, $this->loggerMock, 1);
     }
 
 
