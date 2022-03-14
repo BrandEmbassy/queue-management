@@ -4,6 +4,7 @@ namespace BE\QueueManagement\Queue\Common;
 
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
+use BE\QueueManagement\Jobs\JobInterface;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
@@ -35,10 +36,6 @@ final class Logger
     }
 
 
-    /**
-     * TODO - Currently not used due to unit test issue:
-     * TypeError: Argument 1 passed to BE\QueueManagement\Queue\Common\Logger::logJobPushedIntoQueue() must be an instance of BE\QueueManagement\Queue\Common\JobInterface, instance of Tests\BE\QueueManagement\Jobs\ExampleJob given
-     */
     public static function logJobPushedIntoQueue(JobInterface $job, string $queueName, LoggerInterface $logger): void
     {
         $logger->info(
