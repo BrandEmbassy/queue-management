@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use function count;
 
-final class SqsQueueManager implements QueueManagerInterface
+class SqsQueueManager implements QueueManagerInterface
 {
     /**
      * The maximum number of messages to return.
