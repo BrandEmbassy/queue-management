@@ -66,7 +66,7 @@ class SqsConsumer implements SqsConsumerInterface
             ]);
         } catch (ConsumerFailedExceptionInterface $exception) {
             // do not delete message.
-            // Afer visibility timeout message should be visible to other consumers.
+            // After visibility timeout message should be visible to other consumers.
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
                 ['exception' => $exception]
