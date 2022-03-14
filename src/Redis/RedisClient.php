@@ -45,10 +45,10 @@ class RedisClient
     public function setWithTtl(
         string $key,
         string $value,
-        int $timeToLiveSec
+        int $timeToLiveSeconds
     ): void {
         try {
-            $result = $this->client->set($key, $value, 'EX', $timeToLiveSec);
+            $result = $this->client->set($key, $value, 'EX', $timeToLiveSeconds);
         } catch (Throwable $exception) {
             $message = sprintf(
                 'Unexpected exception during setting of value with time to live: %s',
