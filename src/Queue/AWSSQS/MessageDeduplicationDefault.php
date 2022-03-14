@@ -23,7 +23,7 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
 
     private Mutex $mutex;
 
-    private int $dedupWindowSizeSec;
+    private int $deduplicationWindowSizeSec;
 
 
     public function __construct(
@@ -31,13 +31,13 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
         RedisClient $redisClient,
         Mutex $mutex,
         string $queueName,
-        int $dedupWindowSizeSec = 300
+        int $deduplicationWindowSizeSec = 300
     ) {
         $this->logger = $logger;
         $this->redisClient = $redisClient;
         $this->queueName = $queueName;
         $this->mutex = $mutex;
-        $this->dedupWindowSizeSec = $dedupWindowSizeSec;
+        $this->deduplicationWindowSizeSec = $deduplicationWindowSizeSec;
     }
 
 
@@ -48,7 +48,7 @@ final class MessageDeduplicationDefault implements MessageDeduplicationInterface
         $messageId = $message->getMessageId();
         $redisClient = $this->redisClient;
         $queueName = $this->queueName;
-        $dedupWindowSizeSec = $this->dedupWindowSizeSec;
+        $dedupWindowSizeSec = $this->deduplicationWindowSizeSec;
 
         try {
             $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName, $dedupWindowSizeSec): bool {
