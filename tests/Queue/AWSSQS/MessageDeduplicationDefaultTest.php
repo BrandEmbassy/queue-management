@@ -28,13 +28,13 @@ final class MessageDeduplicationDefaultTest extends TestCase
     private $redisClientMock;
 
 
-    public const DUMMY_QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
-    public const DUMMY_RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
+    public const TEST_QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
+    public const TEST_RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
 
-    public const DUMMY_MESSAGES = [
+    public const TEST_MESSAGES = [
         [
             'MessageId' => 'c176f71b-ea77-4b0e-af6a-d76246d77057',
-            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+            'ReceiptHandle' => self::TEST_RECEIPT_HANDLE,
             'MD5OfBody' => 'e0001b05d30f529eaf4bbbf585280a4c',
             'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
             'Attributes' => [
@@ -46,7 +46,7 @@ final class MessageDeduplicationDefaultTest extends TestCase
             'MD5OfMessageAttributes' => 'e4849a650dbb07b06723f9cf0ebe1f68',
             'MessageAttributes' => [
                 'QueueUrl' => [
-                    'StringValue' => self::DUMMY_QUEUE_URL,
+                    'StringValue' => self::TEST_QUEUE_URL,
                     'DataType' => 'String',
                 ],
             ],
@@ -64,7 +64,7 @@ final class MessageDeduplicationDefaultTest extends TestCase
 
     public function testMessageNotYetSeen(): void
     {
-        $message = new SqsMessage(self::DUMMY_MESSAGES[0], self::DUMMY_QUEUE_URL);
+        $message = new SqsMessage(self::TEST_MESSAGES[0], self::TEST_QUEUE_URL);
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault();
 
         $this->redisClientMock->shouldReceive('get')
@@ -80,7 +80,7 @@ final class MessageDeduplicationDefaultTest extends TestCase
 
     public function testMessageAlreadySeen(): void
     {
-        $message = $this->creaDummyMessage();
+        $message = $this->createTestMessage();
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault();
 
         $this->redisClientMock->shouldReceive('get')
@@ -93,7 +93,7 @@ final class MessageDeduplicationDefaultTest extends TestCase
 
     public function testMessageNotYetSeenThenAlreadySeen(): void
     {
-        $message = $this->creaDummyMessage();
+        $message = $this->createTestMessage();
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault();
 
         $this->redisClientMock->shouldReceive('get')
@@ -112,9 +112,9 @@ final class MessageDeduplicationDefaultTest extends TestCase
     }
 
 
-    private function creaDummyMessage(): SqsMessage
+    private function createTestMessage(): SqsMessage
     {
-        return new SqsMessage(self::DUMMY_MESSAGES[0], self::DUMMY_QUEUE_URL);
+        return new SqsMessage(self::TEST_MESSAGES[0], self::TEST_QUEUE_URL);
     }
 
 
