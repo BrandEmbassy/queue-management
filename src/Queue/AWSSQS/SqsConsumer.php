@@ -24,7 +24,7 @@ class SqsConsumer implements SqsConsumerInterface
 
     protected SqsClient $sqsClient;
 
-    protected MessageDeduplicationInterface $dedupSvc;
+    protected MessageDeduplicationInterface $messageDeduplication;
 
 
     public function __construct(
@@ -33,21 +33,21 @@ class SqsConsumer implements SqsConsumerInterface
         PushDelayedResolver $pushDelayedResolver,
         JobLoaderInterface $jobLoader,
         SqsClient $sqsClient,
-        MessageDeduplicationInterface $dedupSvc
+        MessageDeduplicationInterface $messageDeduplication
     ) {
         $this->logger = $logger;
         $this->pushDelayedResolver = $pushDelayedResolver;
         $this->jobExecutor = $jobExecutor;
         $this->jobLoader = $jobLoader;
         $this->sqsClient = $sqsClient;
-        $this->dedupSvc = $dedupSvc;
+        $this->messageDeduplication = $messageDeduplication;
     }
 
 
     public function __invoke(SqsMessage $message): void
     {
         try {
-            if ($this->dedupSvc->isDuplicate($message)) {
+            if ($this->messageDeduplication->isDuplicate($message)) {
                 $this->logger->warning('Duplicate message detected: ' . $message->getBody());
 
                 $this->sqsClient->deleteMessage([
