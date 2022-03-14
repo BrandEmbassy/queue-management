@@ -4,6 +4,9 @@ namespace BE\QueueManagement\Redis;
 
 use Exception;
 
-final class RedisClientException extends Exception
+/**
+ * @final
+ */
+class RedisClientException extends Exception
 {
 }

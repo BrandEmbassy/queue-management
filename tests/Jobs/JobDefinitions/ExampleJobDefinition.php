@@ -9,7 +9,10 @@ use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 use RuntimeException;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 
-final class ExampleJobDefinition implements JobDefinitionInterface
+/**
+ * @final
+ */
+class ExampleJobDefinition implements JobDefinitionInterface
 {
     public const QUEUE_NAME = 'exampleJobQueue';
     public const MAX_ATTEMPTS = 3;

@@ -10,8 +10,10 @@ use Psr\Log\LoggerInterface;
 /**
  * Default SQS message deduplicator. Combination of locks (via php-lock/lock) with self-expiring redis keys is used
  * to deliver fixed-size deduplication time window/frame for SQS message (messageId used as deduplication key).
+ *
+ * @final
  */
-final class MessageDeduplicationDefault implements MessageDeduplicationInterface
+class MessageDeduplicationDefault implements MessageDeduplicationInterface
 {
     private const DEDUPLICATION_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
 

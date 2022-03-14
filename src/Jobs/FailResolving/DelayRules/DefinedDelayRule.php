@@ -8,7 +8,10 @@ use function array_keys;
 use function count;
 use function in_array;
 
-final class DefinedDelayRule implements DelayRuleInterface
+/**
+ * @final
+ */
+class DefinedDelayRule implements DelayRuleInterface
 {
     private int $maximumDelay;
 

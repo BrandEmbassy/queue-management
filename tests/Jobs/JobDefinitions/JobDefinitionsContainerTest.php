@@ -14,7 +14,10 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleJobProcessor;
 
-final class JobDefinitionsContainerTest extends TestCase
+/**
+ * @final
+ */
+class JobDefinitionsContainerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

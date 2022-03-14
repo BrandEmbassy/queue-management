@@ -18,7 +18,10 @@ use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 
-final class DefinedDelayRuleTest extends TestCase
+/**
+ * @final
+ */
+class DefinedDelayRuleTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

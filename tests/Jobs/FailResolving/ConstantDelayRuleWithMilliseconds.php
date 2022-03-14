@@ -7,7 +7,10 @@ use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleWithMillisecondsIn
 use BE\QueueManagement\Jobs\JobInterface;
 use Throwable;
 
-final class ConstantDelayRuleWithMilliseconds implements DelayRuleInterface, DelayRuleWithMillisecondsInterface
+/**
+ * @final
+ */
+class ConstantDelayRuleWithMilliseconds implements DelayRuleInterface, DelayRuleWithMillisecondsInterface
 {
     private int $delayInMilliseconds;
 

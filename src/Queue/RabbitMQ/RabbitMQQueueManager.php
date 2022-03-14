@@ -17,6 +17,9 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use function count;
 
+/**
+ * @final
+ */
 class RabbitMQQueueManager implements QueueManagerInterface
 {
     public const PREFETCH_COUNT = 'prefetchCount';

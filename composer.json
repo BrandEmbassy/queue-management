@@ -23,8 +23,8 @@
         "predis/predis": "^1.1"
     },
     "require-dev": {
-        "brandembassy/coding-standard": "^8.1",
-        "brandembassy/mockery-tools": "^2.8",
+        "brandembassy/coding-standard": "^8.6",
+        "brandembassy/mockery-tools": "^3.9",
         "mockery/mockery": "^1.2",
         "phpunit/phpunit": "^8.5",
         "roave/security-advisories": "dev-latest",

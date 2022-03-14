@@ -7,8 +7,10 @@ namespace BE\QueueManagement\Queue\AWSSQS;
  *
  * AWS SQS API does not provide type for SQSMessahe, only type \Aws\Result. This class is simple abstraction over this generic type.
  * For details see https://docs.aws.amazon.com/aws-sdk-php/v3/api/class-Aws.Result.html
+ *
+ * @final
  */
-final class SqsMessage
+class SqsMessage
 {
     public const ATTR_MESSAGEBODY = 'MessageBody'; // for sending only. when receiving message actual attr name is 'Body'
     public const ATTR_DELAYSECONDS = 'DelaySeconds'; // for sending only.

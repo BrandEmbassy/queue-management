@@ -11,8 +11,10 @@ use function sprintf;
 /**
  * Utility class holding logging logic that requires more formatting/input preparation/etc. before actual logging
  * and at the same time is shared across multiple places (typically between RabbitMQ and AWS SQS counterparts).
+ *
+ * @final
  */
-final class Logger
+class Logger
 {
     public static function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception, LoggerInterface $logger): void
     {

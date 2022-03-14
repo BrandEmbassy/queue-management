@@ -6,7 +6,10 @@ use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 
-final class ExampleWarningOnlyException extends UnableToProcessLoadedJobException implements WarningOnlyExceptionInterface
+/**
+ * @final
+ */
+class ExampleWarningOnlyException extends UnableToProcessLoadedJobException implements WarningOnlyExceptionInterface
 {
     public static function create(JobInterface $job): self
     {

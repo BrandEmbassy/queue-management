@@ -6,7 +6,10 @@ use BE\QueueManagement\Queue\AWSSQS\SqsClientException;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use PHPUnit\Framework\TestCase;
 
-final class SqsClientFactoryTest extends TestCase
+/**
+ * @final
+ */
+class SqsClientFactoryTest extends TestCase
 {
     public function testUnableToEstablishConnectionThrowsException(): void
     {

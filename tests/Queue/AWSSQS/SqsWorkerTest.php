@@ -11,7 +11,10 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class SqsWorkerTest extends TestCase
+/**
+ * @final
+ */
+class SqsWorkerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

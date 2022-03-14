@@ -13,7 +13,10 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class MessageDeduplicationDefaultTest extends TestCase
+/**
+ * @final
+ */
+class MessageDeduplicationDefaultTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

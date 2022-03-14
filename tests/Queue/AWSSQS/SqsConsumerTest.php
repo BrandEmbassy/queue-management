@@ -22,7 +22,10 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 
-final class SqsConsumerTest extends TestCase
+/**
+ * @final
+ */
+class SqsConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

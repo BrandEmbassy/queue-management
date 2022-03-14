@@ -17,7 +17,10 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class SqsQueueManagerTest extends TestCase
+/**
+ * @final
+ */
+class SqsQueueManagerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

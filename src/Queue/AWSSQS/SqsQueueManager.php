@@ -11,6 +11,9 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use function count;
 
+/**
+ * @final
+ */
 class SqsQueueManager implements QueueManagerInterface
 {
     /**

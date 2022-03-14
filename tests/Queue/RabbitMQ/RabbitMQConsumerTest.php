@@ -20,7 +20,10 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 
-final class RabbitMQConsumerTest extends TestCase
+/**
+ * @final
+ */
+class RabbitMQConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

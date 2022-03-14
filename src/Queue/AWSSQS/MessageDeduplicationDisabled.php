@@ -5,8 +5,10 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 /**
  * If message deduplication is not needed this implementation of deduplication should be used.
  * It allows all messages to be processed and no message ever is marked as duplicate
+ *
+ * @final
  */
-final class MessageDeduplicationDisabled implements MessageDeduplicationInterface
+class MessageDeduplicationDisabled implements MessageDeduplicationInterface
 {
     public function isDuplicate(SqsMessage $message): bool
     {
