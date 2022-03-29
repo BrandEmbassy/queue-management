@@ -135,7 +135,6 @@ class RabbitMQQueueManager implements QueueManagerInterface
         }
 
         $this->declareQueue($queueName, $arguments);
-        $this->declaredQueues->add($queueName);
     }
 
 
