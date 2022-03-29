@@ -12,7 +12,7 @@ class JobDefinition implements JobDefinitionInterface
 
     private string $queueName;
 
-    private ?int $maxAttempts = null;
+    private ?int $maxAttempts;
 
     private JobLoaderInterface $jobLoader;
 
