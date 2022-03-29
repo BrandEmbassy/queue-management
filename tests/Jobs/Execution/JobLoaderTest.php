@@ -19,7 +19,10 @@ use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class JobLoaderTest extends TestCase
+/**
+ * @final
+ */
+class JobLoaderTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

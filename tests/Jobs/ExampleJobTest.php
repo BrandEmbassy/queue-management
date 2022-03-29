@@ -17,7 +17,10 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class ExampleJobTest extends TestCase
+/**
+ * @final
+ */
+class ExampleJobTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -93,7 +96,7 @@ final class ExampleJobTest extends TestCase
             $jobCreatedAt,
             JobInterface::INIT_ATTEMPTS,
             ExampleJobDefinition::create(),
-            new ArrayCollection(['foo' => $foo])
+            new ArrayCollection(['foo' => $foo]),
         );
     }
 }

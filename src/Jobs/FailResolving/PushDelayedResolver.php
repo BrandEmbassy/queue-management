@@ -11,15 +11,9 @@ use function sprintf;
 
 class PushDelayedResolver
 {
-    /**
-     * @var QueueManagerInterface
-     */
-    private $queueManager;
+    private QueueManagerInterface $queueManager;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
 
     public function __construct(QueueManagerInterface $queueManager, LoggerInterface $logger)

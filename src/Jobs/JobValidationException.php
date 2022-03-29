@@ -9,10 +9,7 @@ use function sprintf;
 
 class JobValidationException extends RuntimeException
 {
-    /**
-     * @var JobInterface
-     */
-    private $job;
+    private JobInterface $job;
 
 
     public function __construct(string $message, JobInterface $job, int $code = 0, ?Throwable $previous = null)
@@ -37,9 +34,9 @@ class JobValidationException extends RuntimeException
             sprintf(
                 'Parameter %s not found, available parameters: %s',
                 $key,
-                implode(', ', $existingKeys)
+                implode(', ', $existingKeys),
             ),
-            $job
+            $job,
         );
     }
 }

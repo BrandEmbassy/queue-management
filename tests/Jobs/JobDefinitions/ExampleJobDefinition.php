@@ -9,35 +9,23 @@ use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 use RuntimeException;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 
-final class ExampleJobDefinition implements JobDefinitionInterface
+/**
+ * @final
+ */
+class ExampleJobDefinition implements JobDefinitionInterface
 {
     public const QUEUE_NAME = 'exampleJobQueue';
     public const MAX_ATTEMPTS = 3;
 
-    /**
-     * @var JobLoaderInterface|null
-     */
-    private $jobLoader;
+    private ?JobLoaderInterface $jobLoader = null;
 
-    /**
-     * @var string
-     */
-    private $jobName;
+    private string $jobName;
 
-    /**
-     * @var string
-     */
-    private $jobClass;
+    private string $jobClass;
 
-    /**
-     * @var DelayRuleInterface|null
-     */
-    private $delayRule;
+    private ?DelayRuleInterface $delayRule = null;
 
-    /**
-     * @var JobProcessorInterface|null
-     */
-    private $jobProcessor;
+    private ?JobProcessorInterface $jobProcessor = null;
 
 
     public function __construct(string $jobName, string $jobClass)

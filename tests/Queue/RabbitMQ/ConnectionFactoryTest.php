@@ -7,7 +7,10 @@ use BE\QueueManagement\Queue\RabbitMQ\ConnectionFactory;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
-final class ConnectionFactoryTest extends TestCase
+/**
+ * @final
+ */
+class ConnectionFactoryTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -20,7 +23,7 @@ final class ConnectionFactoryTest extends TestCase
                 ConnectionFactory::PORT => 6666,
                 ConnectionFactory::PASSWORD => 'admin',
                 ConnectionFactory::USER => 'root',
-            ]
+            ],
         );
 
         $this->expectException(ConnectionException::class);
@@ -36,7 +39,7 @@ final class ConnectionFactoryTest extends TestCase
             [
                 ConnectionFactory::HOST => 'localhost',
                 ConnectionFactory::PORT => 6666,
-            ]
+            ],
         );
 
         $this->expectException(ConnectionException::class);

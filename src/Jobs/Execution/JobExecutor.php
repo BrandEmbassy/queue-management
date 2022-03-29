@@ -9,15 +9,9 @@ use Throwable;
 
 class JobExecutor implements JobExecutorInterface
 {
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected LoggerInterface $logger;
 
-    /**
-     * @var DateTimeImmutableFactory
-     */
-    protected $dateTimeImmutableFactory;
+    protected DateTimeImmutableFactory $dateTimeImmutableFactory;
 
 
     public function __construct(LoggerInterface $logger, DateTimeImmutableFactory $dateTimeImmutableFactory)
@@ -46,7 +40,7 @@ class JobExecutor implements JobExecutorInterface
 
             $this->logger->info(
                 'Job execution success [' . $diff . ' sec]',
-                ['executionTime' => $diff]
+                ['executionTime' => $diff],
             );
         } catch (ConsumerFailedExceptionInterface | UnresolvableProcessFailExceptionInterface $exception) {
             throw $exception;
@@ -55,7 +49,7 @@ class JobExecutor implements JobExecutorInterface
                 $job,
                 $exception->getMessage(),
                 $exception->getCode(),
-                $exception
+                $exception,
             );
         }
     }

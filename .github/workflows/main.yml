@@ -14,7 +14,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.2'
+          php-version: '7.4'
           extensions: mbstring, sockets
 
       - name: Get composer cache directory
@@ -46,7 +46,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.2'
+          php-version: '7.4'
           extensions: mbstring, sockets
 
       - name: Get composer cache directory
@@ -73,7 +73,7 @@ jobs:
 
     strategy:
       matrix:
-        php-version: [ '7.2', '7.4' ]
+        php-version: [ '7.4' ]
         composer-cmd: [ 'install', 'update --prefer-lowest' ]
 
     steps:

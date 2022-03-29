@@ -13,15 +13,9 @@ use Nette\Utils\Json;
 
 class JobLoader implements JobLoaderInterface
 {
-    /**
-     * @var JobDefinitionsContainer
-     */
-    private $jobDefinitionsContainer;
+    private JobDefinitionsContainer $jobDefinitionsContainer;
 
-    /**
-     * @var JobTerminator
-     */
-    private $jobTerminator;
+    private JobTerminator $jobTerminator;
 
 
     public function __construct(JobDefinitionsContainer $jobDefinitionsContainer, JobTerminator $jobTerminator)
@@ -49,7 +43,7 @@ class JobLoader implements JobLoaderInterface
             $jobUuid,
             DateTimeFromString::create($messageParameters[JobParameters::CREATED_AT]),
             $attempts,
-            new ArrayCollection($messageParameters[JobParameters::PARAMETERS])
+            new ArrayCollection($messageParameters[JobParameters::PARAMETERS]),
         );
     }
 

@@ -16,25 +16,13 @@ use function sprintf;
 
 class RabbitMQConsumer implements RabbitMQConsumerInterface
 {
-    /**
-     * @var LoggerInterface
-     */
-    protected $logger;
+    protected LoggerInterface $logger;
 
-    /**
-     * @var PushDelayedResolver
-     */
-    protected $pushDelayedResolver;
+    protected PushDelayedResolver $pushDelayedResolver;
 
-    /**
-     * @var JobExecutorInterface
-     */
-    protected $jobExecutor;
+    protected JobExecutorInterface $jobExecutor;
 
-    /**
-     * @var JobLoaderInterface
-     */
-    protected $jobLoader;
+    protected JobLoaderInterface $jobLoader;
 
 
     public function __construct(
@@ -64,14 +52,14 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
 
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
-                ['exception' => $exception]
+                ['exception' => $exception],
             );
 
             throw $exception;
         } catch (UnresolvableProcessFailExceptionInterface $exception) {
             $this->logger->warning(
                 'Job removed from queue: ' . $exception->getMessage(),
-                ['exception' => $exception]
+                ['exception' => $exception],
             );
 
             $channel->basic_nack($message->delivery_info['delivery_tag']);
@@ -98,7 +86,7 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
         $message = sprintf(
             'Job execution failed [attempts: %s], reason: %s',
             $exception->getJob()->getAttempts(),
-            $exception->getMessage()
+            $exception->getMessage(),
         );
         $context = [
             'exception' => $exception,

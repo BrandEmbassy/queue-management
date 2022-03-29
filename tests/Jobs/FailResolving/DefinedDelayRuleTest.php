@@ -18,7 +18,10 @@ use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 
-final class DefinedDelayRuleTest extends TestCase
+/**
+ * @final
+ */
+class DefinedDelayRuleTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -44,11 +47,11 @@ final class DefinedDelayRuleTest extends TestCase
             new DateTimeImmutable(),
             $attempts,
             $this->createQueueJobDefinition(),
-            new ArrayCollection()
+            new ArrayCollection(),
         );
         $delayRule = new DefinedDelayRule(
             self::MAXIMUM_DELAY,
-            self::LINEAR_DELAY_DEFINITION
+            self::LINEAR_DELAY_DEFINITION,
         );
 
         $delay = $delayRule->getDelay($job, new Exception());
@@ -110,7 +113,7 @@ final class DefinedDelayRuleTest extends TestCase
 
         new DefinedDelayRule(
             self::MAXIMUM_DELAY,
-            $linearDelayDefinition
+            $linearDelayDefinition,
         );
     }
 
@@ -145,9 +148,9 @@ final class DefinedDelayRuleTest extends TestCase
             Mockery::spy(JobLoaderInterface::class),
             new DefinedDelayRule(
                 self::MAXIMUM_DELAY,
-                self::LINEAR_DELAY_DEFINITION
+                self::LINEAR_DELAY_DEFINITION,
             ),
-            Mockery::spy(JobProcessorInterface::class)
+            Mockery::spy(JobProcessorInterface::class),
         );
     }
 }

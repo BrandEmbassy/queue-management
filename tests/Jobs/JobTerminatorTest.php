@@ -11,7 +11,10 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-final class JobTerminatorTest extends TestCase
+/**
+ * @final
+ */
+class JobTerminatorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
