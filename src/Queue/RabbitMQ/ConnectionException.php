@@ -23,8 +23,8 @@ class ConnectionException extends RuntimeException
         return new self(
             sprintf(
                 'Invalid connection config for RabbitMQ server, missing key/s (%s)',
-                implode(', ', $missingParameters)
-            )
+                implode(', ', $missingParameters),
+            ),
         );
     }
 }

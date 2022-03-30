@@ -7,12 +7,12 @@ use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleWithMillisecondsIn
 use BE\QueueManagement\Jobs\JobInterface;
 use Throwable;
 
-final class ConstantDelayRuleWithMilliseconds implements DelayRuleInterface, DelayRuleWithMillisecondsInterface
+/**
+ * @final
+ */
+class ConstantDelayRuleWithMilliseconds implements DelayRuleInterface, DelayRuleWithMillisecondsInterface
 {
-    /**
-     * @var int
-     */
-    private $delayInMilliseconds;
+    private int $delayInMilliseconds;
 
 
     public function __construct(int $delayInMilliseconds)

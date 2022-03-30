@@ -9,7 +9,10 @@ use BrandEmbassy\DateTime\DateTimeFromString;
 use Doctrine\Common\Collections\ArrayCollection;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class ExampleJob extends SimpleJob
+/**
+ * @final
+ */
+class ExampleJob extends SimpleJob
 {
     public const UUID = 'some-job-uud';
     public const ATTEMPTS = JobInterface::INIT_ATTEMPTS;
@@ -25,7 +28,7 @@ final class ExampleJob extends SimpleJob
             DateTimeFromString::create(self::CREATED_AT),
             self::ATTEMPTS,
             $jobDefinition ?? ExampleJobDefinition::create(),
-            new ArrayCollection([self::PARAMETER_FOO => $bar])
+            new ArrayCollection([self::PARAMETER_FOO => $bar]),
         );
     }
 

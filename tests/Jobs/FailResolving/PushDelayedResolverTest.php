@@ -14,7 +14,10 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class PushDelayedResolverTest extends TestCase
+/**
+ * @final
+ */
+class PushDelayedResolverTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

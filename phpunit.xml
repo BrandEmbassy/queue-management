@@ -25,8 +25,4 @@
         <log type="coverage-html" target="./var/code-coverage" lowUpperBound="50" highLowerBound="80"/>
         <log type="testdox-html" target="./var/code-coverage/index.html"/>
     </logging>
-
-    <extensions>
-        <extension class="BrandEmbassy\MockeryTools\PhpUnit\BypassFinalHook"/>
-    </extensions>
 </phpunit>

@@ -11,7 +11,10 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class RabbitMQWorkerTest extends TestCase
+/**
+ * @final
+ */
+class RabbitMQWorkerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 

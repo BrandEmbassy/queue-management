@@ -4,7 +4,10 @@ namespace BE\QueueManagement\Jobs\FailResolving\DelayRules;
 
 use Exception;
 
-final class DelayRuleException extends Exception
+/**
+ * @final
+ */
+class DelayRuleException extends Exception
 {
     public static function byNotAbleToCalculateDelay(): self
     {

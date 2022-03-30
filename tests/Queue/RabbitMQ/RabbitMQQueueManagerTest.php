@@ -18,7 +18,10 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
-final class RabbitMQQueueManagerTest extends TestCase
+/**
+ * @final
+ */
+class RabbitMQQueueManagerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -66,12 +69,10 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($exampleJob): bool {
-                        return $message->getBody() === $exampleJob->toJson()
-                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
-                    }
+                    static fn (AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
+                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 ),
-                ExampleJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync',
             )
             ->once();
 
@@ -98,9 +99,9 @@ final class RabbitMQQueueManagerTest extends TestCase
                         return $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT
                             && $applicationHeaders->getNativeData() === $expectedNativeData;
-                    }
+                    },
                 ),
-                ExampleJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync',
             )
             ->once();
 
@@ -127,9 +128,9 @@ final class RabbitMQQueueManagerTest extends TestCase
                         return $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT
                             && $applicationHeaders->getNativeData() === $expectedNativeData;
-                    }
+                    },
                 ),
-                ExampleJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync',
             )
             ->once();
 
@@ -151,12 +152,10 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($exampleJob): bool {
-                        return $message->getBody() === $exampleJob->toJson()
-                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
-                    }
+                    static fn (AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
+                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 ),
-                ExampleJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync',
             )
             ->once()
             ->andThrow(new AMQPRuntimeException('Broken pipe'));
@@ -164,19 +163,17 @@ final class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static function (AMQPMessage $message) use ($exampleJob): bool {
-                        return $message->getBody() === $exampleJob->toJson()
-                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT;
-                    }
+                    static fn (AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
+                            && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 ),
-                ExampleJobDefinition::QUEUE_NAME . '.sync'
+                ExampleJobDefinition::QUEUE_NAME . '.sync',
             )
             ->once();
 
         $this->loggerMock->shouldReceive('warning')
             ->with(
                 'Reconnecting: Broken pipe',
-                Mockery::hasKey('queueName')
+                Mockery::hasKey('queueName'),
             )
             ->once();
 
@@ -223,7 +220,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             [
                 RabbitMQQueueManager::PREFETCH_COUNT => 2,
                 RabbitMQQueueManager::NO_ACK => true,
-            ]
+            ],
         );
     }
 
@@ -258,7 +255,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             ->andReturnUsing(
                 static function () use ($amqpChannelMock): void {
                     $amqpChannelMock->callbacks = [];
-                }
+                },
             );
 
         $amqpChannelMock->shouldReceive('close')
@@ -284,7 +281,7 @@ final class RabbitMQQueueManagerTest extends TestCase
             [
                 RabbitMQQueueManager::PREFETCH_COUNT => 2,
                 RabbitMQQueueManager::NO_ACK => true,
-            ]
+            ],
         );
     }
 
@@ -359,7 +356,7 @@ final class RabbitMQQueueManagerTest extends TestCase
                 false,
                 false,
                 false,
-                ['x-delayed-type' => ['S', 'direct']]
+                ['x-delayed-type' => ['S', 'direct']],
             )
             ->once();
 

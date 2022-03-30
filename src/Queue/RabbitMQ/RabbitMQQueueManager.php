@@ -23,30 +23,18 @@ class RabbitMQQueueManager implements QueueManagerInterface
     public const NO_ACK = 'noAck';
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
 
-    /**
-     * @var ConnectionFactoryInterface
-     */
-    private $connectionFactory;
+    private ConnectionFactoryInterface $connectionFactory;
 
     /**
      * @var Collection<int, string>|string[]
      */
-    private $declaredQueues;
+    private Collection $declaredQueues;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
-    /**
-     * @var AMQPChannel|null
-     */
-    private $channel;
+    private ?AMQPChannel $channel = null;
 
-    /**
-     * @var AMQPStreamConnection|null
-     */
-    private $connection;
+    private ?AMQPStreamConnection $connection = null;
 
 
     public function __construct(ConnectionFactoryInterface $connectionFactory, LoggerInterface $logger)
@@ -84,7 +72,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
             } catch (AMQPRuntimeException $exception) {
                 $this->logger->warning(
                     'AMQPChannel disconnected: ' . $exception->getMessage(),
-                    ['exception' => $exception]
+                    ['exception' => $exception],
                 );
 
                 $this->reconnect($exception, $queueName);
@@ -109,8 +97,8 @@ class RabbitMQQueueManager implements QueueManagerInterface
                 'Job (%s) [%s] pushed into %s queue',
                 $job->getName(),
                 $job->getUuid(),
-                $queueName
-            )
+                $queueName,
+            ),
         );
     }
 
@@ -129,7 +117,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $parameters = [
             'application_headers' => new AMQPTable(
-                ['x-delay' => $delayInMilliseconds]
+                ['x-delay' => $delayInMilliseconds],
             ),
         ];
 
@@ -147,7 +135,6 @@ class RabbitMQQueueManager implements QueueManagerInterface
         }
 
         $this->declareQueue($queueName, $arguments);
-        $this->declaredQueues->add($queueName);
     }
 
 
@@ -180,7 +167,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
             false,
             false,
             false,
-            $arguments
+            $arguments,
         );
     }
 
@@ -262,7 +249,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
             [
                 'queueName' => $queueName,
                 'exception' => $exception->getTraceAsString(),
-            ]
+            ],
         );
     }
 

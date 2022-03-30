@@ -7,20 +7,11 @@ use function sprintf;
 
 class JobTerminator
 {
-    /**
-     * @var int
-     */
-    private $minimumAttempts;
+    private int $minimumAttempts;
 
-    /**
-     * @var JobUuidBlacklistInterface
-     */
-    private $jobUuidBlacklist;
+    private JobUuidBlacklistInterface $jobUuidBlacklist;
 
-    /**
-     * @var LoggerInterface
-     */
-    private $logger;
+    private LoggerInterface $logger;
 
 
     public function __construct(

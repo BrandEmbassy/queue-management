@@ -20,7 +20,10 @@ use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 
-final class RabbitMQConsumerTest extends TestCase
+/**
+ * @final
+ */
+class RabbitMQConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -99,7 +102,7 @@ final class RabbitMQConsumerTest extends TestCase
         $this->loggerMock->shouldReceive('error')
             ->with(
                 'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
-                ['exception' => $unknownJobDefinitionException]
+                ['exception' => $unknownJobDefinitionException],
             )
             ->once();
 
@@ -129,7 +132,7 @@ final class RabbitMQConsumerTest extends TestCase
         $this->loggerMock->shouldReceive('warning')
             ->with(
                 'Job removed from queue: Job some-job-uud blacklisted',
-                ['exception' => $blacklistedJobUuidException]
+                ['exception' => $blacklistedJobUuidException],
             )
             ->once();
 
@@ -149,7 +152,7 @@ final class RabbitMQConsumerTest extends TestCase
         $exampleJob = new ExampleJob();
         $unableToProcessLoadedJobException = new UnableToProcessLoadedJobException(
             $exampleJob,
-            'Unable to process loaded job'
+            'Unable to process loaded job',
         );
 
         $this->jobLoaderMock->shouldReceive('loadJob')
@@ -172,7 +175,7 @@ final class RabbitMQConsumerTest extends TestCase
                 [
                     'exception' => $unableToProcessLoadedJobException,
                     'previousException' => null,
-                ]
+                ],
             )
             ->once();
 
@@ -212,7 +215,7 @@ final class RabbitMQConsumerTest extends TestCase
                 [
                     'exception' => $exampleWarningOnlyException,
                     'previousException' => null,
-                ]
+                ],
             )
             ->once();
 
@@ -246,7 +249,7 @@ final class RabbitMQConsumerTest extends TestCase
             $this->loggerMock,
             $this->jobExecutorMock,
             $this->pushDelayedResolverMock,
-            $this->jobLoaderMock
+            $this->jobLoaderMock,
         );
     }
 }

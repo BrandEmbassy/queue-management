@@ -29,7 +29,7 @@ class ConnectionFactory implements ConnectionFactoryInterface
     /**
      * @var mixed[]
      */
-    private $connectionConfig;
+    private array $connectionConfig;
 
 
     /**
@@ -64,7 +64,7 @@ class ConnectionFactory implements ConnectionFactoryInterface
                 $connectionConfig[self::KEEP_ALIVE] ?? false,
                 $connectionConfig[self::HEART_BEAT] ?? 0,
                 $connectionConfig[self::CHANNEL_RPC_TIMEOUT] ?? 0.0,
-                $connectionConfig[self::SSL_PROTOCOL] ?? null
+                $connectionConfig[self::SSL_PROTOCOL] ?? null,
             );
         } catch (Throwable $exception) {
             throw ConnectionException::createUnableToConnect($exception);

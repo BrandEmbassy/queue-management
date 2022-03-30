@@ -7,15 +7,9 @@ use BE\QueueManagement\Queue\WorkerInterface;
 
 class RabbitMQWorker implements WorkerInterface
 {
-    /**
-     * @var QueueManagerInterface
-     */
-    private $queueManager;
+    private QueueManagerInterface $queueManager;
 
-    /**
-     * @var RabbitMQConsumerInterface
-     */
-    private $consumer;
+    private RabbitMQConsumerInterface $consumer;
 
 
     public function __construct(QueueManagerInterface $queueManager, RabbitMQConsumerInterface $consumer)

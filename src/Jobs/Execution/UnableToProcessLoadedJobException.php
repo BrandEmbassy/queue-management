@@ -8,10 +8,7 @@ use Throwable;
 
 class UnableToProcessLoadedJobException extends RuntimeException implements DelayableProcessFailExceptionInterface
 {
-    /**
-     * @var JobInterface
-     */
-    private $job;
+    private JobInterface $job;
 
 
     public function __construct(JobInterface $job, string $message, int $code = 0, ?Throwable $previous = null)

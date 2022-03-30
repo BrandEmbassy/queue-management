@@ -8,40 +8,19 @@ use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 
 class JobDefinition implements JobDefinitionInterface
 {
-    /**
-     * @var string
-     */
-    private $jobClass;
+    private string $jobClass;
 
-    /**
-     * @var string
-     */
-    private $queueName;
+    private string $queueName;
 
-    /**
-     * @var int|null
-     */
-    private $maxAttempts;
+    private ?int $maxAttempts;
 
-    /**
-     * @var JobLoaderInterface
-     */
-    private $jobLoader;
+    private JobLoaderInterface $jobLoader;
 
-    /**
-     * @var DelayRuleInterface
-     */
-    private $delayRule;
+    private DelayRuleInterface $delayRule;
 
-    /**
-     * @var JobProcessorInterface
-     */
-    private $jobProcessor;
+    private JobProcessorInterface $jobProcessor;
 
-    /**
-     * @var string
-     */
-    private $jobName;
+    private string $jobName;
 
 
     public function __construct(
