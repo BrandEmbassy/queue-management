@@ -17,7 +17,10 @@
         "doctrine/collections": "^1.5",
         "php-amqplib/php-amqplib": "^2.12.2",
         "brandembassy/datetime": "^3.0",
-        "nette/utils": "^3.0"
+        "nette/utils": "^3.0",
+        "aws/aws-sdk-php": "^3.209",
+        "malkusch/lock": "^2.2",
+        "predis/predis": "^1.1"
     },
     "require-dev": {
         "brandembassy/coding-standard": "^8.6",
