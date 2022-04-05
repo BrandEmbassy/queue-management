@@ -26,7 +26,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
 
     private Mutex $mutex;
 
-    private int $deduplicationWindowSizeSec;
+    private int $deduplicationWindowSizeInSeconds;
 
 
     public function __construct(
@@ -34,13 +34,13 @@ class MessageDeduplicationDefault implements MessageDeduplication
         RedisClient $redisClient,
         Mutex $mutex,
         string $queueName,
-        int $deduplicationWindowSizeSec = 300
+        int $deduplicationWindowSizeInSeconds = 300
     ) {
         $this->logger = $logger;
         $this->redisClient = $redisClient;
         $this->queueName = $queueName;
         $this->mutex = $mutex;
-        $this->deduplicationWindowSizeSec = $deduplicationWindowSizeSec;
+        $this->deduplicationWindowSizeInSeconds = $deduplicationWindowSizeInSeconds;
     }
 
 
@@ -54,16 +54,16 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 $rk = self::DEDUPLICATION_KEY_PREFIX . $this->queueName . $message->getMessageId();
                 $deduplicationKeyVal = $this->redisClient->get($rk);
                 if ($deduplicationKeyVal === null) {
-                    $this->redisClient->setWithTtl($rk, '1', $this->deduplicationWindowSizeSec);
+                    $this->redisClient->setWithTtl($rk, '1', $this->deduplicationWindowSizeInSeconds);
 
                     return false;
                 }
 
                 return true;
             });
-        } catch (LockReleaseException $unlockException) {
-            $codeResult = $unlockException->getCodeResult();
-            $errorMessage = $unlockException->getCodeException() !== null ? $unlockException->getCodeException()->getMessage() : '';
+        } catch (LockReleaseException $exception) {
+            $codeResult = $exception->getCodeResult();
+            $errorMessage = $exception->getCodeException() !== null ? $exception->getCodeException()->getMessage() : '';
             $this->logger->warning('Error when releasing lock ' . $errorMessage);
             if ($codeResult !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
