@@ -8,9 +8,9 @@ use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Queue\Common\LoggerHelper;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
-use BE\QueueManagement\Queue\Common\LoggerHelper;
 use Psr\Log\LoggerInterface;
 
 class RabbitMQConsumer implements RabbitMQConsumerInterface
