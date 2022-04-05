@@ -9,8 +9,8 @@ use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
+use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationDisabled;
-use BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationInterface;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use Mockery;
@@ -57,7 +57,7 @@ class SqsConsumerTest extends TestCase
      */
     private $sqsClientMock;
 
-    private MessageDeduplicationInterface $dedupSvc;
+    private MessageDeduplication $dedupSvc;
 
 
     public function setUp(): void

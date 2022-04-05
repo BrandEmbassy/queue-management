@@ -8,7 +8,7 @@ namespace BE\QueueManagement\Queue\AWSSQS;
  *
  * @final
  */
-class MessageDeduplicationDisabled implements MessageDeduplicationInterface
+class MessageDeduplicationDisabled implements MessageDeduplication
 {
     public function isDuplicate(SqsMessage $message): bool
     {

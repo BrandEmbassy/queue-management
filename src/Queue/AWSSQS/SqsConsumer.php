@@ -28,7 +28,7 @@ class SqsConsumer implements SqsConsumerInterface
 
     protected SqsClient $sqsClient;
 
-    protected MessageDeduplicationInterface $messageDeduplication;
+    protected MessageDeduplication $messageDeduplication;
 
 
     public function __construct(
@@ -37,7 +37,7 @@ class SqsConsumer implements SqsConsumerInterface
         PushDelayedResolver $pushDelayedResolver,
         JobLoaderInterface $jobLoader,
         SqsClient $sqsClient,
-        MessageDeduplicationInterface $messageDeduplication
+        MessageDeduplication $messageDeduplication
     ) {
         $this->logger = $logger;
         $this->pushDelayedResolver = $pushDelayedResolver;

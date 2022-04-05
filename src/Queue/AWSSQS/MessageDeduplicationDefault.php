@@ -13,7 +13,7 @@ use Psr\Log\LoggerInterface;
  *
  * @final
  */
-class MessageDeduplicationDefault implements MessageDeduplicationInterface
+class MessageDeduplicationDefault implements MessageDeduplication
 {
     private const DEDUPLICATION_KEY_PREFIX = 'AWS_DEDUP_PREFIX_';
 
