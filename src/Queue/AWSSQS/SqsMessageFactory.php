@@ -3,6 +3,7 @@
 namespace BE\QueueManagement\Queue\AWSSQS;
 
 use function array_push;
+use function assert;
 
 /**
  * @final
@@ -20,6 +21,8 @@ class SqsMessageFactory
          * @var SqsMessage[]
          */
         $sqsMessages = [];
+
+        assert($queueUrl !== '');
 
         foreach ($awsResultMessages as $message) {
             array_push($sqsMessages, new SqsMessage($message, $queueUrl));
