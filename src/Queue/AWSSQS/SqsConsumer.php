@@ -53,21 +53,13 @@ class SqsConsumer implements SqsConsumerInterface
         try {
             if ($this->messageDeduplication->isDuplicate($message)) {
                 $this->logger->warning('Duplicate message detected: ' . $message->getBody());
-
-                $this->sqsClient->deleteMessage([
-                    SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
-                    SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
-                ]);
+                $this->deleteSqsMessage($message);
 
                 return;
             }
 
             $this->executeJob($message);
-
-            $this->sqsClient->deleteMessage([
-                SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
-                SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
-            ]);
+            $this->deleteSqsMessage($message);
         } catch (ConsumerFailedExceptionInterface $exception) {
             // do not delete message.
             // After visibility timeout message should be visible to other consumers.
@@ -83,11 +75,17 @@ class SqsConsumer implements SqsConsumerInterface
                 [LoggerContextField::EXCEPTION => $exception],
             );
 
-            $this->sqsClient->deleteMessage([
-                SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
-                SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
-            ]);
+            $this->deleteSqsMessage($message);
         }
+    }
+
+
+    private function deleteSqsMessage(SqsMessage $message): void
+    {
+        $this->sqsClient->deleteMessage([
+            SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
+            SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
+        ]);
     }
 
 
