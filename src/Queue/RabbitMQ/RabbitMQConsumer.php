@@ -13,6 +13,9 @@ use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @final
+ */
 class RabbitMQConsumer implements RabbitMQConsumerInterface
 {
     protected LoggerInterface $logger;

@@ -7,6 +7,9 @@ use Throwable;
 use function array_key_exists;
 use function count;
 
+/**
+ * @final
+ */
 class ConnectionFactory implements ConnectionFactoryInterface
 {
     public const HOST = 'host';

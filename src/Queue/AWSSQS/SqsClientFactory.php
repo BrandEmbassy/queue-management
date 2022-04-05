@@ -14,6 +14,8 @@ use function count;
  *
  * See AWS config guide to understand in detail how SqsClient can be initiated:
  * https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/guide_configuration.html
+ *
+ * @final
  */
 class SqsClientFactory implements SqsClientFactoryInterface
 {

@@ -5,6 +5,9 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BE\QueueManagement\Queue\WorkerInterface;
 
+/**
+ * @final
+ */
 class SqsWorker implements WorkerInterface
 {
     private QueueManagerInterface $queueManager;

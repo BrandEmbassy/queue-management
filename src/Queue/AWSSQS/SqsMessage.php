@@ -5,7 +5,7 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 /**
  * Represent SQS Message
  *
- * AWS SQS API does not provide type for SQSMessahe, only type \Aws\Result. This class is simple abstraction over this generic type.
+ * AWS SQS API does not provide type for SQSMessage, only type \Aws\Result. This class is simple abstraction over this generic type.
  * For details see https://docs.aws.amazon.com/aws-sdk-php/v3/api/class-Aws.Result.html
  *
  * @final

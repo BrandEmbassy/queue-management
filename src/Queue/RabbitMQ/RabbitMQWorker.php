@@ -5,6 +5,9 @@ namespace BE\QueueManagement\Queue\RabbitMQ;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BE\QueueManagement\Queue\WorkerInterface;
 
+/**
+ * @final
+ */
 class RabbitMQWorker implements WorkerInterface
 {
     private QueueManagerInterface $queueManager;

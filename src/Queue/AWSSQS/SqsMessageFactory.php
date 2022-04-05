@@ -4,6 +4,9 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 
 use function array_push;
 
+/**
+ * @final
+ */
 class SqsMessageFactory
 {
     /**

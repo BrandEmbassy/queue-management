@@ -17,6 +17,9 @@ use Throwable;
 use function count;
 use function sprintf;
 
+/**
+ * @final
+ */
 class RabbitMQQueueManager implements QueueManagerInterface
 {
     public const PREFETCH_COUNT = 'prefetchCount';

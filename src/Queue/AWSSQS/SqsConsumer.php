@@ -12,6 +12,9 @@ use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Queue\Common\LoggerHelper;
 use Psr\Log\LoggerInterface;
 
+/**
+ * @final
+ */
 class SqsConsumer implements SqsConsumerInterface
 {
     protected LoggerInterface $logger;
