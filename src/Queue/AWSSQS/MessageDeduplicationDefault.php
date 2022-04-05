@@ -69,11 +69,10 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 // LockReleaseException was thrown after sync block had been already executed
                 // -> use sync block return value
                 return $codeResult;
-            } else {
-                // if code result is not known we rather prefer to process message twice
-                // than to discard potentially unprocessed message -> indicate message has been not yet seen
-                return false;
             }
+            // if code result is not known we rather prefer to process message twice
+            // than to discard potentially unprocessed message -> indicate message has been not yet seen
+            return false;
         }
     }
 }
