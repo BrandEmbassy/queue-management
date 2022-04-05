@@ -3,6 +3,7 @@
 namespace BE\QueueManagement\Queue\AWSSQS;
 
 use BE\QueueManagement\Redis\RedisClient;
+use Exception;
 use malkusch\lock\exception\LockReleaseException;
 use malkusch\lock\mutex\Mutex;
 use Psr\Log\LoggerInterface;
@@ -43,29 +44,23 @@ class MessageDeduplicationDefault implements MessageDeduplication
     }
 
 
+    /**
+     * @throws Exception
+     */
     public function isDuplicate(SqsMessage $message): bool
     {
-        $mutex = $this->mutex;
-
-        $messageId = $message->getMessageId();
-        $redisClient = $this->redisClient;
-        $queueName = $this->queueName;
-        $deduplicationWindowSizeSec = $this->deduplicationWindowSizeSec;
-
         try {
-            $alreadySeen = $mutex->synchronized(function () use ($messageId, $redisClient, $queueName, $deduplicationWindowSizeSec): bool {
-                $rk = self::DEDUPLICATION_KEY_PREFIX . $queueName . $messageId;
-                $deduplicationKeyVal = $redisClient->get($rk);
+            return $this->mutex->synchronized(function () use ($message): bool {
+                $rk = self::DEDUPLICATION_KEY_PREFIX . $this->queueName . $message->getMessageId();
+                $deduplicationKeyVal = $this->redisClient->get($rk);
                 if ($deduplicationKeyVal === null) {
-                    $redisClient->setWithTtl($rk, '1', $deduplicationWindowSizeSec);
+                    $this->redisClient->setWithTtl($rk, '1', $this->deduplicationWindowSizeSec);
 
                     return false;
                 }
 
                 return true;
             });
-
-            return $alreadySeen;
         } catch (LockReleaseException $unlockException) {
             $codeResult = $unlockException->getCodeResult();
             $errorMessage = $unlockException->getCodeException() !== null ? $unlockException->getCodeException()->getMessage() : '';
