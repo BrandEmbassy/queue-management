@@ -63,7 +63,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
             });
         } catch (LockReleaseException $exception) {
             $codeResult = $exception->getCodeResult();
-            $errorMessage = $exception->getCodeException() !== null ? $exception->getCodeException()->getMessage() : '';
+            $errorMessage = $exception->getCodeException() !== null ? $exception->getCodeException()->getMessage() : 'not available';
             $this->logger->warning('Error when releasing lock ' . $errorMessage);
             if ($codeResult !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
