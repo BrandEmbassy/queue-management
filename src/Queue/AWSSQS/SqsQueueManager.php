@@ -140,9 +140,9 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         $sqsMessage = [
-            'DelaySeconds' => $delaySeconds,
-            'MessageAttributes' => [
-                'QueueUrl' => [
+            SqsMessageFields::DELAYSECONDS => $delaySeconds,
+            SqsMessageFields::MESSAGEATTRIBUTES => [
+                SqsMessageFields::QUEUEURL => [
                     'DataType' => 'String',
                     // queueName might be handy here if we want to consume
                     // from multiple queues in parallel via promises.
@@ -150,8 +150,8 @@ class SqsQueueManager implements QueueManagerInterface
                     'StringValue' => $queueName,
                 ],
             ],
-            'MessageBody' => $message,
-            'QueueUrl' => $queueName,
+            SqsMessageFields::MESSAGEBODY => $message,
+            SqsMessageFields::QUEUEURL => $queueName,
         ];
 
         try {
