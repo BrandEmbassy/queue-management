@@ -9,7 +9,8 @@ use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
-use BE\QueueManagement\Queue\Common\LoggerHelper;
+use BE\QueueManagement\Logging\LoggerContextField;
+use BE\QueueManagement\Logging\LoggerHelper;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -72,14 +73,14 @@ class SqsConsumer implements SqsConsumerInterface
             // After visibility timeout message should be visible to other consumers.
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
-                ['exception' => $exception],
+                [LoggerContextField::EXCEPTION => $exception],
             );
 
             throw $exception;
         } catch (UnresolvableProcessFailExceptionInterface $exception) {
             $this->logger->warning(
                 'Job removed from queue: ' . $exception->getMessage(),
-                ['exception' => $exception],
+                [LoggerContextField::EXCEPTION => $exception],
             );
 
             $this->sqsClient->deleteMessage([

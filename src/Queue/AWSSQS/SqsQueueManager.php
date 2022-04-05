@@ -5,7 +5,7 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 use Aws\Exception\AwsException;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
-use BE\QueueManagement\Queue\Common\LoggerHelper;
+use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;

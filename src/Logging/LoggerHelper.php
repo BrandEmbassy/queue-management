@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Queue\Common;
+namespace BE\QueueManagement\Logging;
 
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
@@ -24,8 +24,8 @@ class LoggerHelper
             $exception->getMessage(),
         );
         $context = [
-            'exception' => $exception,
-            'previousException' => $exception->getPrevious(),
+            LoggerContextField::EXCEPTION => $exception,
+            LoggerContextField::PREVIOUS_EXCEPTION => $exception->getPrevious(),
         ];
 
         if ($exception instanceof WarningOnlyExceptionInterface) {

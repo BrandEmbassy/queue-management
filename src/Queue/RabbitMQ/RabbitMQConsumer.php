@@ -8,7 +8,8 @@ use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
-use BE\QueueManagement\Queue\Common\LoggerHelper;
+use BE\QueueManagement\Logging\LoggerContextField;
+use BE\QueueManagement\Logging\LoggerHelper;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
@@ -54,14 +55,14 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
 
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
-                ['exception' => $exception],
+                [LoggerContextField::EXCEPTION => $exception],
             );
 
             throw $exception;
         } catch (UnresolvableProcessFailExceptionInterface $exception) {
             $this->logger->warning(
                 'Job removed from queue: ' . $exception->getMessage(),
-                ['exception' => $exception],
+                [LoggerContextField::EXCEPTION => $exception],
             );
 
             $channel->basic_nack($message->delivery_info['delivery_tag']);
