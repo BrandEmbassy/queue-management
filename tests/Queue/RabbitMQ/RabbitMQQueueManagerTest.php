@@ -69,7 +69,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static fn (AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
+                    static fn(AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 ),
                 ExampleJobDefinition::QUEUE_NAME . '.sync',
@@ -152,7 +152,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static fn (AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
+                    static fn(AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 ),
                 ExampleJobDefinition::QUEUE_NAME . '.sync',
@@ -163,7 +163,7 @@ class RabbitMQQueueManagerTest extends TestCase
         $this->amqpChannelMock->shouldReceive('basic_publish')
             ->with(
                 Mockery::on(
-                    static fn (AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
+                    static fn(AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
                             && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT,
                 ),
                 ExampleJobDefinition::QUEUE_NAME . '.sync',

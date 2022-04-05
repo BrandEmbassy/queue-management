@@ -78,7 +78,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->shouldReceive('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn (array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
                 ),
             )
             ->once();
@@ -97,7 +97,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->shouldReceive('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn (array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
                 ),
             )
             ->once();
@@ -116,7 +116,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->shouldReceive('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn (array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
                 ),
             )
             ->once();
@@ -141,7 +141,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->shouldReceive('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn (array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
                 ),
             )
             ->once()
@@ -150,7 +150,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->shouldReceive('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn (array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
                 ),
             )
             ->once();
