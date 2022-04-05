@@ -54,8 +54,8 @@ class SqsConsumer implements SqsConsumerInterface
                 $this->logger->warning('Duplicate message detected: ' . $message->getBody());
 
                 $this->sqsClient->deleteMessage([
-                    'QueueUrl' => $message->getQueueUrl(),
-                    'ReceiptHandle' => $message->getReceiptHandle(),
+                    SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
+                    SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
                 ]);
 
                 return;
@@ -64,8 +64,8 @@ class SqsConsumer implements SqsConsumerInterface
             $this->executeJob($message);
 
             $this->sqsClient->deleteMessage([
-                'QueueUrl' => $message->getQueueUrl(),
-                'ReceiptHandle' => $message->getReceiptHandle(),
+                SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
+                SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
             ]);
         } catch (ConsumerFailedExceptionInterface $exception) {
             // do not delete message.
@@ -83,8 +83,8 @@ class SqsConsumer implements SqsConsumerInterface
             );
 
             $this->sqsClient->deleteMessage([
-                'QueueUrl' => $message->getQueueUrl(),
-                'ReceiptHandle' => $message->getReceiptHandle(),
+                SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
+                SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
             ]);
         }
     }
