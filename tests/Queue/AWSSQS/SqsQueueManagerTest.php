@@ -8,6 +8,7 @@ use Aws\Result;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageFields;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -296,9 +297,9 @@ class SqsQueueManagerTest extends TestCase
     private static function messageCheckOk(array $message, ExampleJob $exampleJob, int $delay): bool
     {
         return $message['MessageBody'] === $exampleJob->toJson()
-            && $message[SqsMessage::ATTR_DELAYSECONDS] === $delay
-            && $message[SqsMessage::ATTR_QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
-            && $message[SqsMessage::ATTR_MESSAGEATTRIBUTES][SqsMessage::ATTR_QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+            && $message[SqsMessageFields::DELAYSECONDS] === $delay
+            && $message[SqsMessageFields::QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
+            && $message[SqsMessageFields::MESSAGEATTRIBUTES][SqsMessageFields::QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
     }
 
 

@@ -12,12 +12,6 @@ namespace BE\QueueManagement\Queue\AWSSQS;
  */
 class SqsMessage
 {
-    public const ATTR_MESSAGEBODY = 'MessageBody'; // for sending only. when receiving message actual attr name is 'Body'
-    public const ATTR_DELAYSECONDS = 'DelaySeconds'; // for sending only.
-    public const ATTR_QUEUEURL = 'QueueUrl'; // for sending only.
-    public const ATTR_MESSAGEATTRIBUTES = 'MessageAttributes';
-    public const ATTR_RECEIPTHANDLE = 'ReceiptHandle';
-
     /**
      * @var mixed[]
      */
@@ -41,13 +35,13 @@ class SqsMessage
      */
     public function getReceiptHandle()
     {
-        return $this->message[self::ATTR_RECEIPTHANDLE];
+        return $this->message[SqsMessageFields::RECEIPTHANDLE];
     }
 
 
     public function getBody(): string
     {
-        return $this->message['Body'];
+        return $this->message[SqsMessageFields::BODY];
     }
 
 
@@ -58,7 +52,7 @@ class SqsMessage
      */
     public function getAttributes(): array
     {
-        return $this->message['Attributes'];
+        return $this->message[SqsMessageFields::ATTRIBUTES];
     }
 
 
@@ -69,7 +63,7 @@ class SqsMessage
      */
     public function getMessageAttributes(): array
     {
-        return $this->message['MessageAttributes'];
+        return $this->message[SqsMessageFields::MESSAGEATTRIBUTES];
     }
 
 
@@ -81,6 +75,6 @@ class SqsMessage
 
     public function getMessageId(): string
     {
-        return $this->message['MessageId'];
+        return $this->message[SqsMessageFields::MESSAGEID];
     }
 }
