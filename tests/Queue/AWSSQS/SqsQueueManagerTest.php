@@ -5,7 +5,9 @@ namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 use Aws\CommandInterface;
 use Aws\Exception\AwsException;
 use Aws\Result;
+use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessageFields;
@@ -34,6 +36,11 @@ class SqsQueueManagerTest extends TestCase
     private $sqsClientFactoryMock;
 
     /**
+     * @var S3ClientFactory&MockInterface
+     */
+    private $s3ClientFactoryMock;
+
+    /**
      * @var LoggerInterface&MockInterface
      */
     private $loggerMock;
@@ -42,6 +49,11 @@ class SqsQueueManagerTest extends TestCase
      * @var SqsClient&MockInterface
      */
     private $sqsClientMock;
+
+    /**
+     * @var S3Client&MockInterface
+     */
+    private $s3ClientMock;
 
     /**
      * @var CommandInterface<mixed>&MockInterface
@@ -58,8 +70,10 @@ class SqsQueueManagerTest extends TestCase
     {
         parent::setUp();
         $this->sqsClientFactoryMock = Mockery::mock(SqsClientFactory::class);
+        $this->s3ClientFactoryMock = Mockery::mock(S3ClientFactory::class);
         $this->loggerMock = Mockery::mock(LoggerInterface::class);
         $this->sqsClientMock = Mockery::mock(SqsClient::class);
+        $this->s3ClientMock = Mockery::mock(S3Client::class);
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
     }
@@ -311,7 +325,7 @@ class SqsQueueManagerTest extends TestCase
 
     private function createQueueManager(): SqsQueueManager
     {
-        return new SqsQueueManager($this->sqsClientFactoryMock, $this->loggerMock, 1);
+        return new SqsQueueManager($this->sqsClientFactoryMock, $this->s3ClientFactoryMock, $this->loggerMock, 1);
     }
 
 
@@ -321,5 +335,10 @@ class SqsQueueManagerTest extends TestCase
             ->withNoArgs()
             ->times($connectionIsCreatedTimes)
             ->andReturn($this->sqsClientMock);
+
+        $this->s3ClientFactoryMock->shouldReceive('create')
+            ->withNoArgs()
+            ->times($connectionIsCreatedTimes)
+            ->andReturn($this->s3ClientMock);
     }
 }

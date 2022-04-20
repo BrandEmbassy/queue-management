@@ -3,6 +3,7 @@
 namespace BE\QueueManagement\Queue\AWSSQS;
 
 use Aws\Exception\AwsException;
+use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerHelper;
@@ -32,19 +33,37 @@ class SqsQueueManager implements QueueManagerInterface
 
     private SqsClientFactoryInterface $sqsClientFactory;
 
+    private S3ClientFactoryInterface $s3ClientFactory;
+
     private SqsClient $sqsClient;
+
+    /**
+     * TODO: make private, this if temp for phpcs
+     */
+    public S3Client $s3Client;
 
     private LoggerInterface $logger;
 
-    private int $consumeLoopIterationsCount; // -1 = no limit
+    /**
+     * -1 = no limit
+     */
+    private int $consumeLoopIterationsCount;
+
+    /**
+     * TODO: make private, this if temp for phpcs
+     */
+    public ?string $s3bucket;
 
 
-    public function __construct(SqsClientFactoryInterface $sqsClientFactory, LoggerInterface $logger, int $consumeLoopIterationsCount = -1)
+    public function __construct(SqsClientFactoryInterface $sqsClientFactory, S3ClientFactoryInterface $s3ClientFactory, LoggerInterface $logger, int $consumeLoopIterationsCount = -1, ?string $s3bucket = null)
     {
         $this->sqsClientFactory = $sqsClientFactory;
         $this->sqsClient = $this->sqsClientFactory->create();
+        $this->s3ClientFactory = $s3ClientFactory;
+        $this->s3Client = $this->s3ClientFactory->create();
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
+        $this->s3bucket = $s3bucket;
     }
 
 
@@ -169,6 +188,7 @@ class SqsQueueManager implements QueueManagerInterface
     private function reconnect(Throwable $exception, string $queueName): void
     {
         $this->sqsClient = $this->sqsClientFactory->create();
+        $this->s3Client = $this->s3ClientFactory->create();
 
         $this->logger->warning(
             'Reconnecting: ' . $exception->getMessage(),

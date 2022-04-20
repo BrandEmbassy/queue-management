@@ -2,24 +2,24 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-use Aws\Sqs\SqsClient;
+use Aws\S3\S3Client;
 use Throwable;
 use function count;
 
 /**
- * Defines SQS client factory.
+ * Defines S3 client factory.
  *
- * Contains creation logic of SqsClient
+ * Contains creation logic of S3Client
  *
  * See AWS config guide to understand in detail how SqsClient can be initiated:
  * https://docs.aws.amazon.com/sdk-for-php/v3/developer-guide/guide_configuration.html
  *
  * @final
  */
-class SqsClientFactory extends AwsClientFactory implements SqsClientFactoryInterface
+class S3ClientFactory extends AwsClientFactory implements S3ClientFactoryInterface
 {
     /**
-     * @param mixed[] $connectionConfig
+     * @param array<mixed> $connectionConfig
      */
     public function __construct(array $connectionConfig)
     {
@@ -27,18 +27,18 @@ class SqsClientFactory extends AwsClientFactory implements SqsClientFactoryInter
     }
 
 
-    public function create(): SqsClient
+    public function create(): S3Client
     {
         $missing = $this->getMissingRequiredElements();
 
         if (count($missing) > 0) {
-            throw SqsClientException::createFromMissingParameters($missing);
+            throw S3ClientException::createFromMissingParameters($missing);
         }
 
         try {
-            return new SqsClient($this->connectionConfig);
+            return new S3Client($this->connectionConfig);
         } catch (Throwable $exception) {
-            throw SqsClientException::createUnableToConnect($exception);
+            throw S3ClientException::createUnableToConnect($exception);
         }
     }
 }

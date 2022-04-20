@@ -2,6 +2,8 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
+use function strlen;
+
 /**
  * Represent SQS Message
  *
@@ -12,6 +14,11 @@ namespace BE\QueueManagement\Queue\AWSSQS;
  */
 class SqsMessage
 {
+    /**
+     * The maximum size that SQS can accept.
+     */
+    private const MAX_SQS_SIZE_KB = 256;
+
     /**
      * @var mixed[]
      */
@@ -76,5 +83,14 @@ class SqsMessage
     public function getMessageId(): string
     {
         return $this->message[SqsMessageFields::MESSAGEID];
+    }
+
+
+    /**
+     * Returns true if message is bigger than 256 KB (AWS SQS message size limit), false otherwise
+     */
+    public static function isTooBig(string $messageBody): bool
+    {
+        return strlen($messageBody) > self::MAX_SQS_SIZE_KB * 1024;
     }
 }
