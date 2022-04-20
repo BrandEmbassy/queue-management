@@ -9,6 +9,7 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 use Throwable;
 use function count;
 
@@ -156,6 +157,18 @@ class SqsQueueManager implements QueueManagerInterface
 
         if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
+        }
+
+        if (SqsMessage::isTooBig($message) && $this->s3bucket !== null) {
+            $key = Uuid::uuid4()->toString() . '.json';
+            $receipt = $this->s3Client->upload(
+                $this->s3bucket,
+                $key,
+                $message,
+            );
+
+            // Swap the message for a pointer to the actual message in S3.
+            $message = (string)(new S3Pointer($this->s3bucket, $key, $receipt));
         }
 
         $sqsMessage = [

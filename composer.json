@@ -20,7 +20,8 @@
         "nette/utils": "^3.0",
         "aws/aws-sdk-php": "^3.209",
         "malkusch/lock": "^2.2",
-        "predis/predis": "^1.1"
+        "predis/predis": "^1.1",
+        "ramsey/uuid": "^4.2"
     },
     "require-dev": {
         "brandembassy/coding-standard": "^8.6",
