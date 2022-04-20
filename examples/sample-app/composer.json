@@ -30,7 +30,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "./../../../queue-management"
+            "url": "./../../../../queue-management"
         }
     ]
 }

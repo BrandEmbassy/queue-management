@@ -4,6 +4,11 @@ parameters:
         version: '2012-11-05'
         http:
             verify: false
+    s3ConnectionParams:
+        region: 'eu-central-1'
+        version: '2006-03-01'
+        http:
+            verify: false
     queue:
         jobs:
             defaultJobLoader: BE\QueueManagement\Jobs\Loading\SimpleJobLoader()
@@ -25,6 +30,9 @@ services:
 
     sqsClientFactory: BE\QueueManagement\Queue\AWSSQS\SqsClientFactory(%sqsConnectionParams%)
     sqsClient: @sqsClientFactory::create
+
+    s3ClientFactory: BE\QueueManagement\Queue\AWSSQS\S3ClientFactory(%s3ConnectionParams%)
+    s3Client: @s3ClientFactory::create
 
     # pusher
     simpleJobLoader: BE\QueueManagement\Jobs\Loading\SimpleJobLoader
