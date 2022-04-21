@@ -6,6 +6,7 @@ use Aws\ResultInterface;
 use function array_map;
 use function count;
 use function is_array;
+use function is_object;
 use function json_encode;
 
 class S3Pointer

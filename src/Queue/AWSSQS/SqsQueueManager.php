@@ -11,7 +11,10 @@ use BE\QueueManagement\Queue\QueueManagerInterface;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
+use function array_push;
+use function assert;
 use function count;
+use function is_array;
 use function json_decode;
 
 /**
@@ -69,6 +72,7 @@ class SqsQueueManager implements QueueManagerInterface
         return $this->consumeLoopIterationsCount;
     }
 
+
     /**
      * @param array<mixed> $awsResultMessages
      *
@@ -86,25 +90,26 @@ class SqsQueueManager implements QueueManagerInterface
         foreach ($awsResultMessages as $message) {
                 $decodedMessageBody = json_decode($message[SqsMessageFields::BODY]);
 
-                if (is_array($decodedMessageBody)) /* message stored in S3 */ {
-                    if (S3Pointer::isS3Pointer($decodedMessageBody)) {
-                        $s3Object = $this->s3Client->getObject([
-                            'Bucket' => $this->s3bucket,
-                            'Key'    => $decodedMessageBody[1]->s3Key,
-                        ]);
-                        $s3ObjectBody=$s3Object->get('Body'); // this is GuzzleHttp\Psr7\Stream
-                        // convert Stream into string content
-                        // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
-                        $content = (string)$s3ObjectBody;
-                        $message[SqsMessageFields::BODY]=$content;
-                    }
+            if (is_array($decodedMessageBody)) { /* message stored in S3 */
+                if (S3Pointer::isS3Pointer($decodedMessageBody)) {
+                    $s3Object = $this->s3Client->getObject([
+                        'Bucket' => $this->s3bucket,
+                        'Key'    => $decodedMessageBody[1]->s3Key,
+                    ]);
+                    $s3ObjectBody = $s3Object->get('Body'); // this is GuzzleHttp\Psr7\Stream
+                    // convert Stream into string content
+                    // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
+                    $content = (string)$s3ObjectBody;
+                    $message[SqsMessageFields::BODY] = $content;
                 }
+            }
 
                 array_push($sqsMessages, new SqsMessage($message, $queueUrl));
         }
 
         return $sqsMessages;
     }
+
 
     /**
      * @param mixed[] $parameters
