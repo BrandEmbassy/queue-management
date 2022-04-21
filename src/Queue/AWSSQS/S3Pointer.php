@@ -3,7 +3,6 @@
 namespace BE\QueueManagement\Queue\AWSSQS;
 
 use Aws\ResultInterface;
-use function array_diff;
 use function array_map;
 use function count;
 use function is_array;
@@ -30,17 +29,17 @@ class S3Pointer
     /**
      * @param ResultInterface<mixed> $s3_result
      */
-    public function __construct(string $bucket_name, string $key, ResultInterface $s3_result)
+    public function __construct(string $bucketName, string $key, ResultInterface $s3Result)
     {
-        $this->bucketName = $bucket_name;
+        $this->bucketName = $bucketName;
         $this->key = $key;
-        $this->s3Result = $s3_result;
+        $this->s3Result = $s3Result;
     }
 
 
     public function __toString(): string
     {
-        $info_keys = ['@metadata', 'ObjectUrl'];
+        $info_keys = ['@metadata', 'ObjectURL'];
         $metadata = array_map([$this->s3Result, 'get'], $info_keys);
         $pointer = ['s3BucketName' => $this->bucketName, 's3Key' => $this->key];
 
@@ -49,16 +48,14 @@ class S3Pointer
 
 
     /**
-     * TODO: fix this! see index TBD
-     *
-     * @param ResultInterface<mixed> $result
+     * @param array<mixed> $messageBody
      */
-    public static function isS3Pointer(ResultInterface $result): bool
+    public static function isS3Pointer(array $messageBody): bool
     {
-      // Check that the second element of the 2 position array has the expected
-      // keys (and no more).
-        return $result->count() === 2 &&
-        is_array($result->get('TBD')) &&
-        count(array_diff($result->get('TBD'), ['s3BucketName', 's3Key'])) === 0;
+        return count($messageBody) === 2 &&
+            is_array($messageBody[0]) &&
+            is_object($messageBody[1]) &&
+            isset($messageBody[1]->s3BucketName) &&
+            isset($messageBody[1]->s3Key);
     }
 }

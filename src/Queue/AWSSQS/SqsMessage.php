@@ -91,6 +91,7 @@ class SqsMessage
      */
     public static function isTooBig(string $messageBody): bool
     {
-        return strlen($messageBody) > self::MAX_SQS_SIZE_KB * 1024;
+        return true;
+        //return strlen($messageBody) > self::MAX_SQS_SIZE_KB * 1024;
     }
 }

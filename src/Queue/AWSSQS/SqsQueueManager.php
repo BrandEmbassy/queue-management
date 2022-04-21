@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 use function count;
+use function json_decode;
 
 /**
  * @final
@@ -38,10 +39,7 @@ class SqsQueueManager implements QueueManagerInterface
 
     private SqsClient $sqsClient;
 
-    /**
-     * TODO: make private, this if temp for phpcs
-     */
-    public S3Client $s3Client;
+    private S3Client $s3Client;
 
     private LoggerInterface $logger;
 
@@ -50,10 +48,7 @@ class SqsQueueManager implements QueueManagerInterface
      */
     private int $consumeLoopIterationsCount;
 
-    /**
-     * TODO: make private, this if temp for phpcs
-     */
-    public ?string $s3bucket;
+    private ?string $s3bucket;
 
 
     public function __construct(SqsClientFactoryInterface $sqsClientFactory, S3ClientFactoryInterface $s3ClientFactory, LoggerInterface $logger, int $consumeLoopIterationsCount = -1, ?string $s3bucket = null)
@@ -64,7 +59,8 @@ class SqsQueueManager implements QueueManagerInterface
         $this->s3Client = $this->s3ClientFactory->create();
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
-        $this->s3bucket = $s3bucket;
+        //$this->s3bucket = $s3bucket; // TODO: need to find out where bucket will be configured, for now hardoding
+        $this->s3bucket = 'dfo-webhooksender-s3';
     }
 
 
@@ -73,6 +69,42 @@ class SqsQueueManager implements QueueManagerInterface
         return $this->consumeLoopIterationsCount;
     }
 
+    /**
+     * @param array<mixed> $awsResultMessages
+     *
+     * @return SqsMessage[]
+     */
+    private function fromAwsResultMessages(array $awsResultMessages, string $queueUrl): array
+    {
+        /**
+         * @var SqsMessage[]
+         */
+        $sqsMessages = [];
+
+        assert($queueUrl !== '');
+
+        foreach ($awsResultMessages as $message) {
+                $decodedMessageBody = json_decode($message[SqsMessageFields::BODY]);
+                if (is_object($decodedMessageBody)) /* message stored in SQS directly */ {
+                    array_push($sqsMessages, new SqsMessage($message, $queueUrl));
+                } else if (is_array($decodedMessageBody)) /* message stored in S3 */ {
+                    if (S3Pointer::isS3Pointer($decodedMessageBody)) {
+                        $s3Object = $this->s3Client->getObject([
+                            'Bucket' => $this->s3bucket,
+                            'Key'    => $decodedMessageBody[1]->s3Key,
+                        ]);
+                        $s3ObjectBody=$s3Object->get('Body'); // this is GuzzleHttp\Psr7\Stream
+                        // convert Stream into string content
+                        // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
+                        $content = (string)$s3ObjectBody;
+                        $message[SqsMessageFields::BODY]=$content;
+                        array_push($sqsMessages, new SqsMessage($message, $queueUrl));
+                    }
+                }
+        }
+
+        return $sqsMessages;
+    }
 
     /**
      * @param mixed[] $parameters
@@ -99,7 +131,7 @@ class SqsQueueManager implements QueueManagerInterface
 
                 $messages = $result->get('Messages');
                 if (count($messages) > 0) {
-                    $sqsMessages = SqsMessageFactory::fromAwsResultMessages($messages, $queueName);
+                    $sqsMessages = $this->fromAwsResultMessages($messages, $queueName);
                     foreach ($sqsMessages as $sqsMessage) {
                         $consumer($sqsMessage);
                     }
