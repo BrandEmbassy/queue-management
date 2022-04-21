@@ -27,7 +27,7 @@ class S3Pointer
 
 
     /**
-     * @param ResultInterface<mixed> $s3_result
+     * @param ResultInterface<mixed> $s3Result
      */
     public function __construct(string $bucketName, string $key, ResultInterface $s3Result)
     {

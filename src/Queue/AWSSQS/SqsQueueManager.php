@@ -59,8 +59,8 @@ class SqsQueueManager implements QueueManagerInterface
         $this->s3Client = $this->s3ClientFactory->create();
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
-        //$this->s3bucket = $s3bucket; // TODO: need to find out where bucket will be configured, for now hardoding
-        $this->s3bucket = 'dfo-webhooksender-s3';
+        $this->s3bucket = $s3bucket;
+        $this->s3bucket = 'dfo-webhooksender-s3';// TODO: need to find out where bucket will be configured, for now hard coding
     }
 
 
