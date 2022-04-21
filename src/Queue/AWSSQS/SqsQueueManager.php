@@ -74,7 +74,7 @@ class SqsQueueManager implements QueueManagerInterface
      *
      * @return SqsMessage[]
      */
-    private function fromAwsResultMessages(array $awsResultMessages, string $queueUrl): array
+    public function fromAwsResultMessages(array $awsResultMessages, string $queueUrl): array
     {
         /**
          * @var SqsMessage[]
@@ -85,9 +85,8 @@ class SqsQueueManager implements QueueManagerInterface
 
         foreach ($awsResultMessages as $message) {
                 $decodedMessageBody = json_decode($message[SqsMessageFields::BODY]);
-                if (is_object($decodedMessageBody)) /* message stored in SQS directly */ {
-                    array_push($sqsMessages, new SqsMessage($message, $queueUrl));
-                } else if (is_array($decodedMessageBody)) /* message stored in S3 */ {
+
+                if (is_array($decodedMessageBody)) /* message stored in S3 */ {
                     if (S3Pointer::isS3Pointer($decodedMessageBody)) {
                         $s3Object = $this->s3Client->getObject([
                             'Bucket' => $this->s3bucket,
@@ -98,9 +97,10 @@ class SqsQueueManager implements QueueManagerInterface
                         // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
                         $content = (string)$s3ObjectBody;
                         $message[SqsMessageFields::BODY]=$content;
-                        array_push($sqsMessages, new SqsMessage($message, $queueUrl));
                     }
                 }
+
+                array_push($sqsMessages, new SqsMessage($message, $queueUrl));
         }
 
         return $sqsMessages;
