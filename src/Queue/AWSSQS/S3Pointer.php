@@ -59,4 +59,30 @@ class S3Pointer
             isset($messageBody[1]->s3BucketName) &&
             isset($messageBody[1]->s3Key);
     }
+
+
+    /**
+     * @param array<mixed> $messageBody
+     */
+    public static function getBucketNameFromValidS3Pointer(array $messageBody): string
+    {
+        if (self::isS3Pointer($messageBody)) {
+            return $messageBody[1]->s3BucketName;
+        }
+
+        return '';
+    }
+
+
+    /**
+     * @param array<mixed> $messageBody
+     */
+    public static function getS3KeyFromValidS3Pointer(array $messageBody): string
+    {
+        if (self::isS3Pointer($messageBody)) {
+            return $messageBody[1]->s3Key;
+        }
+
+        return '';
+    }
 }

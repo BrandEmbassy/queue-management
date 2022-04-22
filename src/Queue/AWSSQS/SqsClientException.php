@@ -35,4 +35,12 @@ class SqsClientException extends RuntimeException
             sprintf('Invalid DelaySeconds specified: (%d). Value must be integer from 0 to 900 seconds.', $delay),
         );
     }
+
+
+    public static function createS3BucketNameNotSpecified(string $queueName): self
+    {
+        return new self(
+            sprintf('S3 bucket name for messages > 256 KB not specified for queue %s', $queueName),
+        );
+    }
 }

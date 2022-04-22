@@ -24,6 +24,7 @@ class JobDefinitionFactory implements JobDefinitionFactoryInterface
             $jobName,
             $jobDefinition[self::JOB_CLASS],
             $jobDefinition[self::QUEUE_NAME],
+            $jobDefinition[self::S3_BUCKET_NAME] ?? null,
             $jobDefinition[self::MAX_ATTEMPTS] ?? null,
             $jobDefinition[self::JOB_LOADER] ?? $this->defaultJobLoader,
             $jobDefinition[self::JOB_DELAY_RULE],

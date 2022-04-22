@@ -52,10 +52,8 @@ class SqsQueueManager implements QueueManagerInterface
      */
     private int $consumeLoopIterationsCount;
 
-    private ?string $s3bucket;
 
-
-    public function __construct(SqsClientFactoryInterface $sqsClientFactory, S3ClientFactoryInterface $s3ClientFactory, LoggerInterface $logger, int $consumeLoopIterationsCount = -1, ?string $s3bucket = null)
+    public function __construct(SqsClientFactoryInterface $sqsClientFactory, S3ClientFactoryInterface $s3ClientFactory, LoggerInterface $logger, int $consumeLoopIterationsCount = -1)
     {
         $this->sqsClientFactory = $sqsClientFactory;
         $this->sqsClient = $this->sqsClientFactory->create();
@@ -63,7 +61,6 @@ class SqsQueueManager implements QueueManagerInterface
         $this->s3Client = $this->s3ClientFactory->create();
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
-        $this->s3bucket = $s3bucket;
     }
 
 
@@ -92,16 +89,19 @@ class SqsQueueManager implements QueueManagerInterface
 
             if (is_array($decodedMessageBody)) { /* message stored in S3 */
                 if (S3Pointer::isS3Pointer($decodedMessageBody)) {
+                    $bucketName = S3Pointer::getBucketNameFromValidS3Pointer($decodedMessageBody);
+                    $s3Key = S3Pointer::getS3KeyFromValidS3Pointer($decodedMessageBody);
+
                     $this->logger->warning(sprintf(
                         'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
                         $message[SqsMessageFields::MESSAGEID],
-                        $this->s3bucket,
-                        $decodedMessageBody[1]->s3Key,
+                        $bucketName,
+                        $s3Key,
                     ));
 
                     $s3Object = $this->s3Client->getObject([
-                        'Bucket' => $this->s3bucket,
-                        'Key'    => $decodedMessageBody[1]->s3Key,
+                        'Bucket' => $bucketName,
+                        'Key'    => $s3Key,
                     ]);
                     $s3ObjectBody = $s3Object->get('Body'); // this is GuzzleHttp\Psr7\Stream
                     // convert Stream into string content
@@ -166,7 +166,8 @@ class SqsQueueManager implements QueueManagerInterface
     public function push(JobInterface $job): void
     {
         $queueName = $job->getJobDefinition()->getQueueName();
-        $this->publishMessage($job->toJson(), $queueName);
+        $s3BucketName = $job->getJobDefinition()->getS3BucketName();
+        $this->publishMessage($job->toJson(), $queueName, $s3BucketName);
         LoggerHelper::logJobPushedIntoQueue($job, $queueName, $this->logger);
     }
 
@@ -180,22 +181,23 @@ class SqsQueueManager implements QueueManagerInterface
     public function pushDelayed(JobInterface $job, int $delayInSeconds): void
     {
         $queueName = $job->getJobDefinition()->getQueueName();
+        $s3BucketName = $job->getJobDefinition()->getS3BucketName();
 
         $parameters = [
             self::DELAY_SECONDS => $delayInSeconds,
         ];
 
-        $this->publishMessage($job->toJson(), $queueName, $parameters);
+        $this->publishMessage($job->toJson(), $queueName, $s3BucketName, $parameters);
     }
 
 
     /**
-     * @param mixed[] $properties
+     * @param array<mixed> $properties
      *
      * @throws AwsException
      * @throws SqsClientException
      */
-    private function publishMessage(string $message, string $queueName, array $properties = []): void
+    private function publishMessage(string $message, string $queueName, ?string $s3BucketName, array $properties = []): void
     {
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
@@ -203,16 +205,19 @@ class SqsQueueManager implements QueueManagerInterface
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
-        if (SqsMessage::isTooBig($message) && $this->s3bucket !== null) {
+        if (SqsMessage::isTooBig($message)) {
+            if (!isset($s3BucketName)) {
+                throw SqsClientException::createS3BucketNameNotSpecified($queueName);
+            }
             $key = Uuid::uuid4()->toString() . '.json';
             $receipt = $this->s3Client->upload(
-                $this->s3bucket,
+                $s3BucketName,
                 $key,
                 $message,
             );
 
             // Swap the message for a pointer to the actual message in S3.
-            $message = (string)(new S3Pointer($this->s3bucket, $key, $receipt));
+            $message = (string)(new S3Pointer($s3BucketName, $key, $receipt));
         }
 
         $sqsMessage = [

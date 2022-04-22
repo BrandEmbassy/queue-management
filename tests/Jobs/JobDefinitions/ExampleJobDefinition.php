@@ -15,6 +15,7 @@ use Tests\BE\QueueManagement\Jobs\ExampleJob;
 class ExampleJobDefinition implements JobDefinitionInterface
 {
     public const QUEUE_NAME = 'exampleJobQueue';
+    public const S3_BUCKET_NAME = 'exampleJobS3Bucket';
     public const MAX_ATTEMPTS = 3;
 
     private ?JobLoaderInterface $jobLoader = null;
@@ -83,6 +84,12 @@ class ExampleJobDefinition implements JobDefinitionInterface
     public function getQueueName(): string
     {
         return self::QUEUE_NAME;
+    }
+
+
+    public function getS3BucketName(): ?string
+    {
+        return null;
     }
 
 

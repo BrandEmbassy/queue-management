@@ -12,6 +12,8 @@ class JobDefinition implements JobDefinitionInterface
 
     private string $queueName;
 
+    private ?string $s3BucketName;
+
     private ?int $maxAttempts;
 
     private JobLoaderInterface $jobLoader;
@@ -27,6 +29,7 @@ class JobDefinition implements JobDefinitionInterface
         string $jobName,
         string $jobClass,
         string $queueName,
+        ?string $s3BucketName,
         ?int $maxAttempts,
         JobLoaderInterface $jobLoader,
         DelayRuleInterface $delayRule,
@@ -35,6 +38,7 @@ class JobDefinition implements JobDefinitionInterface
         $this->jobName = $jobName;
         $this->jobClass = $jobClass;
         $this->queueName = $queueName;
+        $this->s3BucketName = $s3BucketName;
         $this->maxAttempts = $maxAttempts;
         $this->jobLoader = $jobLoader;
         $this->delayRule = $delayRule;
@@ -57,6 +61,12 @@ class JobDefinition implements JobDefinitionInterface
     public function getQueueName(): string
     {
         return $this->queueName;
+    }
+
+
+    public function getS3BucketName(): ?string
+    {
+        return $this->s3BucketName;
     }
 
 
