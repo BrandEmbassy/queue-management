@@ -327,7 +327,7 @@ class SqsQueueManagerTest extends TestCase
 
     private function createQueueManager(): SqsQueueManager
     {
-        return new SqsQueueManager($this->sqsClientFactoryMock, $this->s3ClientFactoryMock, $this->loggerMock, 1);
+        return new SqsQueueManager($this->sqsClientFactoryMock, $this->s3ClientFactoryMock, $this->loggerMock, 1, 'dfo-webhooksender-s3');
     }
 
 
