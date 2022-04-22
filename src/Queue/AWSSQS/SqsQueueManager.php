@@ -16,6 +16,7 @@ use function assert;
 use function count;
 use function is_array;
 use function json_decode;
+use function sprintf;
 
 /**
  * @final
@@ -92,6 +93,13 @@ class SqsQueueManager implements QueueManagerInterface
 
             if (is_array($decodedMessageBody)) { /* message stored in S3 */
                 if (S3Pointer::isS3Pointer($decodedMessageBody)) {
+                    $this->logger->warning(sprintf(
+                        'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
+                        $message[SqsMessageFields::MESSAGEID],
+                        $this->s3bucket,
+                        $decodedMessageBody[1]->s3Key,
+                    ));
+
                     $s3Object = $this->s3Client->getObject([
                         'Bucket' => $this->s3bucket,
                         'Key'    => $decodedMessageBody[1]->s3Key,

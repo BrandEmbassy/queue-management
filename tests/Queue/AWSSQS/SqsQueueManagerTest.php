@@ -345,13 +345,13 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    public function testFromAwsResultMessages(): void
+    public function testFromAwsResultMessagesDownloadingFromS3(): void
     {
         $queueUrl = 'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue';
         $messages = [
             0 => [
                 'MessageId' => '96819875-6e43-4a14-9652-6b5d239f5e1b',
-                'ReceiptHandle' => 'AQEBzIAiAszGlR5ATxhjbGdRA/cVxGzGheyMUeMFD/T4plZzCE2qS5Qo+vZ6d+6IS8O14rO+MY+hjFBdZ2L5RrEH6jxmtwD9B2Swy6WIHm7dBN7uV199+maaqvYzyqicgyL3VErSX/8UnVJKqCnkBJPFTdetUY7tDqg2ib2pCp5kCcwBrMDPvR0/rrfL2ISQeLbdxZBItvu/9PhYL3nfMxOzyW+R6fXorQxyLrP1S+tn3D2Di+UkI9zGFUlz9MTXs7zTwVm8W3aVLVyhElCZ2nEnxMClxVv2DS4grpz7dl/WLiPj/NHffig38CGFq6Z7UvFAusIlP4McsOTa/Hfy0hZX0Dj5UrOBLtiMsuYmJtvlAqGWyGFgWfjf+rU3Ie1HrqkEOVOIUcI/2UAQhTNU1uQ67w==',
+                'ReceiptHandle' => 'AQEB...',
                 'MD5OfBody' => 'db9b6a326e8c7336d4303d9a4b8f3e11',
                 'Body' => '[[{"statusCode":200,"effectiveUri":"https:\\/\\/dfo-webhooksender-s3.s3.eu-central-1.amazonaws.com\\/de2710e6-56b8-47cc-95fe-5aae916ef2c8.json","headers":{"x-amz-id-2":"2MSq\\/GpTM6k6yPHZJtsmsYBYKLJLmd+OyF2CTsTlLQfZlw02\\/BFCqhdWJnQ+71TbozrsxYk\\/TfQ=","x-amz-request-id":"SMJJ5QJFZ0EACVKD","date":"Thu, 21 Apr 2022 11:07:04 GMT","etag":"\\"eff36c85eeeebeaf8a583bf55776120b\\"","server":"AmazonS3","content-length":"0"},"transferStats":{"http":[[]]}},"https:\\/\\/dfo-webhooksender-s3.s3.eu-central-1.amazonaws.com\\/de2710e6-56b8-47cc-95fe-5aae916ef2c8.json"],{"s3BucketName":"dfo-webhooksender-s3","s3Key":"de2710e6-56b8-47cc-95fe-5aae916ef2c8.json"}]',
                 'Attributes' =>
@@ -377,7 +377,7 @@ class SqsQueueManagerTest extends TestCase
 
         $this->expectSetUpConnection();
 
-        $queueManeger = $this->createQueueManager();
+        $queueManager = $this->createQueueManager();
 
         $this->s3ClientMock->shouldReceive('getObject')
             ->once()
@@ -388,9 +388,62 @@ class SqsQueueManagerTest extends TestCase
             ->with('Body')
             ->andReturn($messageBody);
 
-        $sqsMessages = $queueManeger->fromAwsResultMessages($messages, $queueUrl);
+        $this->loggerMock->shouldReceive('warning')
+            ->with('Message with ID 96819875-6e43-4a14-9652-6b5d239f5e1b will be downloaded from S3 bucket: dfo-webhooksender-s3. Key: de2710e6-56b8-47cc-95fe-5aae916ef2c8.json')
+            ->once();
+
+        $sqsMessages = $queueManager->fromAwsResultMessages($messages, $queueUrl);
 
         Assert::assertTrue(count($sqsMessages) === 1);
         Assert::assertTrue($sqsMessages[0]->getBody() === $messageBody);
+    }
+
+
+    public function testFromAwsResultMessagesNotDownloadingFromS3(): void
+    {
+        $queueUrl = 'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue';
+        $messages = [
+            0 => [
+                'MessageId' => '46e68a1c-5a26-43a6-8a14-533c5f568220',
+                'ReceiptHandle' => 'AQEB...',
+                'MD5OfBody' => '0a7adfb0fdeaafa6dccfd81aa1cd53b1',
+                'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-04-22T09:11:05+00:00","jobParameters":{"foo":"bar"}}',
+                'Attributes' =>
+                    [
+                        'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:SomeRoleSession',
+                        'ApproximateFirstReceiveTimestamp' => '1650618745238',
+                        'ApproximateReceiveCount' => '1',
+                        'SentTimestamp' => '1650618639695',
+                    ],
+                'MD5OfMessageAttributes' => 'e4849a650dbb07b06723f9cf0ebe1f68',
+                'MessageAttributes' =>
+                    [
+                        'QueueUrl' =>
+                            [
+                                'StringValue' => 'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
+                                'DataType' => 'String',
+                            ],
+                    ],
+            ],
+        ];
+
+        $messageBodyExpected = '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-04-22T09:11:05+00:00","jobParameters":{"foo":"bar"}}';
+
+        $this->expectSetUpConnection();
+
+        $queueManager = $this->createQueueManager();
+
+        $this->s3ClientMock->shouldNotReceive('getObject');
+
+        $this->awsResultMock->shouldNotReceive('get');
+
+        $this->loggerMock->shouldNotReceive('warning')
+            ->with('Message with ID 96819875-6e43-4a14-9652-6b5d239f5e1b will be downloaded from S3 bucket: dfo-webhooksender-s3. Key: de2710e6-56b8-47cc-95fe-5aae916ef2c8.json');
+
+        $sqsMessages = $queueManager->fromAwsResultMessages($messages, $queueUrl);
+        $messageBodyReal = $sqsMessages[0]->getBody();
+
+        Assert::assertTrue(count($sqsMessages) === 1);
+        Assert::assertTrue($messageBodyReal === $messageBodyExpected);
     }
 }
