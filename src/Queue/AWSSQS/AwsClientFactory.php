@@ -7,10 +7,10 @@ use function array_key_exists;
 /**
  * Contains technical validation common for all AWS SDK clients (e.g. SqsClient, S3Client, etc.)
  */
-class AwsClientFactory
+abstract class AwsClientFactory
 {
-    public const VERSION = 'version';
-    public const REGION = 'region';
+    private const VERSION = 'version';
+    private const REGION = 'region';
 
     /**
      * @var mixed[]
@@ -39,7 +39,6 @@ class AwsClientFactory
 
         $missing = [];
 
-        /** @var string $requiredKey */
         foreach ($requiredKeys as $requiredKey) {
             if (array_key_exists($requiredKey, $this->connectionConfig)) {
                 continue;

@@ -313,9 +313,9 @@ class SqsQueueManagerTest extends TestCase
     private static function messageCheckOk(array $message, ExampleJob $exampleJob, int $delay): bool
     {
         return $message['MessageBody'] === $exampleJob->toJson()
-            && $message[SqsMessageFields::DELAYSECONDS] === $delay
-            && $message[SqsMessageFields::QUEUEURL] === ExampleJobDefinition::QUEUE_NAME
-            && $message[SqsMessageFields::MESSAGEATTRIBUTES][SqsMessageFields::QUEUEURL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+            && $message[SqsMessageFields::DELAY_SECONDS] === $delay
+            && $message[SqsMessageFields::QUEUE_URL] === ExampleJobDefinition::QUEUE_NAME
+            && $message[SqsMessageFields::MESSAGE_ATTRIBUTES][SqsMessageFields::QUEUE_URL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
     }
 
 

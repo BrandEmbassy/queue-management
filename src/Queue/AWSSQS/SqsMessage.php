@@ -42,7 +42,7 @@ class SqsMessage
      */
     public function getReceiptHandle()
     {
-        return $this->message[SqsMessageFields::RECEIPTHANDLE];
+        return $this->message[SqsMessageFields::RECEIPT_HANDLE];
     }
 
 
@@ -70,7 +70,7 @@ class SqsMessage
      */
     public function getMessageAttributes(): array
     {
-        return $this->message[SqsMessageFields::MESSAGEATTRIBUTES];
+        return $this->message[SqsMessageFields::MESSAGE_ATTRIBUTES];
     }
 
 
@@ -82,7 +82,7 @@ class SqsMessage
 
     public function getMessageId(): string
     {
-        return $this->message[SqsMessageFields::MESSAGEID];
+        return $this->message[SqsMessageFields::MESSAGE_ID];
     }
 
 

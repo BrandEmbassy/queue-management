@@ -7,12 +7,12 @@ namespace BE\QueueManagement\Queue\AWSSQS;
  */
 class SqsMessageFields
 {
-    public const MESSAGEBODY = 'MessageBody'; // for sending only. when receiving message actual attr name is 'Body'
+    public const MESSAGE_BODY = 'MessageBody'; // for sending only. when receiving message actual attr name is 'Body'
     public const BODY = 'Body';
-    public const DELAYSECONDS = 'DelaySeconds'; // for sending only.
-    public const QUEUEURL = 'QueueUrl'; // for sending only.
-    public const MESSAGEATTRIBUTES = 'MessageAttributes'; // for sending only. for reading use ATTRIBUTES
+    public const DELAY_SECONDS = 'DelaySeconds'; // for sending only.
+    public const QUEUE_URL = 'QueueUrl'; // for sending only.
+    public const MESSAGE_ATTRIBUTES = 'MessageAttributes'; // for sending only. for reading use ATTRIBUTES
     public const ATTRIBUTES = 'Attributes';
-    public const RECEIPTHANDLE = 'ReceiptHandle';
-    public const MESSAGEID = 'MessageId';
+    public const RECEIPT_HANDLE = 'ReceiptHandle';
+    public const MESSAGE_ID = 'MessageId';
 }

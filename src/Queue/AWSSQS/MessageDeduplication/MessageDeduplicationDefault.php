@@ -1,7 +1,8 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Queue\AWSSQS;
+namespace BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 
+use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Redis\RedisClient;
 use Exception;
 use malkusch\lock\exception\LockReleaseException;
@@ -51,10 +52,10 @@ class MessageDeduplicationDefault implements MessageDeduplication
     {
         try {
             return $this->mutex->synchronized(function () use ($message): bool {
-                $rk = self::DEDUPLICATION_KEY_PREFIX . $this->queueName . $message->getMessageId();
-                $deduplicationKeyVal = $this->redisClient->get($rk);
+                $key = self::DEDUPLICATION_KEY_PREFIX . $this->queueName . $message->getMessageId();
+                $deduplicationKeyVal = $this->redisClient->get($key);
                 if ($deduplicationKeyVal === null) {
-                    $this->redisClient->setWithTtl($rk, '1', $this->deduplicationWindowSizeInSeconds);
+                    $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds);
 
                     return false;
                 }
@@ -63,8 +64,10 @@ class MessageDeduplicationDefault implements MessageDeduplication
             });
         } catch (LockReleaseException $exception) {
             $codeResult = $exception->getCodeResult();
-            $errorMessage = $exception->getCodeException() !== null ? $exception->getCodeException()->getMessage() : 'not available';
-            $this->logger->warning('Error when releasing lock ' . $errorMessage);
+            $errorMessage = $exception->getCodeException() !== null
+                ? $exception->getCodeException()->getMessage()
+                : 'exception message not available';
+            $this->logger->warning('Error when releasing lock: ' . $errorMessage);
             if ($codeResult !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
                 // -> use sync block return value

@@ -7,9 +7,11 @@ use Predis\Response\Status;
 use Throwable;
 use function gettype;
 use function is_string;
-use function sprintf;
 
 /**
+ * TODO:  extract into a separate package
+ * {@see https://github.com/BrandEmbassy/platform-backend/blob/master/application/src/BE/Database/Redis/RedisClient.php}
+ *
  * @final
  */
 class RedisClient
@@ -33,9 +35,7 @@ class RedisClient
         try {
             $result = $this->client->set($key, $value);
         } catch (Throwable $exception) {
-            $message = sprintf('Unexpected exception during value setting: %s', $exception->getMessage());
-
-            throw new RedisClientException($message, $exception->getCode(), $exception);
+            throw RedisClientException::byAnotherExceptionWhenSettingValue($exception);
         }
 
         $this->assertSavingSucceeded($result);
@@ -53,12 +53,7 @@ class RedisClient
         try {
             $result = $this->client->set($key, $value, 'EX', $timeToLiveSeconds);
         } catch (Throwable $exception) {
-            $message = sprintf(
-                'Unexpected exception during setting of value with time to live: %s',
-                $exception->getMessage(),
-            );
-
-            throw new RedisClientException($message, $exception->getCode(), $exception);
+            throw RedisClientException::byAnotherExceptionWhenSettingValueWithTtl($exception);
         }
 
         $this->assertSavingSucceeded($result);
@@ -73,9 +68,7 @@ class RedisClient
         try {
             $fetchedValue = $this->client->get($key);
         } catch (Throwable $exception) {
-            $message = sprintf('Unexpected exception during value getting: %s', $exception->getMessage());
-
-            throw new RedisClientException($message, $exception->getCode(), $exception);
+            throw RedisClientException::byAnotherExceptionWhenGettingValue($exception);
         }
 
         $this->assertFetchedValueIsValid($fetchedValue);
@@ -92,18 +85,11 @@ class RedisClient
     private function assertSavingSucceeded($result): void
     {
         if (!$result instanceof Status) {
-            $message = sprintf(
-                'Invalid response from Redis client during value setting. Response value: %s',
-                (string)$result,
-            );
-
-            throw new RedisClientException($message);
+            throw RedisClientException::byInvalidResultStatus((string)$result);
         }
 
         if ($result->getPayload() !== self::SAVE_SUCCESS) {
-            $message = sprintf('Saving failed. Response payload value: %s.', $result->getPayload());
-
-            throw new RedisClientException($message);
+            throw RedisClientException::byInvalidSavedStatus($result->getPayload());
         }
     }
 
@@ -118,9 +104,7 @@ class RedisClient
         $isValidValue = $this->checkFetchedValueIsValid($fetchedValue);
 
         if (!$isValidValue) {
-            $message = sprintf('Redis client returned invalid value of type: %s.', gettype($fetchedValue));
-
-            throw new RedisClientException($message);
+            throw RedisClientException::byInvalidReturnValue(gettype($fetchedValue));
         }
     }
 
@@ -131,11 +115,5 @@ class RedisClient
     public function checkFetchedValueIsValid($fetchedValue): bool
     {
         return $fetchedValue === null || is_string($fetchedValue);
-    }
-
-
-    public function getRedisClient(): Client
-    {
-        return $this->client;
     }
 }

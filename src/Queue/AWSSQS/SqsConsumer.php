@@ -11,6 +11,7 @@ use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
+use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -83,8 +84,8 @@ class SqsConsumer implements SqsConsumerInterface
     private function deleteSqsMessage(SqsMessage $message): void
     {
         $this->sqsClient->deleteMessage([
-            SqsMessageFields::QUEUEURL => $message->getQueueUrl(),
-            SqsMessageFields::RECEIPTHANDLE => $message->getReceiptHandle(),
+            SqsMessageFields::QUEUE_URL => $message->getQueueUrl(),
+            SqsMessageFields::RECEIPT_HANDLE => $message->getReceiptHandle(),
         ]);
     }
 

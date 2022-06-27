@@ -9,8 +9,8 @@ use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
-use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
-use BE\QueueManagement\Queue\AWSSQS\MessageDeduplicationDisabled;
+use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
+use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use Mockery;
@@ -57,7 +57,7 @@ class SqsConsumerTest extends TestCase
      */
     private $sqsClientMock;
 
-    private MessageDeduplication $dedupSvc;
+    private MessageDeduplication $messageDeduplicationDisabled;
 
 
     public function setUp(): void
@@ -68,7 +68,7 @@ class SqsConsumerTest extends TestCase
         $this->pushDelayedResolverMock = Mockery::mock(PushDelayedResolver::class);
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
         $this->sqsClientMock = Mockery::mock(SqsClient::class);
-        $this->dedupSvc = new MessageDeduplicationDisabled();
+        $this->messageDeduplicationDisabled = new MessageDeduplicationDisabled();
     }
 
 
@@ -280,7 +280,7 @@ class SqsConsumerTest extends TestCase
             $this->pushDelayedResolverMock,
             $this->jobLoaderMock,
             $sqsClient,
-            $this->dedupSvc,
+            $this->messageDeduplicationDisabled,
         );
     }
 }

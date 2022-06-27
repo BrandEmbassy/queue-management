@@ -9,6 +9,9 @@ use function is_array;
 use function is_object;
 use function json_encode;
 
+/**
+ * @final
+ */
 class S3Pointer
 {
   /**

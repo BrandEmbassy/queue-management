@@ -94,7 +94,7 @@ class SqsQueueManager implements QueueManagerInterface
 
                     $this->logger->warning(sprintf(
                         'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
-                        $message[SqsMessageFields::MESSAGEID],
+                        $message[SqsMessageFields::MESSAGE_ID],
                         $bucketName,
                         $s3Key,
                     ));
@@ -142,7 +142,7 @@ class SqsQueueManager implements QueueManagerInterface
                 ]);
 
                 $messages = $result->get('Messages');
-                if (count($messages) > 0) {
+                if ($messages !== null && count($messages) > 0) {
                     $sqsMessages = $this->fromAwsResultMessages($messages, $queueName);
                     foreach ($sqsMessages as $sqsMessage) {
                         $consumer($sqsMessage);
@@ -221,9 +221,9 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         $sqsMessage = [
-            SqsMessageFields::DELAYSECONDS => $delaySeconds,
-            SqsMessageFields::MESSAGEATTRIBUTES => [
-                SqsMessageFields::QUEUEURL => [
+            SqsMessageFields::DELAY_SECONDS => $delaySeconds,
+            SqsMessageFields::MESSAGE_ATTRIBUTES => [
+                SqsMessageFields::QUEUE_URL => [
                     'DataType' => 'String',
                     // queueName might be handy here if we want to consume
                     // from multiple queues in parallel via promises.
@@ -231,8 +231,8 @@ class SqsQueueManager implements QueueManagerInterface
                     'StringValue' => $queueName,
                 ],
             ],
-            SqsMessageFields::MESSAGEBODY => $message,
-            SqsMessageFields::QUEUEURL => $queueName,
+            SqsMessageFields::MESSAGE_BODY => $message,
+            SqsMessageFields::QUEUE_URL => $queueName,
         ];
 
         try {

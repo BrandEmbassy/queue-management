@@ -1,6 +1,8 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Queue\AWSSQS;
+namespace BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
+
+use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 
 /**
  * If message deduplication is not needed this implementation of deduplication should be used.

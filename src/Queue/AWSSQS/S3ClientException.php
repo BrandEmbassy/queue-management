@@ -7,6 +7,9 @@ use Throwable;
 use function implode;
 use function sprintf;
 
+/**
+ * @final
+ */
 class S3ClientException extends RuntimeException
 {
     public static function createUnableToConnect(Throwable $parentException): self
