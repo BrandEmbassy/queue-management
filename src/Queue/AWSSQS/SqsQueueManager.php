@@ -8,10 +8,10 @@ use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
+use GuzzleHttp\Psr7\Stream;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
-use function array_push;
 use function assert;
 use function count;
 use function is_array;
@@ -29,13 +29,10 @@ class SqsQueueManager implements QueueManagerInterface
      * Valid values: 1 to 10. Default: 1.
      */
     public const MAX_NUMBER_OF_MESSAGES = 'MaxNumberOfMessages';
-
-    public const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
-
-    public const DELAY_SECONDS = 'DelaySeconds';
-
+    private const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
+    private const DELAY_SECONDS = 'DelaySeconds';
     // SQS allows maximum message delay of 15 minutes
-    public const MAX_DELAY_SECONDS = 15 * 60;
+    private const MAX_DELAY_SECONDS = 15 * 60;
 
     private SqsClientFactoryInterface $sqsClientFactory;
 
@@ -53,8 +50,12 @@ class SqsQueueManager implements QueueManagerInterface
     private int $consumeLoopIterationsCount;
 
 
-    public function __construct(SqsClientFactoryInterface $sqsClientFactory, S3ClientFactoryInterface $s3ClientFactory, LoggerInterface $logger, int $consumeLoopIterationsCount = -1)
-    {
+    public function __construct(
+        SqsClientFactoryInterface $sqsClientFactory,
+        S3ClientFactoryInterface $s3ClientFactory,
+        LoggerInterface $logger,
+        int $consumeLoopIterationsCount = -1
+    ) {
         $this->sqsClientFactory = $sqsClientFactory;
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->s3ClientFactory = $s3ClientFactory;
@@ -85,25 +86,29 @@ class SqsQueueManager implements QueueManagerInterface
         assert($queueUrl !== '');
 
         foreach ($awsResultMessages as $message) {
-                $decodedMessageBody = json_decode($message[SqsMessageFields::BODY]);
+            $decodedMessageBody = json_decode($message[SqsMessageFields::BODY]);
 
             if (is_array($decodedMessageBody)) { /* message stored in S3 */
                 if (S3Pointer::isS3Pointer($decodedMessageBody)) {
                     $bucketName = S3Pointer::getBucketNameFromValidS3Pointer($decodedMessageBody);
                     $s3Key = S3Pointer::getS3KeyFromValidS3Pointer($decodedMessageBody);
 
-                    $this->logger->warning(sprintf(
-                        'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
-                        $message[SqsMessageFields::MESSAGE_ID],
-                        $bucketName,
-                        $s3Key,
-                    ));
+                    $this->logger->warning(
+                        sprintf(
+                            'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
+                            $message[SqsMessageFields::MESSAGE_ID],
+                            $bucketName,
+                            $s3Key,
+                        ),
+                    );
 
                     $s3Object = $this->s3Client->getObject([
                         'Bucket' => $bucketName,
-                        'Key'    => $s3Key,
+                        'Key' => $s3Key,
                     ]);
-                    $s3ObjectBody = $s3Object->get('Body'); // this is GuzzleHttp\Psr7\Stream
+                    $s3ObjectBody = $s3Object->get('Body');
+                    assert($s3ObjectBody instanceof Stream);
+
                     // convert Stream into string content
                     // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
                     $content = (string)$s3ObjectBody;
@@ -111,7 +116,7 @@ class SqsQueueManager implements QueueManagerInterface
                 }
             }
 
-                array_push($sqsMessages, new SqsMessage($message, $queueUrl));
+            $sqsMessages[] = new SqsMessage($message, $queueUrl);
         }
 
         return $sqsMessages;
@@ -197,15 +202,19 @@ class SqsQueueManager implements QueueManagerInterface
      * @throws AwsException
      * @throws SqsClientException
      */
-    private function publishMessage(string $message, string $queueName, ?string $s3BucketName, array $properties = []): void
-    {
+    private function publishMessage(
+        string $messageBody,
+        string $queueName,
+        ?string $s3BucketName,
+        array $properties = []
+    ): void {
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
         if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
-        if (SqsMessage::isTooBig($message)) {
+        if (SqsMessage::isTooBig($messageBody)) {
             if (!isset($s3BucketName)) {
                 throw SqsClientException::createS3BucketNameNotSpecified($queueName);
             }
@@ -213,17 +222,17 @@ class SqsQueueManager implements QueueManagerInterface
             $receipt = $this->s3Client->upload(
                 $s3BucketName,
                 $key,
-                $message,
+                $messageBody,
             );
 
             // Swap the message for a pointer to the actual message in S3.
-            $message = (string)(new S3Pointer($s3BucketName, $key, $receipt));
+            $messageBody = (string)(new S3Pointer($s3BucketName, $key, $receipt));
         }
 
-        $sqsMessage = [
-            SqsMessageFields::DELAY_SECONDS => $delaySeconds,
-            SqsMessageFields::MESSAGE_ATTRIBUTES => [
-                SqsMessageFields::QUEUE_URL => [
+        $messageToSend = [
+            SqsSendingMessageFields::DELAY_SECONDS => $delaySeconds,
+            SqsSendingMessageFields::MESSAGE_ATTRIBUTES => [
+                SqsSendingMessageFields::QUEUE_URL => [
                     'DataType' => 'String',
                     // queueName might be handy here if we want to consume
                     // from multiple queues in parallel via promises.
@@ -231,15 +240,15 @@ class SqsQueueManager implements QueueManagerInterface
                     'StringValue' => $queueName,
                 ],
             ],
-            SqsMessageFields::MESSAGE_BODY => $message,
-            SqsMessageFields::QUEUE_URL => $queueName,
+            SqsSendingMessageFields::MESSAGE_BODY => $messageBody,
+            SqsSendingMessageFields::QUEUE_URL => $queueName,
         ];
 
         try {
-            $this->sqsClient->sendMessage($sqsMessage);
+            $this->sqsClient->sendMessage($messageToSend);
         } catch (AwsException $exception) {
             $this->reconnect($exception, $queueName);
-            $this->sqsClient->sendMessage($sqsMessage);
+            $this->sqsClient->sendMessage($messageToSend);
         }
     }
 

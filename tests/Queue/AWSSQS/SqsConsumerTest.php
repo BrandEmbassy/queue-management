@@ -76,21 +76,18 @@ class SqsConsumerTest extends TestCase
     {
         $exampleJob = new ExampleJob();
 
-        $this->jobLoaderMock->shouldReceive('loadJob')
+        $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
-            ->once()
             ->andReturn($exampleJob);
 
-        $this->jobExecutorMock->shouldReceive('execute')
-            ->with($exampleJob)
-            ->once();
+        $this->jobExecutorMock->expects('execute')
+            ->with($exampleJob);
 
-        $this->sqsClientMock->shouldReceive('deleteMessage')
+        $this->sqsClientMock->expects('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
                 'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
-            ])
-            ->once();
+            ]);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
@@ -102,19 +99,17 @@ class SqsConsumerTest extends TestCase
     {
         $unknownJobDefinitionException = UnknownJobDefinitionException::createFromUnknownJobName(ExampleJob::JOB_NAME);
 
-        $this->jobLoaderMock->shouldReceive('loadJob')
+        $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
-            ->once()
             ->andThrow($unknownJobDefinitionException);
 
-        $this->loggerMock->shouldReceive('error')
+        $this->loggerMock->expects('error')
             ->with(
                 'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
                 ['exception' => $unknownJobDefinitionException],
-            )
-            ->once();
+            );
 
-        $this->sqsClientMock->shouldNotReceive('deleteMessage');
+        $this->sqsClientMock->allows('deleteMessage')->never();
 
         $this->expectException(UnknownJobDefinitionException::class);
         $this->expectExceptionMessage('Job definition (exampleJob) not found, maybe you forget to register it');
@@ -129,24 +124,21 @@ class SqsConsumerTest extends TestCase
     {
         $blacklistedJobUuidException = BlacklistedJobUuidException::createFromJobUuid(ExampleJob::UUID);
 
-        $this->jobLoaderMock->shouldReceive('loadJob')
+        $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
-            ->once()
             ->andThrow($blacklistedJobUuidException);
 
-        $this->loggerMock->shouldReceive('warning')
+        $this->loggerMock->expects('warning')
             ->with(
                 'Job removed from queue: Job some-job-uud blacklisted',
                 ['exception' => $blacklistedJobUuidException],
-            )
-            ->once();
+            );
 
-        $this->sqsClientMock->shouldReceive('deleteMessage')
+        $this->sqsClientMock->expects('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
                 'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
-            ])
-            ->once();
+            ]);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
@@ -162,36 +154,31 @@ class SqsConsumerTest extends TestCase
             'Unable to process loaded job',
         );
 
-        $this->jobLoaderMock->shouldReceive('loadJob')
+        $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
-            ->once()
-            ->andReturn($exampleJob);
+            ->andReturns($exampleJob);
 
-        $this->jobExecutorMock->shouldReceive('execute')
+        $this->jobExecutorMock->expects('execute')
             ->with($exampleJob)
-            ->once()
             ->andThrow($unableToProcessLoadedJobException);
 
-        $this->sqsClientMock->shouldReceive('deleteMessage')
+        $this->sqsClientMock->expects('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
                 'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
-            ])
-            ->once();
+            ]);
 
-        $this->loggerMock->shouldReceive('error')
+        $this->loggerMock->expects('error')
             ->with(
                 'Job execution failed [attempts: 1], reason: Unable to process loaded job',
                 [
                     'exception' => $unableToProcessLoadedJobException,
                     'previousException' => null,
                 ],
-            )
-            ->once();
+            );
 
-        $this->pushDelayedResolverMock->shouldReceive('resolve')
-            ->with($exampleJob, $unableToProcessLoadedJobException)
-            ->once();
+        $this->pushDelayedResolverMock->expects('resolve')
+            ->with($exampleJob, $unableToProcessLoadedJobException);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
@@ -204,36 +191,31 @@ class SqsConsumerTest extends TestCase
         $exampleJob = new ExampleJob();
         $exampleWarningOnlyException = ExampleWarningOnlyException::create($exampleJob);
 
-        $this->jobLoaderMock->shouldReceive('loadJob')
+        $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
-            ->once()
-            ->andReturn($exampleJob);
+            ->andReturns($exampleJob);
 
-        $this->jobExecutorMock->shouldReceive('execute')
+        $this->jobExecutorMock->expects('execute')
             ->with($exampleJob)
-            ->once()
             ->andThrow($exampleWarningOnlyException);
 
-        $this->sqsClientMock->shouldReceive('deleteMessage')
+        $this->sqsClientMock->expects('deleteMessage')
             ->with([
                 'QueueUrl' => self::DUMMY_QUEUE_URL ,
                 'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
-            ])
-            ->once();
+            ]);
 
-        $this->loggerMock->shouldReceive('warning')
+        $this->loggerMock->expects('warning')
             ->with(
                 'Job execution failed [attempts: 1], reason: I will be logged as a warning',
                 [
                     'exception' => $exampleWarningOnlyException,
                     'previousException' => null,
                 ],
-            )
-            ->once();
+            );
 
-        $this->pushDelayedResolverMock->shouldReceive('resolve')
-            ->with($exampleJob, $exampleWarningOnlyException)
-            ->once();
+        $this->pushDelayedResolverMock->expects('resolve')
+            ->with($exampleJob, $exampleWarningOnlyException);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
@@ -242,11 +224,11 @@ class SqsConsumerTest extends TestCase
 
 
     /**
-     * @return mixed[]
+     * @return array<string, mixed>
      */
     private function getSqsMessageData(): array
     {
-        $sqsMessageData = [
+        return [
             'MessageAttributes' => [
                 'QueueUrl' => [
                     'DataType' => 'String',
@@ -256,8 +238,6 @@ class SqsConsumerTest extends TestCase
             'Body' => Json::encode(['foo' => 'bar']),
             'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
         ];
-
-        return $sqsMessageData;
     }
 
 
@@ -266,9 +246,7 @@ class SqsConsumerTest extends TestCase
      */
     private function createSqsMessage(array $messageData): SqsMessage
     {
-        $sqsMessage = new SqsMessage($messageData, self::DUMMY_QUEUE_URL);
-
-        return $sqsMessage;
+        return new SqsMessage($messageData, self::DUMMY_QUEUE_URL);
     }
 
 

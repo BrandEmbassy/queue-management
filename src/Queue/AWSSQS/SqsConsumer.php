@@ -54,13 +54,13 @@ class SqsConsumer implements SqsConsumerInterface
         try {
             if ($this->messageDeduplication->isDuplicate($message)) {
                 $this->logger->warning('Duplicate message detected: ' . $message->getBody());
-                $this->deleteSqsMessage($message);
+                $this->deleteMessageFromQueue($message);
 
                 return;
             }
 
             $this->executeJob($message);
-            $this->deleteSqsMessage($message);
+            $this->deleteMessageFromQueue($message);
         } catch (ConsumerFailedExceptionInterface $exception) {
             // do not delete message.
             // After visibility timeout message should be visible to other consumers.
@@ -76,12 +76,12 @@ class SqsConsumer implements SqsConsumerInterface
                 [LoggerContextField::EXCEPTION => $exception],
             );
 
-            $this->deleteSqsMessage($message);
+            $this->deleteMessageFromQueue($message);
         }
     }
 
 
-    private function deleteSqsMessage(SqsMessage $message): void
+    private function deleteMessageFromQueue(SqsMessage $message): void
     {
         $this->sqsClient->deleteMessage([
             SqsMessageFields::QUEUE_URL => $message->getQueueUrl(),

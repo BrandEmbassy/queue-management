@@ -2,6 +2,7 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 
+use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Redis\RedisClient;
 use Exception;
@@ -67,14 +68,24 @@ class MessageDeduplicationDefault implements MessageDeduplication
             $errorMessage = $exception->getCodeException() !== null
                 ? $exception->getCodeException()->getMessage()
                 : 'exception message not available';
-            $this->logger->warning('Error when releasing lock: ' . $errorMessage);
+            $this->logger->warning(
+                'Error when releasing lock: ' . $errorMessage,
+                [
+                    LoggerContextField::EXCEPTION => $exception,
+                ],
+            );
             if ($codeResult !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
                 // -> use sync block return value
                 return $codeResult;
             }
-            // if code result is not known we rather prefer to process message twice
-            // than to discard potentially unprocessed message -> indicate message has been not yet seen
+
+            // we rather prefer to process message twice than to discard potentially unprocessed message
+            $this->logger->warning(
+                'Code result unavailable when releasing lock, ' .
+                'assuming false to indicate the message has not been seen yet.',
+            );
+
             return false;
         }
     }

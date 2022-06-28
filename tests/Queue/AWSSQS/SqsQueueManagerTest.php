@@ -10,8 +10,8 @@ use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessageFields;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
+use BE\QueueManagement\Queue\AWSSQS\SqsSendingMessageFields;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -20,7 +20,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
-use function count;
 
 /**
  * @final
@@ -85,19 +84,17 @@ class SqsQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection();
 
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
-            ->once();
+        $this->loggerMock->expects('info')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob();
 
-        $this->sqsClientMock->shouldReceive('sendMessage')
+        $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
                 ),
-            )
-            ->once();
+            );
 
         $queueManager = $this->createQueueManager();
         $queueManager->push($exampleJob);
@@ -110,13 +107,12 @@ class SqsQueueManagerTest extends TestCase
 
         $exampleJob = $this->createExampleJob();
 
-        $this->sqsClientMock->shouldReceive('sendMessage')
+        $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
                 ),
-            )
-            ->once();
+            );
 
         $queueManager = $this->createQueueManager();
         $queueManager->pushDelayed($exampleJob, 5);
@@ -129,13 +125,12 @@ class SqsQueueManagerTest extends TestCase
 
         $exampleJob = $this->createExampleJob();
 
-        $this->sqsClientMock->shouldReceive('sendMessage')
+        $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
                 ),
-            )
-            ->once();
+            );
 
         $queueManager = $this->createQueueManager();
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
@@ -146,37 +141,33 @@ class SqsQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection(2);
 
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
-            ->once();
+        $this->loggerMock->expects('info')
+            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob();
 
         $awsException = new AwsException('Some nasty error', $this->awsCommandMock);
 
-        $this->sqsClientMock->shouldReceive('sendMessage')
+        $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
                 ),
             )
-            ->once()
             ->andThrow($awsException);
 
-        $this->sqsClientMock->shouldReceive('sendMessage')
+        $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
                 ),
-            )
-            ->once();
+            );
 
-        $this->loggerMock->shouldReceive('warning')
+        $this->loggerMock->expects('warning')
             ->with(
                 'Reconnecting: Some nasty error',
                 Mockery::hasKey('queueName'),
-            )
-            ->once();
+            );
 
         $queueManager = $this->createQueueManager();
         $queueManager->push($exampleJob);
@@ -187,7 +178,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection();
 
-        $expectedCallback = function (SqsMessage $message): void {
+        $expectedCallback = static function (SqsMessage $message): void {
         };
 
         $messages = $this->getSampleSqsMessages();
@@ -197,7 +188,7 @@ class SqsQueueManagerTest extends TestCase
             ->andReturn($messages)
             ->once();
 
-        $this->sqsClientMock->shouldReceive('receiveMessage')
+        $this->sqsClientMock->expects('receiveMessage')
             ->with([
                 'AttributeNames' => ['All'],
                 'MaxNumberOfMessages' => 10,
@@ -205,8 +196,7 @@ class SqsQueueManagerTest extends TestCase
                 'QueueUrl' => self::DUMMY_QUEUE_URL,
                 'WaitTimeSeconds' => 10,
             ])
-            ->andReturn($this->awsResultMock)
-            ->once();
+            ->andReturns($this->awsResultMock);
 
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(
@@ -223,12 +213,12 @@ class SqsQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection(2);
 
-        $expectedCallback = function (SqsMessage $message): void {
+        $expectedCallback = static function (SqsMessage $message): void {
         };
 
         $awsException = new AwsException('Some nasty error', $this->awsCommandMock);
 
-        $this->sqsClientMock->shouldReceive('receiveMessage')
+        $this->sqsClientMock->expects('receiveMessage')
             ->with([
                 'AttributeNames' => ['All'],
                 'MaxNumberOfMessages' => 10,
@@ -236,17 +226,16 @@ class SqsQueueManagerTest extends TestCase
                 'QueueUrl' => self::DUMMY_QUEUE_URL,
                 'WaitTimeSeconds' => 10,
             ])
-            ->once()
             ->andThrow($awsException);
 
-         $messages = $this->getSampleSqsMessages();
+        $messages = $this->getSampleSqsMessages();
 
-         $this->awsResultMock->shouldReceive('get')
+        $this->awsResultMock->shouldReceive('get')
             ->with('Messages')
             ->andReturn($messages)
             ->once();
 
-        $this->sqsClientMock->shouldReceive('receiveMessage')
+        $this->sqsClientMock->expects('receiveMessage')
             ->with([
                 'AttributeNames' => ['All'],
                 'MaxNumberOfMessages' => 10,
@@ -254,16 +243,13 @@ class SqsQueueManagerTest extends TestCase
                 'QueueUrl' => self::DUMMY_QUEUE_URL,
                 'WaitTimeSeconds' => 10,
             ])
-            ->once()
-            ->andReturn($this->awsResultMock);
+            ->andReturns($this->awsResultMock);
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with('AwsException: Some nasty error', ['exception' => $awsException])
-            ->once();
+        $this->loggerMock->expects('warning')
+            ->with('AwsException: Some nasty error', ['exception' => $awsException]);
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with('Reconnecting: Some nasty error', Mockery::hasKey('queueName'))
-            ->once();
+        $this->loggerMock->expects('warning')
+            ->with('Reconnecting: Some nasty error', Mockery::hasKey('queueName'));
 
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(
@@ -281,7 +267,7 @@ class SqsQueueManagerTest extends TestCase
      */
     private function getSampleSqsMessages(): array
     {
-        $messages = [
+        return [
             [
                 'MessageId' => 'c176f71b-ea77-4b0e-af6a-d76246d77057',
                 'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
@@ -302,8 +288,6 @@ class SqsQueueManagerTest extends TestCase
                 ],
             ],
         ];
-
-        return $messages;
     }
 
 
@@ -313,9 +297,9 @@ class SqsQueueManagerTest extends TestCase
     private static function messageCheckOk(array $message, ExampleJob $exampleJob, int $delay): bool
     {
         return $message['MessageBody'] === $exampleJob->toJson()
-            && $message[SqsMessageFields::DELAY_SECONDS] === $delay
-            && $message[SqsMessageFields::QUEUE_URL] === ExampleJobDefinition::QUEUE_NAME
-            && $message[SqsMessageFields::MESSAGE_ATTRIBUTES][SqsMessageFields::QUEUE_URL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+            && $message[SqsSendingMessageFields::DELAY_SECONDS] === $delay
+            && $message[SqsSendingMessageFields::QUEUE_URL] === ExampleJobDefinition::QUEUE_NAME
+            && $message[SqsSendingMessageFields::MESSAGE_ATTRIBUTES][SqsSendingMessageFields::QUEUE_URL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
     }
 
 
@@ -333,15 +317,15 @@ class SqsQueueManagerTest extends TestCase
 
     private function expectSetUpConnection(int $connectionIsCreatedTimes = 1): void
     {
-        $this->sqsClientFactoryMock->shouldReceive('create')
+        $this->sqsClientFactoryMock->expects('create')
             ->withNoArgs()
             ->times($connectionIsCreatedTimes)
-            ->andReturn($this->sqsClientMock);
+            ->andReturns($this->sqsClientMock);
 
-        $this->s3ClientFactoryMock->shouldReceive('create')
+        $this->s3ClientFactoryMock->expects('create')
             ->withNoArgs()
             ->times($connectionIsCreatedTimes)
-            ->andReturn($this->s3ClientMock);
+            ->andReturns($this->s3ClientMock);
     }
 
 
@@ -373,29 +357,29 @@ class SqsQueueManagerTest extends TestCase
             ],
         ];
 
-        $messageBody = '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-04-21T14:05:47+00:00","jobParameters":{"foo":"bar"}}';
+        $expectedMessageBody = '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-04-21T14:05:47+00:00","jobParameters":{"foo":"bar"}}';
 
         $this->expectSetUpConnection();
 
         $queueManager = $this->createQueueManager();
 
-        $this->s3ClientMock->shouldReceive('getObject')
-            ->once()
-            ->andReturn($this->awsResultMock);
+        $this->s3ClientMock->expects('getObject')
+            ->andReturns($this->awsResultMock);
 
         $this->awsResultMock->shouldReceive('get')
             ->once()
             ->with('Body')
-            ->andReturn($messageBody);
+            ->andReturn($expectedMessageBody);
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with('Message with ID 96819875-6e43-4a14-9652-6b5d239f5e1b will be downloaded from S3 bucket: dfo-webhooksender-s3. Key: de2710e6-56b8-47cc-95fe-5aae916ef2c8.json')
-            ->once();
+        $this->loggerMock->expects('warning')
+            ->with(
+                'Message with ID 96819875-6e43-4a14-9652-6b5d239f5e1b will be downloaded from S3 bucket: dfo-webhooksender-s3. Key: de2710e6-56b8-47cc-95fe-5aae916ef2c8.json',
+            );
 
         $sqsMessages = $queueManager->fromAwsResultMessages($messages, $queueUrl);
 
-        Assert::assertTrue(count($sqsMessages) === 1);
-        Assert::assertTrue($sqsMessages[0]->getBody() === $messageBody);
+        Assert::assertCount(1, $sqsMessages);
+        Assert::assertSame($expectedMessageBody, $sqsMessages[0]->getBody());
     }
 
 
@@ -433,17 +417,18 @@ class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager();
 
-        $this->s3ClientMock->shouldNotReceive('getObject');
+        $this->s3ClientMock->allows('getObject')->never();
 
         $this->awsResultMock->shouldNotReceive('get');
 
-        $this->loggerMock->shouldNotReceive('warning')
-            ->with('Message with ID 96819875-6e43-4a14-9652-6b5d239f5e1b will be downloaded from S3 bucket: dfo-webhooksender-s3. Key: de2710e6-56b8-47cc-95fe-5aae916ef2c8.json');
+        $this->loggerMock->allows('warning')
+            ->with(
+                'Message with ID 96819875-6e43-4a14-9652-6b5d239f5e1b will be downloaded from S3 bucket: dfo-webhooksender-s3. Key: de2710e6-56b8-47cc-95fe-5aae916ef2c8.json',
+            )->never();
 
         $sqsMessages = $queueManager->fromAwsResultMessages($messages, $queueUrl);
-        $messageBodyReal = $sqsMessages[0]->getBody();
 
-        Assert::assertTrue(count($sqsMessages) === 1);
-        Assert::assertTrue($messageBodyReal === $messageBodyExpected);
+        Assert::assertCount(1, $sqsMessages);
+        Assert::assertSame($messageBodyExpected, $sqsMessages[0]->getBody());
     }
 }

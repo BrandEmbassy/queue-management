@@ -12,13 +12,33 @@ use function str_pad;
  */
 class SqsMessageTest extends TestCase
 {
-    public function testIsTooBig(): void
+    /**
+     * @dataProvider messageProvider
+     */
+    public function testIsTooBig(bool $expectedIsTooBig, string $message): void
     {
-        $message = 'very small message';
-        $messageThatFitsSoSo = str_pad('very small message', SqsMessage::MAX_SQS_SIZE_KB * 1024);
-        $messageThatAlreadyDoesNotFit = str_pad('very small message', SqsMessage::MAX_SQS_SIZE_KB * 1024 + 1);
-        Assert::assertFalse(SqsMessage::isTooBig($message));
-        Assert::assertFalse(SqsMessage::isTooBig($messageThatFitsSoSo));
-        Assert::assertTrue(SqsMessage::isTooBig($messageThatAlreadyDoesNotFit));
+        Assert::assertSame($expectedIsTooBig, SqsMessage::isTooBig($message));
+    }
+
+
+    /**
+     * @return array<array<string, mixed>>
+     */
+    public function messageProvider(): array
+    {
+        return [
+            [
+                'expectedIsTooBig' => false,
+                'message' => 'very small message',
+            ],
+            [
+                'expectedIsTooBig' => false,
+                'message' => str_pad('very small message', SqsMessage::MAX_SQS_SIZE_KB * 1024),
+            ],
+            [
+                'expectedIsTooBig' => true,
+                'message' => str_pad('very small message', SqsMessage::MAX_SQS_SIZE_KB * 1024 + 1),
+            ],
+        ];
     }
 }
