@@ -1,7 +1,8 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Queue\RabbitMQ;
+namespace BE\QueueManagement\Queue\AWSSQS;
 
+use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
@@ -10,14 +11,13 @@ use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
-use PhpAmqpLib\Channel\AMQPChannel;
-use PhpAmqpLib\Message\AMQPMessage;
+use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use Psr\Log\LoggerInterface;
 
 /**
  * @final
  */
-class RabbitMQConsumer implements RabbitMQConsumerInterface
+class SqsConsumer implements SqsConsumerInterface
 {
     protected LoggerInterface $logger;
 
@@ -27,32 +27,43 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
 
     protected JobLoaderInterface $jobLoader;
 
+    protected SqsClient $sqsClient;
+
+    protected MessageDeduplication $messageDeduplication;
+
 
     public function __construct(
         LoggerInterface $logger,
         JobExecutorInterface $jobExecutor,
         PushDelayedResolver $pushDelayedResolver,
-        JobLoaderInterface $jobLoader
+        JobLoaderInterface $jobLoader,
+        SqsClient $sqsClient,
+        MessageDeduplication $messageDeduplication
     ) {
         $this->logger = $logger;
         $this->pushDelayedResolver = $pushDelayedResolver;
         $this->jobExecutor = $jobExecutor;
         $this->jobLoader = $jobLoader;
+        $this->sqsClient = $sqsClient;
+        $this->messageDeduplication = $messageDeduplication;
     }
 
 
-    public function __invoke(AMQPMessage $message): void
+    public function __invoke(SqsMessage $message): void
     {
-        /** @var AMQPChannel $channel */
-        $channel = $message->delivery_info['channel'];
-
         try {
+            if ($this->messageDeduplication->isDuplicate($message)) {
+                $this->logger->warning('Duplicate message detected: ' . $message->getBody());
+                $this->deleteMessageFromQueue($message);
+
+                return;
+            }
+
             $this->executeJob($message);
-
-            $channel->basic_ack($message->delivery_info['delivery_tag']);
+            $this->deleteMessageFromQueue($message);
         } catch (ConsumerFailedExceptionInterface $exception) {
-            $channel->basic_reject($message->delivery_info['delivery_tag'], true);
-
+            // do not delete message.
+            // After visibility timeout message should be visible to other consumers.
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
                 [LoggerContextField::EXCEPTION => $exception],
@@ -65,12 +76,21 @@ class RabbitMQConsumer implements RabbitMQConsumerInterface
                 [LoggerContextField::EXCEPTION => $exception],
             );
 
-            $channel->basic_nack($message->delivery_info['delivery_tag']);
+            $this->deleteMessageFromQueue($message);
         }
     }
 
 
-    private function executeJob(AMQPMessage $message): void
+    private function deleteMessageFromQueue(SqsMessage $message): void
+    {
+        $this->sqsClient->deleteMessage([
+            SqsMessageFields::QUEUE_URL => $message->getQueueUrl(),
+            SqsMessageFields::RECEIPT_HANDLE => $message->getReceiptHandle(),
+        ]);
+    }
+
+
+    private function executeJob(SqsMessage $message): void
     {
         try {
             $job = $this->jobLoader->loadJob($message->getBody());

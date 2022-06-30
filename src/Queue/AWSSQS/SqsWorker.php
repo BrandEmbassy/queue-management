@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Queue\RabbitMQ;
+namespace BE\QueueManagement\Queue\AWSSQS;
 
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BE\QueueManagement\Queue\WorkerInterface;
@@ -8,14 +8,14 @@ use BE\QueueManagement\Queue\WorkerInterface;
 /**
  * @final
  */
-class RabbitMQWorker implements WorkerInterface
+class SqsWorker implements WorkerInterface
 {
     private QueueManagerInterface $queueManager;
 
-    private RabbitMQConsumerInterface $consumer;
+    private SqsConsumerInterface $consumer;
 
 
-    public function __construct(QueueManagerInterface $queueManager, RabbitMQConsumerInterface $consumer)
+    public function __construct(QueueManagerInterface $queueManager, SqsConsumerInterface $consumer)
     {
         $this->queueManager = $queueManager;
         $this->consumer = $consumer;

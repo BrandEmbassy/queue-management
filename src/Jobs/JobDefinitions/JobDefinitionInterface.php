@@ -17,6 +17,9 @@ interface JobDefinitionInterface
     public function getQueueName(): string;
 
 
+    public function getS3BucketName(): ?string;
+
+
     public function getMaxAttempts(): ?int;
 
 
