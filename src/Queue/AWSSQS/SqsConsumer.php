@@ -53,7 +53,14 @@ class SqsConsumer implements SqsConsumerInterface
     {
         try {
             if ($this->messageDeduplication->isDuplicate($message)) {
-                $this->logger->warning('Duplicate message detected: ' . $message->getBody());
+                $this->logger->warning(
+                    'Duplicate message detected',
+                    [
+                        LoggerContextField::MESSAGE_ID => $message->getMessageId(),
+                        LoggerContextField::MESSAGE_BODY => $message->getBody(),
+                        LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                    ],
+                );
                 $this->deleteMessageFromQueue($message);
 
                 return;
@@ -66,14 +73,24 @@ class SqsConsumer implements SqsConsumerInterface
             // After visibility timeout message should be visible to other consumers.
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
-                [LoggerContextField::EXCEPTION => $exception],
+                [
+                    LoggerContextField::EXCEPTION => (string)$exception,
+                    LoggerContextField::MESSAGE_BODY => $message->getBody(),
+                    LoggerContextField::MESSAGE_ID => $message->getMessageId(),
+                    LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                ],
             );
 
             throw $exception;
         } catch (UnresolvableProcessFailExceptionInterface $exception) {
             $this->logger->warning(
                 'Job removed from queue: ' . $exception->getMessage(),
-                [LoggerContextField::EXCEPTION => $exception],
+                [
+                    LoggerContextField::EXCEPTION => (string)$exception,
+                    LoggerContextField::MESSAGE_BODY => $message->getBody(),
+                    LoggerContextField::MESSAGE_ID => $message->getMessageId(),
+                    LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                ],
             );
 
             $this->deleteMessageFromQueue($message);

@@ -13,7 +13,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
@@ -24,10 +24,7 @@ class JobExecutorTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
-    /**
-     * @var MockInterface&LoggerInterface
-     */
-    private $loggerMock;
+    private TestLogger $loggerMock;
 
     /**
      * @var DateTimeImmutableFactory&MockInterface
@@ -38,7 +35,7 @@ class JobExecutorTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->loggerMock = Mockery::mock(LoggerInterface::class);
+        $this->loggerMock = new TestLogger();
         $this->dateTimeImmutableFactory = Mockery::mock(DateTimeImmutableFactory::class);
     }
 
@@ -49,22 +46,15 @@ class JobExecutorTest extends TestCase
             ->withJobProcessor(new ExampleJobProcessor());
 
         $exampleJob = new ExampleJob($exampleJobDefinition);
-
         $startedAt = new DateTimeImmutable();
-        $executedAt = $startedAt->modify('+5 seconds');
 
         $this->dateTimeImmutableFactory->shouldReceive('getNow')
             ->withNoArgs()
-            ->twice()
-            ->andReturn($startedAt, $executedAt);
+            ->once()
+            ->andReturn($startedAt);
 
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job execution start')
-            ->once();
-
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job execution success [5 sec]', ['executionTime' => 5])
-            ->once();
+        $this->loggerMock->hasInfo('Job execution start');
+        $this->loggerMock->hasInfo('Job execution success');
 
         $jobExecutor = $this->createJobExecutor();
         $jobExecutor->execute($exampleJob);
@@ -95,9 +85,7 @@ class JobExecutorTest extends TestCase
             ->once()
             ->andReturn($startedAt);
 
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job execution start')
-            ->once();
+        $this->loggerMock->hasInfo('Job execution start');
 
         $jobExecutor = $this->createJobExecutor();
 
@@ -132,9 +120,7 @@ class JobExecutorTest extends TestCase
             ->once()
             ->andReturn($startedAt);
 
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job execution start')
-            ->once();
+        $this->loggerMock->hasInfo('Job execution start');
 
         $jobExecutor = $this->createJobExecutor();
 

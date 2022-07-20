@@ -71,7 +71,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
             $this->logger->warning(
                 'Error when releasing lock: ' . $errorMessage,
                 [
-                    LoggerContextField::EXCEPTION => $exception,
+                    LoggerContextField::EXCEPTION => (string)$exception,
                 ],
             );
             if ($codeResult !== null) {
