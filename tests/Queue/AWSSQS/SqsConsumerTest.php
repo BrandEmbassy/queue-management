@@ -18,7 +18,7 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 
@@ -29,13 +29,11 @@ class SqsConsumerTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
-    public const DUMMY_QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
-    public const DUMMY_RECEIPT_HANDLE = '123456777';
+    private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
+    private const RECEIPT_HANDLE = '123456777';
+    private const MESSAGE_ID = 'c176f71b-ea77-4b0e-af6a-d76246d77057';
 
-    /**
-     * @var LoggerInterface&MockInterface
-     */
-    private $loggerMock;
+    private TestLogger $loggerMock;
 
     /**
      * @var JobExecutorInterface&MockInterface
@@ -63,7 +61,7 @@ class SqsConsumerTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->loggerMock = Mockery::mock(LoggerInterface::class);
+        $this->loggerMock = new TestLogger();
         $this->jobExecutorMock = Mockery::mock(JobExecutorInterface::class);
         $this->pushDelayedResolverMock = Mockery::mock(PushDelayedResolver::class);
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
@@ -85,8 +83,8 @@ class SqsConsumerTest extends TestCase
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+                'QueueUrl' => self::QUEUE_URL ,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
@@ -103,11 +101,9 @@ class SqsConsumerTest extends TestCase
             ->with('{"foo":"bar"}')
             ->andThrow($unknownJobDefinitionException);
 
-        $this->loggerMock->expects('error')
-            ->with(
-                'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
-                ['exception' => $unknownJobDefinitionException],
-            );
+        $this->loggerMock->hasError(
+            'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
+        );
 
         $this->sqsClientMock->allows('deleteMessage')->never();
 
@@ -128,16 +124,14 @@ class SqsConsumerTest extends TestCase
             ->with('{"foo":"bar"}')
             ->andThrow($blacklistedJobUuidException);
 
-        $this->loggerMock->expects('warning')
-            ->with(
-                'Job removed from queue: Job some-job-uud blacklisted',
-                ['exception' => $blacklistedJobUuidException],
-            );
+        $this->loggerMock->hasWarning(
+            'Job removed from queue: Job some-job-uud blacklisted',
+        );
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+                'QueueUrl' => self::QUEUE_URL ,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
@@ -164,18 +158,13 @@ class SqsConsumerTest extends TestCase
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+                'QueueUrl' => self::QUEUE_URL ,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
-        $this->loggerMock->expects('error')
-            ->with(
-                'Job execution failed [attempts: 1], reason: Unable to process loaded job',
-                [
-                    'exception' => $unableToProcessLoadedJobException,
-                    'previousException' => null,
-                ],
-            );
+        $this->loggerMock->hasError(
+            'Job execution failed [attempts: 1], reason: Unable to process loaded job',
+        );
 
         $this->pushDelayedResolverMock->expects('resolve')
             ->with($exampleJob, $unableToProcessLoadedJobException);
@@ -201,18 +190,13 @@ class SqsConsumerTest extends TestCase
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::DUMMY_QUEUE_URL ,
-                'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+                'QueueUrl' => self::QUEUE_URL ,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
-        $this->loggerMock->expects('warning')
-            ->with(
-                'Job execution failed [attempts: 1], reason: I will be logged as a warning',
-                [
-                    'exception' => $exampleWarningOnlyException,
-                    'previousException' => null,
-                ],
-            );
+        $this->loggerMock->hasWarning(
+            'Job execution failed [attempts: 1], reason: I will be logged as a warning',
+        );
 
         $this->pushDelayedResolverMock->expects('resolve')
             ->with($exampleJob, $exampleWarningOnlyException);
@@ -229,14 +213,15 @@ class SqsConsumerTest extends TestCase
     private function getSqsMessageData(): array
     {
         return [
+            'MessageId' => self::MESSAGE_ID,
             'MessageAttributes' => [
                 'QueueUrl' => [
                     'DataType' => 'String',
-                    'StringValue' => self::DUMMY_QUEUE_URL,
+                    'StringValue' => self::QUEUE_URL,
                 ],
             ],
             'Body' => Json::encode(['foo' => 'bar']),
-            'ReceiptHandle' => self::DUMMY_RECEIPT_HANDLE,
+            'ReceiptHandle' => self::RECEIPT_HANDLE,
         ];
     }
 
@@ -246,7 +231,7 @@ class SqsConsumerTest extends TestCase
      */
     private function createSqsMessage(array $messageData): SqsMessage
     {
-        return new SqsMessage($messageData, self::DUMMY_QUEUE_URL);
+        return new SqsMessage($messageData, self::QUEUE_URL);
     }
 
 

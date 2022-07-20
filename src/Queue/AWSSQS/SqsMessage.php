@@ -82,7 +82,7 @@ class SqsMessage
 
     public function getMessageId(): string
     {
-        return $this->message[SqsMessageFields::MESSAGE_ID];
+        return $this->message[SqsMessageFields::MESSAGE_ID] ?? '';
     }
 
 

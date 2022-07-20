@@ -6,6 +6,7 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use GuzzleHttp\Psr7\Stream;
@@ -93,7 +94,7 @@ class SqsQueueManager implements QueueManagerInterface
                     $bucketName = S3Pointer::getBucketNameFromValidS3Pointer($decodedMessageBody);
                     $s3Key = S3Pointer::getS3KeyFromValidS3Pointer($decodedMessageBody);
 
-                    $this->logger->warning(
+                    $this->logger->info(
                         sprintf(
                             'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
                             $message[SqsMessageFields::MESSAGE_ID],
@@ -159,7 +160,10 @@ class SqsQueueManager implements QueueManagerInterface
             } catch (AwsException $exception) {
                 $this->logger->warning(
                     'AwsException: ' . $exception->getMessage(),
-                    ['exception' => $exception],
+                    [
+                        LoggerContextField::EXCEPTION => (string)$exception,
+                        LoggerContextField::MESSAGE_QUEUE => $queueName,
+                    ],
                 );
 
                 $this->reconnect($exception, $queueName);
@@ -264,8 +268,8 @@ class SqsQueueManager implements QueueManagerInterface
         $this->logger->warning(
             'Reconnecting: ' . $exception->getMessage(),
             [
-                'queueName' => $queueName,
-                'exception' => $exception->getTraceAsString(),
+                LoggerContextField::MESSAGE_QUEUE => $queueName,
+                LoggerContextField::EXCEPTION => (string)$exception,
             ],
         );
     }

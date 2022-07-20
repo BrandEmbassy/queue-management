@@ -21,7 +21,8 @@
         "aws/aws-sdk-php": "^3.209",
         "malkusch/lock": "^2.2",
         "predis/predis": "^1.1",
-        "ramsey/uuid": "^4.2"
+        "ramsey/uuid": "^4.2",
+        "tracy/tracy": "^2.9"
     },
     "require-dev": {
         "brandembassy/coding-standard": "^8.6",

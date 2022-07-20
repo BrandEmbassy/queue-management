@@ -3,9 +3,12 @@
 namespace BE\QueueManagement\Jobs\Execution;
 
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Logging\LoggerContextField;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use Tracy\Debugger;
+use function round;
 
 class JobExecutor implements JobExecutorInterface
 {
@@ -24,6 +27,7 @@ class JobExecutor implements JobExecutorInterface
     public function execute(JobInterface $job): void
     {
         try {
+            Debugger::timer('job-execution');
             $processor = $job->getJobDefinition()->getJobProcessor();
 
             $startedAt = $this->dateTimeImmutableFactory->getNow();
@@ -34,13 +38,11 @@ class JobExecutor implements JobExecutorInterface
 
             $processor->process($job);
 
-            $executedAt = $this->dateTimeImmutableFactory->getNow();
-
-            $diff = $executedAt->getTimestamp() - $startedAt->getTimestamp();
-
             $this->logger->info(
-                'Job execution success [' . $diff . ' sec]',
-                ['executionTime' => $diff],
+                'Job execution success',
+                [
+                    LoggerContextField::JOB_EXECUTION_TIME => round(Debugger::timer('job-execution') * 1000, 5),
+                ],
             );
         } catch (ConsumerFailedExceptionInterface | UnresolvableProcessFailExceptionInterface $exception) {
             throw $exception;
