@@ -2,7 +2,7 @@
 
 namespace BE\QueueManagement\Redis;
 
-use Predis\Client;
+use Predis\ClientInterface;
 use Predis\Response\Status;
 use Throwable;
 use function gettype;
@@ -18,10 +18,10 @@ class RedisClient
 {
     private const SAVE_SUCCESS = 'OK';
 
-    private Client $client;
+    private ClientInterface $client;
 
 
-    public function __construct(Client $client)
+    public function __construct(ClientInterface $client)
     {
         $this->client = $client;
     }
