@@ -18,14 +18,18 @@ class LoggerHelper
 {
     public static function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception, LoggerInterface $logger): void
     {
+        $job = $exception->getJob();
         $message = sprintf(
             'Job execution failed [attempts: %s], reason: %s',
-            $exception->getJob()->getAttempts(),
+            $job->getAttempts(),
             $exception->getMessage(),
         );
         $context = [
-            LoggerContextField::EXCEPTION => $exception,
-            LoggerContextField::PREVIOUS_EXCEPTION => $exception->getPrevious(),
+            LoggerContextField::EXCEPTION => (string)$exception,
+            LoggerContextField::PREVIOUS_EXCEPTION => (string)$exception->getPrevious(),
+            LoggerContextField::MESSAGE_QUEUE => $job->getJobDefinition()->getQueueName(),
+            LoggerContextField::JOB_NAME => $job->getJobDefinition()->getJobName(),
+            LoggerContextField::JOB_UUID => $job->getUuid(),
         ];
 
         if ($exception instanceof WarningOnlyExceptionInterface) {
@@ -47,6 +51,11 @@ class LoggerHelper
                 $job->getUuid(),
                 $queueName,
             ),
+            [
+                LoggerContextField::MESSAGE_QUEUE => $queueName,
+                LoggerContextField::JOB_NAME => $job->getName(),
+                LoggerContextField::JOB_UUID => $job->getUuid(),
+            ],
         );
     }
 }

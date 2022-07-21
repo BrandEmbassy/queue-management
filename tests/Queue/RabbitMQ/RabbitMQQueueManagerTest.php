@@ -14,7 +14,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Wire\AMQPTable;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
@@ -30,10 +30,7 @@ class RabbitMQQueueManagerTest extends TestCase
      */
     private $connectionFactoryMock;
 
-    /**
-     * @var LoggerInterface&MockInterface
-     */
-    private $loggerMock;
+    private TestLogger $loggerMock;
 
     /**
      * @var MockInterface&AMQPChannel
@@ -50,7 +47,7 @@ class RabbitMQQueueManagerTest extends TestCase
     {
         parent::setUp();
         $this->connectionFactoryMock = Mockery::mock(ConnectionFactory::class);
-        $this->loggerMock = Mockery::mock(LoggerInterface::class);
+        $this->loggerMock = new TestLogger();
         $this->amqpChannelMock = Mockery::mock(AMQPChannel::class);
         $this->amqpStreamConnectionMock = Mockery::mock(AMQPStreamConnection::class);
     }
@@ -60,9 +57,7 @@ class RabbitMQQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection();
 
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
-            ->once();
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob();
 
@@ -143,9 +138,7 @@ class RabbitMQQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection(2, 2);
 
-        $this->loggerMock->shouldReceive('info')
-            ->with('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue')
-            ->once();
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob();
 
@@ -170,12 +163,7 @@ class RabbitMQQueueManagerTest extends TestCase
             )
             ->once();
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with(
-                'Reconnecting: Broken pipe',
-                Mockery::hasKey('queueName'),
-            )
-            ->once();
+        $this->loggerMock->hasWarning('Reconnecting: Broken pipe');
 
         $this->amqpChannelMock->shouldReceive('close')
             ->withNoArgs()
@@ -266,13 +254,9 @@ class RabbitMQQueueManagerTest extends TestCase
             ->withNoArgs()
             ->times(2);
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with('AMQPChannel disconnected: Broken pipe', ['exception' => $brokenPipeException])
-            ->once();
+        $this->loggerMock->hasWarning('AMQPChannel disconnected: Broken pipe');
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with('Reconnecting: Broken pipe', Mockery::hasKey('queueName'))
-            ->once();
+        $this->loggerMock->hasWarning('Reconnecting: Broken pipe');
 
         $queueManager = $this->createQueueManager();
         $queueManager->consumeMessages(

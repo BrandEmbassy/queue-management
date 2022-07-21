@@ -16,7 +16,7 @@ use Nette\Utils\Json;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 
@@ -29,10 +29,7 @@ class RabbitMQConsumerTest extends TestCase
 
     private const AMQP_TAG = 'someAmqpTag';
 
-    /**
-     * @var LoggerInterface&MockInterface
-     */
-    private $loggerMock;
+    private TestLogger $loggerMock;
 
     /**
      * @var JobExecutorInterface&MockInterface
@@ -58,7 +55,7 @@ class RabbitMQConsumerTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->loggerMock = Mockery::mock(LoggerInterface::class);
+        $this->loggerMock = new TestLogger();
         $this->jobExecutorMock = Mockery::mock(JobExecutorInterface::class);
         $this->pushDelayedResolverMock = Mockery::mock(PushDelayedResolver::class);
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
@@ -99,12 +96,9 @@ class RabbitMQConsumerTest extends TestCase
             ->once()
             ->andThrow($unknownJobDefinitionException);
 
-        $this->loggerMock->shouldReceive('error')
-            ->with(
-                'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
-                ['exception' => $unknownJobDefinitionException],
-            )
-            ->once();
+        $this->loggerMock->hasError(
+            'Consumer failed, job requeued: Job definition (exampleJob) not found, maybe you forget to register it',
+        );
 
         $this->amqpChannelMock->shouldReceive('basic_reject')
             ->with(self::AMQP_TAG, true)
@@ -129,12 +123,7 @@ class RabbitMQConsumerTest extends TestCase
             ->once()
             ->andThrow($blacklistedJobUuidException);
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with(
-                'Job removed from queue: Job some-job-uud blacklisted',
-                ['exception' => $blacklistedJobUuidException],
-            )
-            ->once();
+        $this->loggerMock->hasWarning('Job removed from queue: Job some-job-uud blacklisted');
 
         $this->amqpChannelMock->shouldReceive('basic_nack')
             ->with(self::AMQP_TAG)
@@ -169,15 +158,7 @@ class RabbitMQConsumerTest extends TestCase
             ->with(self::AMQP_TAG)
             ->once();
 
-        $this->loggerMock->shouldReceive('error')
-            ->with(
-                'Job execution failed [attempts: 1], reason: Unable to process loaded job',
-                [
-                    'exception' => $unableToProcessLoadedJobException,
-                    'previousException' => null,
-                ],
-            )
-            ->once();
+        $this->loggerMock->hasError('Job execution failed [attempts: 1], reason: Unable to process loaded job');
 
         $this->pushDelayedResolverMock->shouldReceive('resolve')
             ->with($exampleJob, $unableToProcessLoadedJobException)
@@ -209,15 +190,7 @@ class RabbitMQConsumerTest extends TestCase
             ->with(self::AMQP_TAG)
             ->once();
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with(
-                'Job execution failed [attempts: 1], reason: I will be logged as a warning',
-                [
-                    'exception' => $exampleWarningOnlyException,
-                    'previousException' => null,
-                ],
-            )
-            ->once();
+        $this->loggerMock->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning');
 
         $this->pushDelayedResolverMock->shouldReceive('resolve')
             ->with($exampleJob, $exampleWarningOnlyException)
