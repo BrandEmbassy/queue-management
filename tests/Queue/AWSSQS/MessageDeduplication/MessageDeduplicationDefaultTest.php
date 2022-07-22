@@ -20,7 +20,7 @@ class MessageDeduplicationDefaultTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     private const TEST_QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
-    private const QUEUE_NAME = 'test_queue';
+    private const QUEUE_NAME = 'MyQueue1';
     private const MESSAGE_ID = 'c176f71b-ea77-4b0e-af6a-d76246d77057';
     private const TEST_RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
     private const TEST_MESSAGE = [
@@ -42,7 +42,7 @@ class MessageDeduplicationDefaultTest extends TestCase
             ],
         ],
     ];
-    private const EXPECTED_REDIS_KEY = 'AWS_DEDUP_PREFIX_' . self::QUEUE_NAME . self::MESSAGE_ID;
+    private const EXPECTED_REDIS_KEY = 'AWS_DEDUP_PREFIX_' . self::QUEUE_NAME . '_' . self::MESSAGE_ID;
     private const DEFAULT_TTL_VALUE = 300;
 
 
@@ -107,6 +107,6 @@ class MessageDeduplicationDefaultTest extends TestCase
 
     private function creatMessageDeduplicationDefault(RedisClient $redisClient): MessageDeduplicationDefault
     {
-        return new MessageDeduplicationDefault(new NullLogger(), $redisClient, new NoMutex(), self::QUEUE_NAME);
+        return new MessageDeduplicationDefault($redisClient, new NoMutex(), new NullLogger());
     }
 }
