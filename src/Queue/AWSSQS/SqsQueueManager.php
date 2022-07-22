@@ -101,6 +101,10 @@ class SqsQueueManager implements QueueManagerInterface
                             $bucketName,
                             $s3Key,
                         ),
+                        [
+                            LoggerContextField::MESSAGE_QUEUE => $queueUrl,
+                            LoggerContextField::MESSAGE_ID => $message[SqsMessageFields::MESSAGE_ID],
+                        ],
                     );
 
                     $s3Object = $this->s3Client->getObject([

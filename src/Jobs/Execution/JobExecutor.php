@@ -28,13 +28,21 @@ class JobExecutor implements JobExecutorInterface
     {
         try {
             Debugger::timer('job-execution');
-            $processor = $job->getJobDefinition()->getJobProcessor();
+            $jobDefinition = $job->getJobDefinition();
+            $processor = $jobDefinition->getJobProcessor();
 
             $startedAt = $this->dateTimeImmutableFactory->getNow();
 
             $job->executionStarted($startedAt);
 
-            $this->logger->info('Job execution start');
+            $this->logger->info(
+                'Job execution start',
+                [
+                    LoggerContextField::MESSAGE_QUEUE => $jobDefinition->getQueueName(),
+                    LoggerContextField::JOB_NAME => $job->getName(),
+                    LoggerContextField::JOB_UUID => $job->getUuid(),
+                ],
+            );
 
             $processor->process($job);
 
@@ -42,6 +50,9 @@ class JobExecutor implements JobExecutorInterface
                 'Job execution success',
                 [
                     LoggerContextField::JOB_EXECUTION_TIME => round(Debugger::timer('job-execution') * 1000, 5),
+                    LoggerContextField::MESSAGE_QUEUE => $jobDefinition->getQueueName(),
+                    LoggerContextField::JOB_NAME => $job->getName(),
+                    LoggerContextField::JOB_UUID => $job->getUuid(),
                 ],
             );
         } catch (ConsumerFailedExceptionInterface | UnresolvableProcessFailExceptionInterface $exception) {

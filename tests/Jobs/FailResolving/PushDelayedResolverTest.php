@@ -10,7 +10,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
@@ -26,17 +26,14 @@ class PushDelayedResolverTest extends TestCase
      */
     private $queueManagerMock;
 
-    /**
-     * @var MockInterface|LoggerInterface
-     */
-    private $loggerMock;
+    private TestLogger $loggerMock;
 
 
     public function setUp(): void
     {
         parent::setUp();
         $this->queueManagerMock = Mockery::mock(QueueManagerInterface::class);
-        $this->loggerMock = Mockery::mock(LoggerInterface::class);
+        $this->loggerMock = new TestLogger();
     }
 
 
@@ -53,9 +50,7 @@ class PushDelayedResolverTest extends TestCase
             ->with($exampleJob, 5000)
             ->once();
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with('Job requeued [delay: 5.000]')
-            ->once();
+        $this->loggerMock->hasWarning('Job requeued [delay: 5.000]');
 
         $pushDelayedResolver->resolve($exampleJob, new Exception());
     }
@@ -74,9 +69,7 @@ class PushDelayedResolverTest extends TestCase
             ->with($exampleJob, 3500)
             ->once();
 
-        $this->loggerMock->shouldReceive('warning')
-            ->with('Job requeued [delay: 3.500]')
-            ->once();
+        $this->loggerMock->hasWarning('Job requeued [delay: 3.500]');
 
         $pushDelayedResolver->resolve($exampleJob, new Exception());
     }

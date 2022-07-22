@@ -4,6 +4,7 @@ namespace BE\QueueManagement\Jobs\FailResolving;
 
 use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleWithMillisecondsInterface;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -31,7 +32,14 @@ class PushDelayedResolver
 
         $this->queueManager->pushDelayedWithMilliseconds($job, $pushDelayInMilliseconds);
 
-        $this->logger->warning(sprintf('Job requeued [delay: %.3f]', $pushDelayInMilliseconds / 1000));
+        $this->logger->warning(
+            sprintf('Job requeued [delay: %.3f]', $pushDelayInMilliseconds / 1000),
+            [
+                LoggerContextField::JOB_UUID => $job->getUuid(),
+                LoggerContextField::JOB_NAME => $job->getName(),
+                LoggerContextField::MESSAGE_QUEUE => $job->getJobDefinition()->getQueueName(),
+            ],
+        );
     }
 
 
