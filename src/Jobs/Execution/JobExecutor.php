@@ -38,7 +38,7 @@ class JobExecutor implements JobExecutorInterface
             $this->logger->info(
                 'Job execution start',
                 [
-                    LoggerContextField::MESSAGE_QUEUE => $jobDefinition->getQueueName(),
+                    LoggerContextField::JOB_QUEUE_NAME => $jobDefinition->getQueueName(),
                     LoggerContextField::JOB_NAME => $job->getName(),
                     LoggerContextField::JOB_UUID => $job->getUuid(),
                 ],
@@ -50,7 +50,7 @@ class JobExecutor implements JobExecutorInterface
                 'Job execution success',
                 [
                     LoggerContextField::JOB_EXECUTION_TIME => round(Debugger::timer('job-execution') * 1000, 5),
-                    LoggerContextField::MESSAGE_QUEUE => $jobDefinition->getQueueName(),
+                    LoggerContextField::JOB_QUEUE_NAME => $jobDefinition->getQueueName(),
                     LoggerContextField::JOB_NAME => $job->getName(),
                     LoggerContextField::JOB_UUID => $job->getUuid(),
                 ],

@@ -102,7 +102,7 @@ class SqsQueueManager implements QueueManagerInterface
                             $s3Key,
                         ),
                         [
-                            LoggerContextField::MESSAGE_QUEUE => $queueUrl,
+                            LoggerContextField::JOB_QUEUE_NAME => $queueUrl,
                             LoggerContextField::MESSAGE_ID => $message[SqsMessageFields::MESSAGE_ID],
                         ],
                     );
@@ -166,7 +166,7 @@ class SqsQueueManager implements QueueManagerInterface
                     'AwsException: ' . $exception->getMessage(),
                     [
                         LoggerContextField::EXCEPTION => (string)$exception,
-                        LoggerContextField::MESSAGE_QUEUE => $queueName,
+                        LoggerContextField::JOB_QUEUE_NAME => $queueName,
                     ],
                 );
 
@@ -272,7 +272,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->logger->warning(
             'Reconnecting: ' . $exception->getMessage(),
             [
-                LoggerContextField::MESSAGE_QUEUE => $queueName,
+                LoggerContextField::JOB_QUEUE_NAME => $queueName,
                 LoggerContextField::EXCEPTION => (string)$exception,
             ],
         );
