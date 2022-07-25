@@ -78,7 +78,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 'Error when releasing lock: ' . $errorMessage,
                 [
                     LoggerContextField::EXCEPTION => (string)$exception,
-                    LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                    LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                 ],
             );
@@ -93,7 +93,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 'Code result unavailable when releasing lock, ' .
                 'assuming false to indicate the message has not been seen yet.',
                 [
-                    LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                    LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                 ],
             );
@@ -104,7 +104,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 'Message duplication resolving failed',
                 [
                     LoggerContextField::EXCEPTION => (string)$exception,
-                    LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                    LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                 ],
             );
