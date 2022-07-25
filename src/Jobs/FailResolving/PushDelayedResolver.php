@@ -37,7 +37,7 @@ class PushDelayedResolver
             [
                 LoggerContextField::JOB_UUID => $job->getUuid(),
                 LoggerContextField::JOB_NAME => $job->getName(),
-                LoggerContextField::MESSAGE_QUEUE => $job->getJobDefinition()->getQueueName(),
+                LoggerContextField::JOB_QUEUE_NAME => $job->getJobDefinition()->getQueueName(),
             ],
         );
     }

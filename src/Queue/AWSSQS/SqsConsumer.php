@@ -58,7 +58,7 @@ class SqsConsumer implements SqsConsumerInterface
                     [
                         LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                         LoggerContextField::MESSAGE_BODY => $message->getBody(),
-                        LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                        LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                     ],
                 );
                 $this->deleteMessageFromQueue($message);
@@ -77,7 +77,7 @@ class SqsConsumer implements SqsConsumerInterface
                     LoggerContextField::EXCEPTION => (string)$exception,
                     LoggerContextField::MESSAGE_BODY => $message->getBody(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
-                    LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                    LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                 ],
             );
 
@@ -89,7 +89,7 @@ class SqsConsumer implements SqsConsumerInterface
                     LoggerContextField::EXCEPTION => (string)$exception,
                     LoggerContextField::MESSAGE_BODY => $message->getBody(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
-                    LoggerContextField::MESSAGE_QUEUE => $message->getQueueUrl(),
+                    LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                 ],
             );
 
