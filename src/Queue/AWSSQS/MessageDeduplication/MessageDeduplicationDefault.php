@@ -52,6 +52,8 @@ class MessageDeduplicationDefault implements MessageDeduplication
     public function isDuplicate(SqsMessage $message): bool
     {
         try {
+            $this->testClient($message);
+
             return $this->mutex->synchronized(function () use ($message): bool {
                 $key = sprintf(
                     '%s_%s_%s',
@@ -110,6 +112,26 @@ class MessageDeduplicationDefault implements MessageDeduplication
             );
 
             throw $exception;
+        }
+    }
+
+
+    private function testClient(SqsMessage $message): void
+    {
+        $key = sprintf(
+            '%s_%s_%s_test',
+            self::DEDUPLICATION_KEY_PREFIX,
+            $this->getQueueNameFromQueueUrl($message->getQueueUrl()),
+            $message->getMessageId(),
+        );
+
+        $deduplicationKeyVal = $this->redisClient->get($key);
+        $this->logger->debug(
+            sprintf('get value key %s in redis client, value: %s', $key, (string)$deduplicationKeyVal)
+        );
+        if ($deduplicationKeyVal === null) {
+            $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds);
+            $this->logger->debug(sprintf('set key %s in redis client', $key));
         }
     }
 
