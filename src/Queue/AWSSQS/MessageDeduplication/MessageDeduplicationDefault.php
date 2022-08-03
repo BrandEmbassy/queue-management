@@ -52,7 +52,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
     public function isDuplicate(SqsMessage $message): bool
     {
         try {
-            $this->testClient($message);
+            $this->tryClient($message);
 
             return $this->mutex->synchronized(function () use ($message): bool {
                 $key = sprintf(
@@ -116,7 +116,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
     }
 
 
-    private function testClient(SqsMessage $message): void
+    private function tryClient(SqsMessage $message): void
     {
         $key = sprintf(
             '%s_%s_%s_test',
