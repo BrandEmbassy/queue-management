@@ -132,6 +132,10 @@ class MessageDeduplicationDefault implements MessageDeduplication
         if ($deduplicationKeyVal === null) {
             $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds);
             $this->logger->debug(sprintf('set key %s in redis client', $key));
+            $deduplicationKeyVal = $this->redisClient->get($key);
+            $this->logger->debug(
+                sprintf('get value key %s in redis client after setting, value: %s', $key, (string)$deduplicationKeyVal)
+            );
         }
     }
 
