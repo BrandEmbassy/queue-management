@@ -55,6 +55,10 @@ class MessageDeduplicationDefault implements MessageDeduplication
             $this->tryClient($message);
 
             return $this->mutex->synchronized(function () use ($message): bool {
+                $this->logger->debug('synchronize');
+
+                return true;
+                /*
                 $key = sprintf(
                     '%s_%s_%s',
                     self::DEDUPLICATION_KEY_PREFIX,
@@ -69,6 +73,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 }
 
                 return true;
+                */
             });
         } catch (LockReleaseException $exception) {
             $codeResult = $exception->getCodeResult();
