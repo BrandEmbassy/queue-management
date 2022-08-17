@@ -144,7 +144,6 @@ class DefinedDelayRuleTest extends TestCase
             self::JOB_NAME,
             self::JOB_CLASS,
             self::QUEUE_NAME,
-            null,
             self::QUEUE_JOB_MAX_ATTEMPTS,
             Mockery::spy(JobLoaderInterface::class),
             new DefinedDelayRule(

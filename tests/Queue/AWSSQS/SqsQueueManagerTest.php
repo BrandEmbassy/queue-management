@@ -36,6 +36,7 @@ class SqsQueueManagerTest extends TestCase
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
     private const UUID = 'e36f227c-2946-11e8-b467-0ed5f89f718b';
+    private const S3_BUCKET_NAME = 'thisIsS3Bucket';
 
     /**
      * @var SqsClientFactory&MockInterface
@@ -129,7 +130,7 @@ class SqsQueueManagerTest extends TestCase
 
         $this->s3ClientMock->expects('upload')
             ->with(
-                ExampleJobDefinition::S3_BUCKET_NAME,
+                self::S3_BUCKET_NAME,
                 sprintf('%s.json', self::UUID),
                 $exampleJob->toJson(),
             )
@@ -142,7 +143,7 @@ class SqsQueueManagerTest extends TestCase
 
         $messageBody = sprintf(
             '[["thisIsMetadata","thisIsObjectUrl"],{"s3BucketName":"%s","s3Key":"%s.json"}]',
-            ExampleJobDefinition::S3_BUCKET_NAME,
+            self::S3_BUCKET_NAME,
             self::UUID,
         );
 
@@ -363,7 +364,13 @@ class SqsQueueManagerTest extends TestCase
 
     private function createQueueManager(): SqsQueueManager
     {
-        return new SqsQueueManager($this->sqsClientFactoryMock, $this->s3ClientFactoryMock, $this->loggerMock, 1);
+        return new SqsQueueManager(
+            self::S3_BUCKET_NAME,
+            $this->sqsClientFactoryMock,
+            $this->s3ClientFactoryMock,
+            $this->loggerMock,
+            1,
+        );
     }
 
 
