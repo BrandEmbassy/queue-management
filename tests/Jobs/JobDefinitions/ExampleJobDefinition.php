@@ -89,7 +89,7 @@ class ExampleJobDefinition implements JobDefinitionInterface
 
     public function getS3BucketName(): ?string
     {
-        return null;
+        return self::S3_BUCKET_NAME;
     }
 
 

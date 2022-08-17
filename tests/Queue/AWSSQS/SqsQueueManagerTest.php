@@ -18,8 +18,13 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
+use Ramsey\Uuid\Rfc4122\UuidInterface;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidFactory;
+use Ramsey\Uuid\UuidFactoryInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
+use function sprintf;
 
 /**
  * @final
@@ -30,6 +35,7 @@ class SqsQueueManagerTest extends TestCase
 
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
+    private const UUID = 'e36f227c-2946-11e8-b467-0ed5f89f718b';
 
     /**
      * @var SqsClientFactory&MockInterface
@@ -74,6 +80,22 @@ class SqsQueueManagerTest extends TestCase
         $this->s3ClientMock = Mockery::mock(S3Client::class);
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
+
+        $factory = $this->createMock(UuidFactoryInterface::class);
+        $uuidInterface = $this->createMock(UuidInterface::class);
+        $uuidInterface->method('toString')
+            ->willReturn(self::UUID);
+        $factory->method('uuid4')
+            ->willReturn($uuidInterface);
+
+        Uuid::setFactory($factory);
+    }
+
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+        Uuid::setFactory(new UuidFactory());
     }
 
 
@@ -88,7 +110,46 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
+                ),
+            );
+
+        $queueManager = $this->createQueueManager();
+        $queueManager->push($exampleJob);
+    }
+
+
+    public function testPushWithTooBigMessage(): void
+    {
+        $this->expectSetUpConnection();
+
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+
+        $exampleJob = ExampleJob::createTooBigForSqs();
+
+        $this->s3ClientMock->expects('upload')
+            ->with(
+                ExampleJobDefinition::S3_BUCKET_NAME,
+                sprintf('%s.json', self::UUID),
+                $exampleJob->toJson(),
+            )
+            ->andReturn(
+                new Result([
+                    '@metadata' => 'thisIsMetadata',
+                    'ObjectURL' => 'thisIsObjectUrl',
+                ]),
+            );
+
+        $messageBody = sprintf(
+            '[["thisIsMetadata","thisIsObjectUrl"],{"s3BucketName":"%s","s3Key":"%s.json"}]',
+            ExampleJobDefinition::S3_BUCKET_NAME,
+            self::UUID,
+        );
+
+        $this->sqsClientMock->expects('sendMessage')
+            ->with(
+                Mockery::on(
+                    static fn(array $message): bool => self::messageCheckOk($message, $messageBody, 0),
                 ),
             );
 
@@ -106,7 +167,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 5),
                 ),
             );
 
@@ -124,7 +185,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 5),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 5),
                 ),
             );
 
@@ -146,7 +207,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
                 ),
             )
             ->andThrow($awsException);
@@ -154,7 +215,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob, 0),
+                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
                 ),
             );
 
@@ -285,9 +346,9 @@ class SqsQueueManagerTest extends TestCase
     /**
      * @param array<mixed> $message
      */
-    private static function messageCheckOk(array $message, ExampleJob $exampleJob, int $delay): bool
+    private static function messageCheckOk(array $message, string $messageBody, int $delay): bool
     {
-        return $message['MessageBody'] === $exampleJob->toJson()
+        return $message['MessageBody'] === $messageBody
             && $message[SqsSendingMessageFields::DELAY_SECONDS] === $delay
             && $message[SqsSendingMessageFields::QUEUE_URL] === ExampleJobDefinition::QUEUE_NAME
             && $message[SqsSendingMessageFields::MESSAGE_ATTRIBUTES][SqsSendingMessageFields::QUEUE_URL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
