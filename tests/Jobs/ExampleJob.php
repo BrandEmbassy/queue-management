@@ -8,6 +8,7 @@ use BE\QueueManagement\Jobs\SimpleJob;
 use BrandEmbassy\DateTime\DateTimeFromString;
 use Doctrine\Common\Collections\ArrayCollection;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
+use function str_repeat;
 
 /**
  * @final
@@ -30,6 +31,12 @@ class ExampleJob extends SimpleJob
             $jobDefinition ?? ExampleJobDefinition::create(),
             new ArrayCollection([self::PARAMETER_FOO => $bar]),
         );
+    }
+
+
+    public static function createTooBigForSqs(?JobDefinitionInterface $jobDefinition = null): self
+    {
+        return new self($jobDefinition, str_repeat('A', 262144)); // 256KB
     }
 
 

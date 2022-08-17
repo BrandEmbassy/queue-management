@@ -35,6 +35,8 @@ class SqsQueueManager implements QueueManagerInterface
     // SQS allows maximum message delay of 15 minutes
     private const MAX_DELAY_SECONDS = 15 * 60;
 
+    private string $s3BucketName;
+
     private SqsClientFactoryInterface $sqsClientFactory;
 
     private S3ClientFactoryInterface $s3ClientFactory;
@@ -52,11 +54,13 @@ class SqsQueueManager implements QueueManagerInterface
 
 
     public function __construct(
+        string $s3BucketName,
         SqsClientFactoryInterface $sqsClientFactory,
         S3ClientFactoryInterface $s3ClientFactory,
         LoggerInterface $logger,
         int $consumeLoopIterationsCount = -1
     ) {
+        $this->s3BucketName = $s3BucketName;
         $this->sqsClientFactory = $sqsClientFactory;
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->s3ClientFactory = $s3ClientFactory;
@@ -179,8 +183,7 @@ class SqsQueueManager implements QueueManagerInterface
     public function push(JobInterface $job): void
     {
         $queueName = $job->getJobDefinition()->getQueueName();
-        $s3BucketName = $job->getJobDefinition()->getS3BucketName();
-        $this->publishMessage($job->toJson(), $queueName, $s3BucketName);
+        $this->publishMessage($job->toJson(), $queueName);
         LoggerHelper::logJobPushedIntoQueue($job, $queueName, $this->logger);
     }
 
@@ -194,13 +197,12 @@ class SqsQueueManager implements QueueManagerInterface
     public function pushDelayed(JobInterface $job, int $delayInSeconds): void
     {
         $queueName = $job->getJobDefinition()->getQueueName();
-        $s3BucketName = $job->getJobDefinition()->getS3BucketName();
 
         $parameters = [
             self::DELAY_SECONDS => $delayInSeconds,
         ];
 
-        $this->publishMessage($job->toJson(), $queueName, $s3BucketName, $parameters);
+        $this->publishMessage($job->toJson(), $queueName, $parameters);
     }
 
 
@@ -213,7 +215,6 @@ class SqsQueueManager implements QueueManagerInterface
     private function publishMessage(
         string $messageBody,
         string $queueName,
-        ?string $s3BucketName,
         array $properties = []
     ): void {
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
@@ -223,18 +224,15 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         if (SqsMessage::isTooBig($messageBody)) {
-            if (!isset($s3BucketName)) {
-                throw SqsClientException::createS3BucketNameNotSpecified($queueName);
-            }
             $key = Uuid::uuid4()->toString() . '.json';
             $receipt = $this->s3Client->upload(
-                $s3BucketName,
+                $this->s3BucketName,
                 $key,
                 $messageBody,
             );
 
             // Swap the message for a pointer to the actual message in S3.
-            $messageBody = (string)(new S3Pointer($s3BucketName, $key, $receipt));
+            $messageBody = (string)(new S3Pointer($this->s3BucketName, $key, $receipt));
         }
 
         $messageToSend = [

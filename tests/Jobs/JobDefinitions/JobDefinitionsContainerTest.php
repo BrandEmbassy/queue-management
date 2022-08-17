@@ -34,7 +34,6 @@ class JobDefinitionsContainerTest extends TestCase
             self::SIMPLE_JOB_NAME => [
                 JobDefinitionFactoryInterface::JOB_CLASS => SimpleJob::class,
                 JobDefinitionFactoryInterface::QUEUE_NAME => ExampleJobDefinition::QUEUE_NAME,
-                JobDefinitionFactoryInterface::S3_BUCKET_NAME => ExampleJobDefinition::S3_BUCKET_NAME,
                 JobDefinitionFactoryInterface::MAX_ATTEMPTS => null,
                 JobDefinitionFactoryInterface::JOB_PROCESSOR => $exampleJobProcessor,
                 JobDefinitionFactoryInterface::JOB_LOADER => $simpleJobLoader,
