@@ -2,7 +2,6 @@
 
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
-use BE\QueueManagement\Queue\QueueManagerInterface;
 use BE\QueueManagement\Queue\WorkerInterface;
 
 /**
@@ -10,14 +9,14 @@ use BE\QueueManagement\Queue\WorkerInterface;
  */
 class RabbitMQWorker implements WorkerInterface
 {
-    private QueueManagerInterface $queueManager;
+    private RabbitMQQueueManager $rabbitMQQueueManager;
 
     private RabbitMQConsumerInterface $consumer;
 
 
-    public function __construct(QueueManagerInterface $queueManager, RabbitMQConsumerInterface $consumer)
+    public function __construct(RabbitMQQueueManager $rabbitMQQueueManager, RabbitMQConsumerInterface $consumer)
     {
-        $this->queueManager = $queueManager;
+        $this->rabbitMQQueueManager = $rabbitMQQueueManager;
         $this->consumer = $consumer;
     }
 
@@ -27,6 +26,6 @@ class RabbitMQWorker implements WorkerInterface
      */
     public function start(string $queueName, array $parameters = []): void
     {
-        $this->queueManager->consumeMessages($this->consumer, $queueName, $parameters);
+        $this->rabbitMQQueueManager->consumeMessages($this->consumer, $queueName, $parameters);
     }
 }

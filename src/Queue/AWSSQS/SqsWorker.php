@@ -2,7 +2,6 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-use BE\QueueManagement\Queue\QueueManagerInterface;
 use BE\QueueManagement\Queue\WorkerInterface;
 
 /**
@@ -10,14 +9,14 @@ use BE\QueueManagement\Queue\WorkerInterface;
  */
 class SqsWorker implements WorkerInterface
 {
-    private QueueManagerInterface $queueManager;
+    private SqsQueueManager $sqsQueueManager;
 
     private SqsConsumerInterface $consumer;
 
 
-    public function __construct(QueueManagerInterface $queueManager, SqsConsumerInterface $consumer)
+    public function __construct(SqsQueueManager $sqsQueueManager, SqsConsumerInterface $consumer)
     {
-        $this->queueManager = $queueManager;
+        $this->sqsQueueManager = $sqsQueueManager;
         $this->consumer = $consumer;
     }
 
@@ -27,6 +26,6 @@ class SqsWorker implements WorkerInterface
      */
     public function start(string $queueName, array $parameters = []): void
     {
-        $this->queueManager->consumeMessages($this->consumer, $queueName, $parameters);
+        $this->sqsQueueManager->consumeMessages($this->consumer, $queueName, $parameters);
     }
 }
