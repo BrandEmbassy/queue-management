@@ -5,6 +5,7 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Db\DatabaseConnectorInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
@@ -53,6 +54,8 @@ class SqsQueueManager implements QueueManagerInterface
      */
     private int $consumeLoopIterationsCount;
 
+    private DatabaseConnectorInterface $databaseConnector;
+
 
     public function __construct(
         string $s3BucketName,
@@ -60,7 +63,8 @@ class SqsQueueManager implements QueueManagerInterface
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
-        int $consumeLoopIterationsCount = -1
+        int $consumeLoopIterationsCount,
+        DatabaseConnectorInterface $databaseConnector
     ) {
         $this->s3BucketName = $s3BucketName;
         $this->sqsClientFactory = $sqsClientFactory;
@@ -70,6 +74,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->messageKeyGenerator = $messageKeyGenerator;
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
+        $this->databaseConnector = $databaseConnector;
     }
 
 
@@ -149,6 +154,7 @@ class SqsQueueManager implements QueueManagerInterface
         $consumeLoopIterationsCount = $this->getConsumeLoopIterationsCount();
 
         while (($loopIterationsCounter < $consumeLoopIterationsCount) || $consumeLoopIterationsCount === -1) {
+            $this->databaseConnector->reconnect();
             try {
                 $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],

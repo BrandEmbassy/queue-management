@@ -7,6 +7,7 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Db\DatabaseConnector;
 use BE\QueueManagement\Queue\AWSSQS\MessageKeyGeneratorInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
@@ -57,6 +58,11 @@ class SqsQueueManagerTest extends TestCase
     private $s3ClientMock;
 
     /**
+     * @var DatabaseConnector&MockInterface
+     */
+    private $databaseConnector;
+
+    /**
      * @var CommandInterface<mixed>&MockInterface
      */
     private $awsCommandMock;
@@ -80,6 +86,7 @@ class SqsQueueManagerTest extends TestCase
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
         $this->messageKeyGenerator = new TestOnlyMessageKeyGenerator();
+        $this->databaseConnector = Mockery::mock(DatabaseConnector::class);
     }
 
 
@@ -219,6 +226,9 @@ class SqsQueueManagerTest extends TestCase
         };
 
         $messages = $this->getSampleSqsMessages();
+        $this->databaseConnector
+            ->expects('reconnect')
+            ->withNoArgs();
 
         $this->awsResultMock->shouldReceive('get')
             ->with('Messages')
@@ -266,6 +276,11 @@ class SqsQueueManagerTest extends TestCase
             ->andThrow($awsException);
 
         $messages = $this->getSampleSqsMessages();
+
+        $this->databaseConnector
+            ->expects('reconnect')
+            ->twice()
+            ->withNoArgs();
 
         $this->awsResultMock->shouldReceive('get')
             ->with('Messages')
@@ -353,6 +368,7 @@ class SqsQueueManagerTest extends TestCase
             $this->messageKeyGenerator,
             $this->loggerMock,
             1,
+            $this->databaseConnector,
         );
     }
 
