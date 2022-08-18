@@ -1,21 +1,21 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Queue\AWSSQS;
-
-use BE\QueueManagement\Queue\QueueManagerInterface;
-use BE\QueueManagement\Queue\WorkerInterface;
+namespace BE\QueueManagement\Queue;
 
 /**
  * @final
  */
-class SqsWorker implements WorkerInterface
+class QueueWorker implements WorkerInterface
 {
     private QueueManagerInterface $queueManager;
 
-    private SqsConsumerInterface $consumer;
+    /**
+     * @var callable
+     */
+    private $consumer;
 
 
-    public function __construct(QueueManagerInterface $queueManager, SqsConsumerInterface $consumer)
+    public function __construct(QueueManagerInterface $queueManager, callable $consumer)
     {
         $this->queueManager = $queueManager;
         $this->consumer = $consumer;

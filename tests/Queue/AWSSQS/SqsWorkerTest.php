@@ -4,7 +4,7 @@ namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
-use BE\QueueManagement\Queue\AWSSQS\SqsWorker;
+use BE\QueueManagement\Queue\QueueWorker;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -55,8 +55,8 @@ class SqsWorkerTest extends TestCase
     }
 
 
-    private function createSqsWorker(): SqsWorker
+    private function createSqsWorker(): QueueWorker
     {
-        return new SqsWorker($this->sqsQueueManagerMock, $this->sqsConsumerMock);
+        return new QueueWorker($this->sqsQueueManagerMock, $this->sqsConsumerMock);
     }
 }
