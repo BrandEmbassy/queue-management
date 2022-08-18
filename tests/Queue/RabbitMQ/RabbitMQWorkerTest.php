@@ -2,9 +2,9 @@
 
 namespace Tests\BE\QueueManagement\Queue\RabbitMQ;
 
+use BE\QueueManagement\Queue\QueueWorker;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQConsumer;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQQueueManager;
-use BE\QueueManagement\Queue\RabbitMQ\RabbitMQWorker;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -51,8 +51,8 @@ class RabbitMQWorkerTest extends TestCase
     }
 
 
-    private function createRabbitMqWorker(): RabbitMQWorker
+    private function createRabbitMqWorker(): QueueWorker
     {
-        return new RabbitMQWorker($this->rabbitMQQueueManagerMock, $this->rabbitMQConsumerMock);
+        return new QueueWorker($this->rabbitMQQueueManagerMock, $this->rabbitMQConsumerMock);
     }
 }
