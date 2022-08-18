@@ -7,7 +7,7 @@ use Ramsey\Uuid\Uuid;
 /**
  * @final
  */
-class S3MessageKeyGenerator implements S3MessageKeyGeneratorInterface
+class MessageKeyGenerator implements MessageKeyGeneratorInterface
 {
     public function generate(): string
     {

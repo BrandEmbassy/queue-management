@@ -7,8 +7,8 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Queue\AWSSQS\MessageKeyGeneratorInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
-use BE\QueueManagement\Queue\AWSSQS\S3MessageKeyGeneratorInterface;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
@@ -66,7 +66,7 @@ class SqsQueueManagerTest extends TestCase
      */
     private $awsResultMock;
 
-    private S3MessageKeyGeneratorInterface $s3MessageKeyGenerator;
+    private MessageKeyGeneratorInterface $messageKeyGenerator;
 
 
     public function setUp(): void
@@ -79,7 +79,7 @@ class SqsQueueManagerTest extends TestCase
         $this->s3ClientMock = Mockery::mock(S3Client::class);
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
-        $this->s3MessageKeyGenerator = new TestOnlyS3MessageKeyGenerator();
+        $this->messageKeyGenerator = new TestOnlyMessageKeyGenerator();
     }
 
 
@@ -114,7 +114,7 @@ class SqsQueueManagerTest extends TestCase
         $this->s3ClientMock->expects('upload')
             ->with(
                 self::S3_BUCKET_NAME,
-                TestOnlyS3MessageKeyGenerator::S3_KEY,
+                TestOnlyMessageKeyGenerator::S3_KEY,
                 $exampleJob->toJson(),
             )
             ->andReturn(
@@ -350,7 +350,7 @@ class SqsQueueManagerTest extends TestCase
             self::S3_BUCKET_NAME,
             $this->sqsClientFactoryMock,
             $this->s3ClientFactoryMock,
-            $this->s3MessageKeyGenerator,
+            $this->messageKeyGenerator,
             $this->loggerMock,
             1,
         );

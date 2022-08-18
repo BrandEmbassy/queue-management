@@ -2,12 +2,12 @@
 
 namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
-use BE\QueueManagement\Queue\AWSSQS\S3MessageKeyGeneratorInterface;
+use BE\QueueManagement\Queue\AWSSQS\MessageKeyGeneratorInterface;
 
 /**
  * @final
  */
-class TestOnlyS3MessageKeyGenerator implements S3MessageKeyGeneratorInterface
+class TestOnlyMessageKeyGenerator implements MessageKeyGeneratorInterface
 {
     public const S3_KEY = '/sqsQueueJobs/jobUuid.json';
 

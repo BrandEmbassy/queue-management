@@ -40,7 +40,7 @@ class SqsQueueManager implements QueueManagerInterface
 
     private S3ClientFactoryInterface $s3ClientFactory;
 
-    private S3MessageKeyGeneratorInterface $s3MessageKeyGenerator;
+    private MessageKeyGeneratorInterface $messageKeyGenerator;
 
     private SqsClient $sqsClient;
 
@@ -58,7 +58,7 @@ class SqsQueueManager implements QueueManagerInterface
         string $s3BucketName,
         SqsClientFactoryInterface $sqsClientFactory,
         S3ClientFactoryInterface $s3ClientFactory,
-        S3MessageKeyGeneratorInterface $s3MessageKeyGenerator,
+        MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
         int $consumeLoopIterationsCount = -1
     ) {
@@ -67,7 +67,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->s3ClientFactory = $s3ClientFactory;
         $this->s3Client = $this->s3ClientFactory->create();
-        $this->s3MessageKeyGenerator = $s3MessageKeyGenerator;
+        $this->messageKeyGenerator = $messageKeyGenerator;
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
     }
@@ -227,7 +227,7 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         if (SqsMessage::isTooBig($messageBody)) {
-            $key = $this->s3MessageKeyGenerator->generate();
+            $key = $this->messageKeyGenerator->generate();
             $receipt = $this->s3Client->upload(
                 $this->s3BucketName,
                 $key,

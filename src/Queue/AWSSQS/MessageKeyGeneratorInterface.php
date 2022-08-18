@@ -2,7 +2,7 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-interface S3MessageKeyGeneratorInterface
+interface MessageKeyGeneratorInterface
 {
     public function generate(): string;
 }
