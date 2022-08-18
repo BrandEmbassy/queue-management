@@ -11,7 +11,6 @@ use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use GuzzleHttp\Psr7\Stream;
 use Psr\Log\LoggerInterface;
-use Ramsey\Uuid\Uuid;
 use Throwable;
 use function assert;
 use function count;
@@ -41,6 +40,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private S3ClientFactoryInterface $s3ClientFactory;
 
+    private MessageKeyGeneratorInterface $messageKeyGenerator;
+
     private SqsClient $sqsClient;
 
     private S3Client $s3Client;
@@ -57,6 +58,7 @@ class SqsQueueManager implements QueueManagerInterface
         string $s3BucketName,
         SqsClientFactoryInterface $sqsClientFactory,
         S3ClientFactoryInterface $s3ClientFactory,
+        MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
         int $consumeLoopIterationsCount = -1
     ) {
@@ -65,6 +67,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->s3ClientFactory = $s3ClientFactory;
         $this->s3Client = $this->s3ClientFactory->create();
+        $this->messageKeyGenerator = $messageKeyGenerator;
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
     }
@@ -224,7 +227,7 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         if (SqsMessage::isTooBig($messageBody)) {
-            $key = Uuid::uuid4()->toString() . '.json';
+            $key = $this->messageKeyGenerator->generate();
             $receipt = $this->s3Client->upload(
                 $this->s3BucketName,
                 $key,

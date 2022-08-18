@@ -7,6 +7,7 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Queue\AWSSQS\MessageKeyGeneratorInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
@@ -18,10 +19,6 @@ use Mockery\MockInterface;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
-use Ramsey\Uuid\Rfc4122\UuidInterface;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidFactory;
-use Ramsey\Uuid\UuidFactoryInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 use function sprintf;
@@ -35,7 +32,6 @@ class SqsQueueManagerTest extends TestCase
 
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
-    private const UUID = 'e36f227c-2946-11e8-b467-0ed5f89f718b';
     private const S3_BUCKET_NAME = 'thisIsS3Bucket';
 
     /**
@@ -70,6 +66,8 @@ class SqsQueueManagerTest extends TestCase
      */
     private $awsResultMock;
 
+    private MessageKeyGeneratorInterface $messageKeyGenerator;
+
 
     public function setUp(): void
     {
@@ -81,22 +79,7 @@ class SqsQueueManagerTest extends TestCase
         $this->s3ClientMock = Mockery::mock(S3Client::class);
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
-
-        $factory = $this->createMock(UuidFactoryInterface::class);
-        $uuidInterface = $this->createMock(UuidInterface::class);
-        $uuidInterface->method('toString')
-            ->willReturn(self::UUID);
-        $factory->method('uuid4')
-            ->willReturn($uuidInterface);
-
-        Uuid::setFactory($factory);
-    }
-
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-        Uuid::setFactory(new UuidFactory());
+        $this->messageKeyGenerator = new TestOnlyMessageKeyGenerator();
     }
 
 
@@ -131,7 +114,7 @@ class SqsQueueManagerTest extends TestCase
         $this->s3ClientMock->expects('upload')
             ->with(
                 self::S3_BUCKET_NAME,
-                sprintf('%s.json', self::UUID),
+                TestOnlyMessageKeyGenerator::S3_KEY,
                 $exampleJob->toJson(),
             )
             ->andReturn(
@@ -142,9 +125,8 @@ class SqsQueueManagerTest extends TestCase
             );
 
         $messageBody = sprintf(
-            '[["thisIsMetadata","thisIsObjectUrl"],{"s3BucketName":"%s","s3Key":"%s.json"}]',
+            '[["thisIsMetadata","thisIsObjectUrl"],{"s3BucketName":"%s","s3Key":"\/sqsQueueJobs\/jobUuid.json"}]',
             self::S3_BUCKET_NAME,
-            self::UUID,
         );
 
         $this->sqsClientMock->expects('sendMessage')
@@ -368,6 +350,7 @@ class SqsQueueManagerTest extends TestCase
             self::S3_BUCKET_NAME,
             $this->sqsClientFactoryMock,
             $this->s3ClientFactoryMock,
+            $this->messageKeyGenerator,
             $this->loggerMock,
             1,
         );
