@@ -63,7 +63,7 @@ class SqsQueueManager implements QueueManagerInterface
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
-        int $consumeLoopIterationsCount,
+        int $consumeLoopIterationsCount = -1,
         DatabaseConnectorInterface $databaseConnector
     ) {
         $this->s3BucketName = $s3BucketName;
@@ -154,7 +154,6 @@ class SqsQueueManager implements QueueManagerInterface
         $consumeLoopIterationsCount = $this->getConsumeLoopIterationsCount();
 
         while (($loopIterationsCounter < $consumeLoopIterationsCount) || $consumeLoopIterationsCount === -1) {
-            $this->databaseConnector->reconnect();
             try {
                 $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],
@@ -166,6 +165,7 @@ class SqsQueueManager implements QueueManagerInterface
 
                 $messages = $result->get('Messages');
                 if ($messages !== null && count($messages) > 0) {
+                    $this->databaseConnector->reconnect();
                     $sqsMessages = $this->fromAwsResultMessages($messages, $queueName);
                     foreach ($sqsMessages as $sqsMessage) {
                         $consumer($sqsMessage);
