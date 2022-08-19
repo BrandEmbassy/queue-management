@@ -279,7 +279,6 @@ class SqsQueueManagerTest extends TestCase
 
         $this->databaseConnector
             ->expects('reconnect')
-            ->twice()
             ->withNoArgs();
 
         $this->awsResultMock->shouldReceive('get')
@@ -367,8 +366,8 @@ class SqsQueueManagerTest extends TestCase
             $this->s3ClientFactoryMock,
             $this->messageKeyGenerator,
             $this->loggerMock,
-            1,
             $this->databaseConnector,
+            1,
         );
     }
 

@@ -63,8 +63,8 @@ class SqsQueueManager implements QueueManagerInterface
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
-        int $consumeLoopIterationsCount = -1,
-        DatabaseConnectorInterface $databaseConnector
+        DatabaseConnectorInterface $databaseConnector,
+        int $consumeLoopIterationsCount = -1
     ) {
         $this->s3BucketName = $s3BucketName;
         $this->sqsClientFactory = $sqsClientFactory;
