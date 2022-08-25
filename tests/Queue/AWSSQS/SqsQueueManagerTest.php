@@ -333,8 +333,8 @@ class SqsQueueManagerTest extends TestCase
     {
         return $message['MessageBody'] === $messageBody
             && $message[SqsSendingMessageFields::DELAY_SECONDS] === $delay
-            && $message[SqsSendingMessageFields::QUEUE_URL] === ExampleJobDefinition::QUEUE_NAME
-            && $message[SqsSendingMessageFields::MESSAGE_ATTRIBUTES][SqsSendingMessageFields::QUEUE_URL]['StringValue'] === ExampleJobDefinition::QUEUE_NAME;
+            && $message[SqsSendingMessageFields::QUEUE_URL] === self::QUEUE_URL
+            && $message[SqsSendingMessageFields::MESSAGE_ATTRIBUTES][SqsSendingMessageFields::QUEUE_URL]['StringValue'] === self::QUEUE_URL;
     }
 
 
@@ -342,7 +342,7 @@ class SqsQueueManagerTest extends TestCase
     {
         return new ExampleJob(
             ExampleJobDefinition::create()
-                ->withQueueName('https://my-aws-sqs:9324/account-id/' . ExampleJobDefinition::QUEUE_NAME)
+                ->withQueueName(self::QUEUE_URL)
         );
     }
 
