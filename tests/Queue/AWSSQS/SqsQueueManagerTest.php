@@ -83,13 +83,16 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    public function testPush(): void
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testPush(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection();
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
-        $exampleJob = $this->createExampleJob();
+        $exampleJob = $this->createExampleJob($queueName);
 
         $this->sqsClientMock->expects('sendMessage')
             ->with(
@@ -98,12 +101,15 @@ class SqsQueueManagerTest extends TestCase
                 ),
             );
 
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
     }
 
 
-    public function testPushWithTooBigMessage(): void
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testPushWithTooBigMessage(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection();
 
@@ -111,7 +117,7 @@ class SqsQueueManagerTest extends TestCase
 
         $exampleJob = ExampleJob::createTooBigForSqs(
             ExampleJobDefinition::create()
-                ->withQueueName(self::QUEUE_URL),
+                ->withQueueName($queueName),
         );
 
         $this->s3ClientMock->expects('upload')
@@ -139,16 +145,19 @@ class SqsQueueManagerTest extends TestCase
                 ),
             );
 
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
     }
 
 
-    public function testPushDelayed(): void
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testPushDelayed(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection();
 
-        $exampleJob = $this->createExampleJob();
+        $exampleJob = $this->createExampleJob($queueName);
 
         $this->sqsClientMock->expects('sendMessage')
             ->with(
@@ -157,16 +166,19 @@ class SqsQueueManagerTest extends TestCase
                 ),
             );
 
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->pushDelayed($exampleJob, 5);
     }
 
 
-    public function testPushDelayedWithMilliSeconds(): void
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testPushDelayedWithMilliSeconds(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection();
 
-        $exampleJob = $this->createExampleJob();
+        $exampleJob = $this->createExampleJob($queueName);
 
         $this->sqsClientMock->expects('sendMessage')
             ->with(
@@ -175,18 +187,21 @@ class SqsQueueManagerTest extends TestCase
                 ),
             );
 
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
     }
 
 
-    public function testPushWithReconnect(): void
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testPushWithReconnect(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection(2);
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
-        $exampleJob = $this->createExampleJob();
+        $exampleJob = $this->createExampleJob($queueName);
 
         $awsException = new AwsException('Some nasty error', $this->awsCommandMock);
 
@@ -209,12 +224,15 @@ class SqsQueueManagerTest extends TestCase
             'Reconnecting: Some nasty error',
         );
 
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
     }
 
 
-    public function testConsume(): void
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testConsume(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection();
 
@@ -238,10 +256,10 @@ class SqsQueueManagerTest extends TestCase
             ])
             ->andReturns($this->awsResultMock);
 
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->consumeMessages(
             $expectedCallback,
-            self::QUEUE_URL,
+            $queueName,
             [
                 SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
             ],
@@ -249,7 +267,10 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    public function testConsumeWithReconnect(): void
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testConsumeWithReconnect(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection(2);
 
@@ -289,14 +310,32 @@ class SqsQueueManagerTest extends TestCase
 
         $this->loggerMock->hasWarning('Reconnecting: Some nasty error');
 
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->consumeMessages(
             $expectedCallback,
-            self::QUEUE_URL,
+            $queueName,
             [
                 SqsQueueManager::MAX_NUMBER_OF_MESSAGES => 10,
             ],
         );
+    }
+
+
+    /**
+     * @return mixed[]
+     */
+    public function queueNameDataProvider(): array
+    {
+        return [
+            [
+                'queueName' => self::QUEUE_URL,
+                'queueNamePrefix' => '',
+            ],
+            [
+                'queueName' => 'MyQueue1',
+                'queueNamePrefix' => 'https://sqs.eu-central-1.amazonaws.com/583027123456/',
+            ],
+        ];
     }
 
 
@@ -341,16 +380,16 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    private function createExampleJob(): ExampleJob
+    private function createExampleJob(string $queueName): ExampleJob
     {
         return new ExampleJob(
             ExampleJobDefinition::create()
-                ->withQueueName(self::QUEUE_URL),
+                ->withQueueName($queueName),
         );
     }
 
 
-    private function createQueueManager(): SqsQueueManager
+    private function createQueueManager(string $queueNamePrefix = ''): SqsQueueManager
     {
         return new SqsQueueManager(
             self::S3_BUCKET_NAME,
@@ -359,6 +398,7 @@ class SqsQueueManagerTest extends TestCase
             $this->messageKeyGenerator,
             $this->loggerMock,
             1,
+            $queueNamePrefix,
         );
     }
 
