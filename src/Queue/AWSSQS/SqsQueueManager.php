@@ -31,6 +31,8 @@ class SqsQueueManager implements QueueManagerInterface
      * Valid values: 1 to 10. Default: 1.
      */
     public const MAX_NUMBER_OF_MESSAGES = 'MaxNumberOfMessages';
+    public const CONSUME_LOOP_ITERATIONS_NO_LIMIT = -1;
+
     private const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
     private const DELAY_SECONDS = 'DelaySeconds';
     // SQS allows maximum message delay of 15 minutes
@@ -50,9 +52,6 @@ class SqsQueueManager implements QueueManagerInterface
 
     private LoggerInterface $logger;
 
-    /**
-     * -1 = no limit
-     */
     private int $consumeLoopIterationsCount;
 
     private string $queueNamePrefix;
@@ -64,7 +63,7 @@ class SqsQueueManager implements QueueManagerInterface
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
-        int $consumeLoopIterationsCount = -1,
+        int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
         string $queueNamePrefix = ''
     ) {
         $this->s3BucketName = $s3BucketName;
@@ -154,9 +153,9 @@ class SqsQueueManager implements QueueManagerInterface
         $waitTimeSeconds = (int)($parameters[self::WAIT_TIME_SECONDS] ?? 10);
 
         $loopIterationsCounter = 0;
-        $consumeLoopIterationsCount = $this->getConsumeLoopIterationsCount();
+        $isLoopIterationsLimitEnabled = $this->consumeLoopIterationsCount !== self::CONSUME_LOOP_ITERATIONS_NO_LIMIT;
 
-        while (($loopIterationsCounter < $consumeLoopIterationsCount) || $consumeLoopIterationsCount === -1) {
+        while (!$isLoopIterationsLimitEnabled || $loopIterationsCounter < $this->consumeLoopIterationsCount) {
             try {
                 $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],
@@ -173,7 +172,7 @@ class SqsQueueManager implements QueueManagerInterface
                         $consumer($sqsMessage);
                     }
                 }
-                if ($this->consumeLoopIterationsCount !== -1) {
+                if ($isLoopIterationsLimitEnabled) {
                     $loopIterationsCounter++;
                 }
             } catch (AwsException $exception) {
