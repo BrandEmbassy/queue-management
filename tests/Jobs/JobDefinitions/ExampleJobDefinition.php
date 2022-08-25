@@ -23,6 +23,8 @@ class ExampleJobDefinition implements JobDefinitionInterface
 
     private string $jobClass;
 
+    private string $queueName = self::QUEUE_NAME;
+
     private ?DelayRuleInterface $delayRule = null;
 
     private ?JobProcessorInterface $jobProcessor = null;
@@ -38,6 +40,15 @@ class ExampleJobDefinition implements JobDefinitionInterface
     public static function create(string $jobName = ExampleJob::JOB_NAME, string $jobClass = ExampleJob::class): self
     {
         return new self($jobName, $jobClass);
+    }
+
+
+    public function withQueueName(string $queueName): self
+    {
+        $clone = clone $this;
+        $clone->queueName = $queueName;
+
+        return $clone;
     }
 
 
@@ -82,7 +93,7 @@ class ExampleJobDefinition implements JobDefinitionInterface
 
     public function getQueueName(): string
     {
-        return self::QUEUE_NAME;
+        return $this->queueName;
     }
 
 
