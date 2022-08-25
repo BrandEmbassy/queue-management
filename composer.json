@@ -34,8 +34,8 @@
         "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2"
     },
     "scripts": {
-        "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests",
-        "phpcbf": "./vendor/bin/phpcbf --standard=BrandEmbassyCodingStandard src tests",
+        "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests --runtime-set php_version 70400",
+        "phpcbf": "./vendor/bin/phpcbf --standard=BrandEmbassyCodingStandard src tests --runtime-set php_version 70400",
         "phpstan": "./vendor/bin/phpstan analyze -c phpstan.neon src tests --memory-limit=-1",
         "phpunit": "./vendor/bin/phpunit tests --no-coverage",
         "phpunit-cc": "./vendor/bin/phpunit tests"
