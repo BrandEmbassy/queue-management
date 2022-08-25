@@ -340,7 +340,7 @@ class SqsQueueManagerTest extends TestCase
 
     private function createExampleJob(): ExampleJob
     {
-        return new ExampleJob();
+        return new ExampleJob(ExampleJobDefinition::create('https://my-aws-sqs:9324/account-id/' . ExampleJob::JOB_NAME));
     }
 
 
