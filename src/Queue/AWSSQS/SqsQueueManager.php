@@ -303,7 +303,7 @@ class SqsQueueManager implements QueueManagerInterface
 
         if (!Validators::isUrl($prefixedQueueName)) {
             throw new LogicException(
-                'In SQS, queue name is supposed to be a URL. '
+                'In SQS, queue name is supposed to be a URL, "' . $prefixedQueueName . '" provided instead. '
                 . 'A prefix can be used to prepend a common part of the URL to uniquely named queues.',
             );
         }
