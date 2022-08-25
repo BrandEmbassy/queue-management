@@ -10,6 +10,8 @@ use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use GuzzleHttp\Psr7\Stream;
+use LogicException;
+use Nette\Utils\Validators;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use function assert;
@@ -52,6 +54,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private int $consumeLoopIterationsCount;
 
+    private string $queueNamePrefix;
+
 
     public function __construct(
         string $s3BucketName,
@@ -59,7 +63,8 @@ class SqsQueueManager implements QueueManagerInterface
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
-        int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT
+        int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
+        string $queueNamePrefix = ''
     ) {
         $this->s3BucketName = $s3BucketName;
         $this->sqsClientFactory = $sqsClientFactory;
@@ -69,6 +74,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->messageKeyGenerator = $messageKeyGenerator;
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
+        $this->queueNamePrefix = $queueNamePrefix;
     }
 
 
@@ -141,6 +147,8 @@ class SqsQueueManager implements QueueManagerInterface
      */
     public function consumeMessages(callable $consumer, string $queueName, array $parameters = []): void
     {
+        $prefixedQueueName = $this->getPrefixedQueueName($queueName);
+
         $maxNumberOfMessages = (int)($parameters[self::MAX_NUMBER_OF_MESSAGES] ?? 10);
         $waitTimeSeconds = (int)($parameters[self::WAIT_TIME_SECONDS] ?? 10);
 
@@ -153,13 +161,13 @@ class SqsQueueManager implements QueueManagerInterface
                     'AttributeNames' => ['All'],
                     'MaxNumberOfMessages' => $maxNumberOfMessages,
                     'MessageAttributeNames' => ['All'],
-                    'QueueUrl' => $queueName,
+                    'QueueUrl' => $prefixedQueueName,
                     'WaitTimeSeconds' => $waitTimeSeconds,
                 ]);
 
                 $messages = $result->get('Messages');
                 if ($messages !== null && count($messages) > 0) {
-                    $sqsMessages = $this->fromAwsResultMessages($messages, $queueName);
+                    $sqsMessages = $this->fromAwsResultMessages($messages, $prefixedQueueName);
                     foreach ($sqsMessages as $sqsMessage) {
                         $consumer($sqsMessage);
                     }
@@ -172,11 +180,11 @@ class SqsQueueManager implements QueueManagerInterface
                     'AwsException: ' . $exception->getMessage(),
                     [
                         LoggerContextField::EXCEPTION => (string)$exception,
-                        LoggerContextField::JOB_QUEUE_NAME => $queueName,
+                        LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
                     ],
                 );
 
-                $this->reconnect($exception, $queueName);
+                $this->reconnect($exception, $prefixedQueueName);
             }
         }
     }
@@ -184,9 +192,10 @@ class SqsQueueManager implements QueueManagerInterface
 
     public function push(JobInterface $job): void
     {
-        $queueName = $job->getJobDefinition()->getQueueName();
-        $this->publishMessage($job->toJson(), $queueName);
-        LoggerHelper::logJobPushedIntoQueue($job, $queueName, $this->logger);
+        $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
+
+        $this->publishMessage($job->toJson(), $prefixedQueueName);
+        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger);
     }
 
 
@@ -198,13 +207,13 @@ class SqsQueueManager implements QueueManagerInterface
 
     public function pushDelayed(JobInterface $job, int $delayInSeconds): void
     {
-        $queueName = $job->getJobDefinition()->getQueueName();
+        $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
         $parameters = [
             self::DELAY_SECONDS => $delayInSeconds,
         ];
 
-        $this->publishMessage($job->toJson(), $queueName, $parameters);
+        $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
     }
 
 
@@ -216,7 +225,7 @@ class SqsQueueManager implements QueueManagerInterface
      */
     private function publishMessage(
         string $messageBody,
-        string $queueName,
+        string $prefixedQueueName,
         array $properties = []
     ): void {
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
@@ -245,17 +254,17 @@ class SqsQueueManager implements QueueManagerInterface
                     // queueName might be handy here if we want to consume
                     // from multiple queues in parallel via promises.
                     // Then we need queue in message directly so that we can delete it.
-                    'StringValue' => $queueName,
+                    'StringValue' => $prefixedQueueName,
                 ],
             ],
             SqsSendingMessageFields::MESSAGE_BODY => $messageBody,
-            SqsSendingMessageFields::QUEUE_URL => $queueName,
+            SqsSendingMessageFields::QUEUE_URL => $prefixedQueueName,
         ];
 
         try {
             $this->sqsClient->sendMessage($messageToSend);
         } catch (AwsException $exception) {
-            $this->reconnect($exception, $queueName);
+            $this->reconnect($exception, $prefixedQueueName);
             $this->sqsClient->sendMessage($messageToSend);
         }
     }
@@ -264,7 +273,7 @@ class SqsQueueManager implements QueueManagerInterface
     /**
      * @throws SqsClientException
      */
-    private function reconnect(Throwable $exception, string $queueName): void
+    private function reconnect(Throwable $exception, string $prefixedQueueName): void
     {
         $this->sqsClient = $this->sqsClientFactory->create();
         $this->s3Client = $this->s3ClientFactory->create();
@@ -272,7 +281,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->logger->warning(
             'Reconnecting: ' . $exception->getMessage(),
             [
-                LoggerContextField::JOB_QUEUE_NAME => $queueName,
+                LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
                 LoggerContextField::EXCEPTION => (string)$exception,
             ],
         );
@@ -284,5 +293,20 @@ class SqsQueueManager implements QueueManagerInterface
         // No checkConn method in SqsClient. For now just providing fake response
         // in the future we might want to check somehow whether we still have connectivity.
         return true;
+    }
+
+
+    private function getPrefixedQueueName(string $queueName): string
+    {
+        $prefixedQueueName = $this->queueNamePrefix . $queueName;
+
+        if (!Validators::isUrl($prefixedQueueName)) {
+            throw new LogicException(
+                'In SQS, queue name is supposed to be a URL, "' . $prefixedQueueName . '" provided instead. '
+                . 'A prefix can be used to prepend a common part of the URL to uniquely named queues.',
+            );
+        }
+
+        return $prefixedQueueName;
     }
 }
