@@ -109,7 +109,10 @@ class SqsQueueManagerTest extends TestCase
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
-        $exampleJob = ExampleJob::createTooBigForSqs();
+        $exampleJob = ExampleJob::createTooBigForSqs(
+            ExampleJobDefinition::create()
+                ->withQueueName(self::QUEUE_URL),
+        );
 
         $this->s3ClientMock->expects('upload')
             ->with(
@@ -342,7 +345,7 @@ class SqsQueueManagerTest extends TestCase
     {
         return new ExampleJob(
             ExampleJobDefinition::create()
-                ->withQueueName(self::QUEUE_URL)
+                ->withQueueName(self::QUEUE_URL),
         );
     }
 
