@@ -8,16 +8,16 @@ use Doctrine\Common\Collections\Collection;
 class JobDefinitionsContainer
 {
     /**
-     * @var Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
+     * @var mixed[]
      */
-    private Collection $jobDefinitions;
+    private array $jobDefinitionsConfig;
 
     private JobDefinitionFactoryInterface $jobDefinitionFactory;
 
     /**
-     * @var mixed[]
+     * @var Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]|null
      */
-    private array $jobDefinitionsConfig;
+    private ?Collection $jobDefinitions;
 
 
     /**
@@ -25,18 +25,18 @@ class JobDefinitionsContainer
      */
     public function __construct(array $jobDefinitionsConfig, JobDefinitionFactoryInterface $jobDefinitionFactory)
     {
-        $this->jobDefinitionFactory = $jobDefinitionFactory;
         $this->jobDefinitionsConfig = $jobDefinitionsConfig;
-        $this->jobDefinitions = new ArrayCollection();
+        $this->jobDefinitionFactory = $jobDefinitionFactory;
+        $this->jobDefinitions = null;
     }
 
 
     public function get(string $jobName): JobDefinitionInterface
     {
-        $jobDefinition = $this->jobDefinitions->get($jobName);
+        $jobDefinition = $this->all()->get($jobName);
 
         if ($jobDefinition === null) {
-            return $this->loadJobDefinition($jobName);
+            throw UnknownJobDefinitionException::createFromUnknownJobName($jobName);
         }
 
         return $jobDefinition;
@@ -45,7 +45,7 @@ class JobDefinitionsContainer
 
     public function has(string $jobName): bool
     {
-        return $this->jobDefinitions->containsKey($jobName);
+        return $this->all()->containsKey($jobName);
     }
 
 
@@ -54,22 +54,29 @@ class JobDefinitionsContainer
      */
     public function all(): Collection
     {
-        return $this->jobDefinitions;
+        if ($this->jobDefinitions === null) {
+            $this->jobDefinitions = $this->loadJobDefinitions($this->jobDefinitionsConfig);
+        }
+
+        return clone $this->jobDefinitions;
     }
 
 
-    private function loadJobDefinition(string $jobName): JobDefinitionInterface
+    /**
+     * @param mixed[] $jobDefinitionsConfig
+     *
+     * @return Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
+     */
+    private function loadJobDefinitions(array $jobDefinitionsConfig): Collection
     {
-        if (!isset($this->jobDefinitionsConfig[$jobName])) {
-            throw UnknownJobDefinitionException::createFromUnknownJobName($jobName);
+        $jobDefinitions = new ArrayCollection();
+
+        foreach ($jobDefinitionsConfig as $jobName => $jobDefinitionConfig) {
+            $jobDefinition = $this->jobDefinitionFactory->create($jobName, $jobDefinitionConfig);
+
+            $jobDefinitions->set($jobName, $jobDefinition);
         }
 
-        $jobDefinitionsConfig = $this->jobDefinitionsConfig[$jobName];
-
-        $jobDefinition = $this->jobDefinitionFactory->create($jobName, $jobDefinitionsConfig);
-
-        $this->jobDefinitions->set($jobName, $jobDefinition);
-
-        return $jobDefinition;
+        return $jobDefinitions;
     }
 }

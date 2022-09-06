@@ -55,6 +55,28 @@ class JobDefinitionsContainerTest extends TestCase
     }
 
 
+    public function testGetAllJobDefinitions(): void
+    {
+        $exampleJobProcessor = new ExampleJobProcessor();
+        $simpleJobLoader = new SimpleJobLoader();
+        $constantDelayRule = new ConstantDelayRule(10);
+
+        $jobDefinitionsConfig = [
+            self::SIMPLE_JOB_NAME => [
+                JobDefinitionFactoryInterface::JOB_CLASS => SimpleJob::class,
+                JobDefinitionFactoryInterface::QUEUE_NAME => ExampleJobDefinition::QUEUE_NAME,
+                JobDefinitionFactoryInterface::MAX_ATTEMPTS => null,
+                JobDefinitionFactoryInterface::JOB_PROCESSOR => $exampleJobProcessor,
+                JobDefinitionFactoryInterface::JOB_LOADER => $simpleJobLoader,
+                JobDefinitionFactoryInterface::JOB_DELAY_RULE => $constantDelayRule,
+            ],
+        ];
+        $jobDefinitionContainer = $this->createJobDefinitionsContainer($jobDefinitionsConfig);
+
+        Assert::assertCount(1, $jobDefinitionContainer->all());
+    }
+
+
     public function testGetUnknownJobDefinition(): void
     {
         $jobDefinitionContainer = $this->createJobDefinitionsContainer([]);
