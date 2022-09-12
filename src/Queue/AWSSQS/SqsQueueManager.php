@@ -170,6 +170,7 @@ class SqsQueueManager implements QueueManagerInterface
 
         while (!$isLoopIterationsLimitEnabled || $loopIterationsCounter < $this->consumeLoopIterationsCount) {
             if ($this->queueWorkerState->shouldStop()) {
+                // TODO: remove logging after testing
                 $this->logger->debug(
                     'Processing of SQS queue is going to shut down gracefully.',
                     [
