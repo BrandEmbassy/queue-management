@@ -52,5 +52,5 @@ interface JobInterface
     public function getTimeOfExecution(): ?int;
 
 
-    public function setTimeOfExecution(int $timeOfExecution): void;  // $timeOfExecution = Timestamp of execution time
+    public function setTimeOfExecution(?int $timeOfExecution): void;  // $timeOfExecution = Timestamp of execution time
 }

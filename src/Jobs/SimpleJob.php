@@ -154,7 +154,7 @@ class SimpleJob implements JobInterface
     }
 
 
-    public function setTimeOfExecution(int $timeOfExecution): void
+    public function setTimeOfExecution(?int $timeOfExecution): void
     {
         $this->timeOfExecution = $timeOfExecution;
     }
