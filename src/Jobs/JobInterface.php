@@ -47,4 +47,10 @@ interface JobInterface
 
 
     public function getJobDefinition(): JobDefinitionInterface;
+
+
+    public function getTimeOfExecution(): ?int;
+
+
+    public function setTimeOfExecution(int $timeOfExecution): void;  // $timeOfExecution = Timestamp of execution time
 }
