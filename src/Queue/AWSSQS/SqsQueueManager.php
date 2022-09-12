@@ -11,6 +11,7 @@ use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
+use BE\QueueManagement\Queue\QueueWorkerState;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use GuzzleHttp\Psr7\Stream;
@@ -54,6 +55,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private S3Client $s3Client;
 
+    private QueueWorkerState $queueWorkerState;
+
     private LoggerInterface $logger;
 
     private int $consumeLoopIterationsCount;
@@ -68,6 +71,7 @@ class SqsQueueManager implements QueueManagerInterface
         SqsClientFactoryInterface $sqsClientFactory,
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
+        QueueWorkerState $queueWorkerState,
         LoggerInterface $logger,
         DateTimeImmutableFactory $dateTimeImmutableFactory,
         int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
@@ -79,6 +83,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->s3ClientFactory = $s3ClientFactory;
         $this->s3Client = $this->s3ClientFactory->create();
         $this->messageKeyGenerator = $messageKeyGenerator;
+        $this->queueWorkerState = $queueWorkerState;
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
         $this->queueNamePrefix = $queueNamePrefix;
@@ -163,7 +168,7 @@ class SqsQueueManager implements QueueManagerInterface
         $loopIterationsCounter = 0;
         $isLoopIterationsLimitEnabled = $this->consumeLoopIterationsCount !== self::CONSUME_LOOP_ITERATIONS_NO_LIMIT;
 
-        while (!$isLoopIterationsLimitEnabled || $loopIterationsCounter < $this->consumeLoopIterationsCount) {
+        while ((!$isLoopIterationsLimitEnabled || $loopIterationsCounter < $this->consumeLoopIterationsCount) && !$this->queueWorkerState->shouldStop()) {
             try {
                 $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],
