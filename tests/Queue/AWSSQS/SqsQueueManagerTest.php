@@ -13,6 +13,7 @@ use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\AWSSQS\SqsSendingMessageFields;
+use BE\QueueManagement\Queue\QueueWorkerState;
 use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
 use DateTimeImmutable;
 use Mockery;
@@ -72,6 +73,11 @@ class SqsQueueManagerTest extends TestCase
 
     private MessageKeyGeneratorInterface $messageKeyGenerator;
 
+    /**
+     * @var QueueWorkerState&MockInterface
+     */
+    private QueueWorkerState $queueWorkerState;
+
     private FrozenDateTimeImmutableFactory $frozenDateTimeImmutableFactory;
 
 
@@ -86,6 +92,7 @@ class SqsQueueManagerTest extends TestCase
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
         $this->messageKeyGenerator = new TestOnlyMessageKeyGenerator();
+        $this->queueWorkerState = Mockery::mock(QueueWorkerState::class);
         $this->frozenDateTimeImmutableFactory = new FrozenDateTimeImmutableFactory(
             new DateTimeImmutable(self::FROZEN_DATE_TIME),
         );
@@ -291,6 +298,9 @@ class SqsQueueManagerTest extends TestCase
 
         $messages = $this->getSampleSqsMessages();
 
+        $this->queueWorkerState->expects('shouldStop')
+            ->andReturnFalse();
+
         $this->awsResultMock->shouldReceive('get')
             ->with('Messages')
             ->andReturn($messages)
@@ -328,6 +338,10 @@ class SqsQueueManagerTest extends TestCase
         };
 
         $awsException = new AwsException('Some nasty error', $this->awsCommandMock);
+
+        $this->queueWorkerState->expects('shouldStop')
+            ->andReturnFalse()
+            ->twice();
 
         $this->sqsClientMock->expects('receiveMessage')
             ->with([
@@ -446,6 +460,7 @@ class SqsQueueManagerTest extends TestCase
             $this->sqsClientFactoryMock,
             $this->s3ClientFactoryMock,
             $this->messageKeyGenerator,
+            $this->queueWorkerState,
             $this->loggerMock,
             $this->frozenDateTimeImmutableFactory,
             1,
