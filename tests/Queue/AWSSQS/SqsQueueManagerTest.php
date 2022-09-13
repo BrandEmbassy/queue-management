@@ -167,7 +167,10 @@ class SqsQueueManagerTest extends TestCase
             );
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
+        $exampleJob->setTimeOfExecution($exampleJob->getCreatedAt()->getTimestamp() + 5);
+
         $queueManager->pushDelayed($exampleJob, 5);
+        Assert::assertSame($exampleJob->getCreatedAt()->getTimestamp() + 5, $exampleJob->getTimeOfExecution());
     }
 
 
@@ -189,6 +192,8 @@ class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
+
+        Assert::assertSame($exampleJob->getCreatedAt()->getTimestamp() + 5, $exampleJob->getTimeOfExecution());
     }
 
 

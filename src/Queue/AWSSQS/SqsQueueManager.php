@@ -214,7 +214,7 @@ class SqsQueueManager implements QueueManagerInterface
         ];
 
         $timeOfExecution = $job->getTimeOfExecution();
-        if ($timeOfExecution !== null) {
+        if ($timeOfExecution === null) {
             $job->setTimeOfExecution($job->getCreatedAt()->getTimestamp() + $delayInSeconds);
         }
 
