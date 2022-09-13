@@ -47,4 +47,8 @@ interface JobInterface
 
 
     public function getJobDefinition(): JobDefinitionInterface;
+
+    public function planExecution(DateTimeImmutable $datetime): void;
+    public function getExecutionPlannedAt(): ?DateTimeImmutable;
+    // + trait HasExecutionPlannedAt
 }

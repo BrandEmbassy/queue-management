@@ -112,6 +112,13 @@ class SqsConsumer implements SqsConsumerInterface
         try {
             $job = $this->jobLoader->loadJob($message->getBody());
 
+            $job->getExecutionPlannedAt();
+            if ($notYet) {
+                $this->logger->info();
+                $this->pushDelayed($job);
+                return;
+            }
+
             $this->jobExecutor->execute($job);
         } catch (DelayableProcessFailExceptionInterface $exception) {
             LoggerHelper::logDelayableProcessFailException($exception, $this->logger);

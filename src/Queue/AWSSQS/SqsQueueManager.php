@@ -6,11 +6,13 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use GuzzleHttp\Psr7\Stream;
 use LogicException;
+use Nette\Utils\Json;
 use Nette\Utils\Validators;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -194,7 +196,7 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        $this->publishMessage($job->toJson(), $prefixedQueueName);
+        $this->publishMessage($this->getJobJson($job), $prefixedQueueName);
         LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger);
     }
 
@@ -209,11 +211,17 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
+        if ($delayInSeconds > self::MAX_DELAY_SECONDS) {
+            $this->logger->info();
+            $job->planExecution($datetime);
+            $delayInSeconds = (int)self::MAX_DELAY_SECONDS;
+        }
+
         $parameters = [
             self::DELAY_SECONDS => $delayInSeconds,
         ];
 
-        $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
+        $this->publishMessage($this->getJobJson($job), $prefixedQueueName, $parameters);
     }
 
 
@@ -308,5 +316,23 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         return $prefixedQueueName;
+    }
+
+
+    private function getJobJson(JobInterface $job): string
+    {
+        if ($job->getExecutionPlannedAt() === null) {
+            return $job->toJson();
+        }
+
+        $jobJson = Json::decode($job->toJson());
+
+        if (isset($jobJson[JobParameters::EXECUTION_PLANNED_AT])) {
+            throw new \LogicException();
+        }
+
+        $jobJson[JobParameters::EXECUTION_PLANNED_AT] = $job->getExecutionPlannedAt();
+
+        return Json::encode($jobJson);
     }
 }

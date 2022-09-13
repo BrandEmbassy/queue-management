@@ -38,13 +38,15 @@ class JobLoader implements JobLoaderInterface
 
         $jobLoader = $jobDefinition->getJobLoader();
 
-        return $jobLoader->load(
+        $job = $jobLoader->load(
             $jobDefinition,
             $jobUuid,
             DateTimeFromString::create($messageParameters[JobParameters::CREATED_AT]),
             $attempts,
             new ArrayCollection($messageParameters[JobParameters::PARAMETERS]),
         );
+
+        $job->planExecution($messageParameters[JobParameters::EXECUTION_PLANNED_AT]);
     }
 
 
