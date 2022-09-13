@@ -22,4 +22,7 @@ interface QueueManagerInterface
 
 
     public function checkConnection(): bool;
+
+
+    public function terminateGracefully(): void;
 }

@@ -290,4 +290,10 @@ class RabbitMQQueueManager implements QueueManagerInterface
     {
         return $this->getConnection()->isConnected();
     }
+
+
+    public function terminateGracefully(): void
+    {
+        // TODO: implement
+    }
 }

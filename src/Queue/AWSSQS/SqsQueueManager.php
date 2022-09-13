@@ -11,7 +11,6 @@ use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
-use BE\QueueManagement\Queue\QueueWorkerState;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use GuzzleHttp\Psr7\Stream;
@@ -55,8 +54,6 @@ class SqsQueueManager implements QueueManagerInterface
 
     private S3Client $s3Client;
 
-    private QueueWorkerState $queueWorkerState;
-
     private LoggerInterface $logger;
 
     private int $consumeLoopIterationsCount;
@@ -65,13 +62,14 @@ class SqsQueueManager implements QueueManagerInterface
 
     private DateTimeImmutableFactory $dateTimeImmutableFactory;
 
+    private bool $isBeingTerminated = false;
+
 
     public function __construct(
         string $s3BucketName,
         SqsClientFactoryInterface $sqsClientFactory,
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
-        QueueWorkerState $queueWorkerState,
         LoggerInterface $logger,
         DateTimeImmutableFactory $dateTimeImmutableFactory,
         int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
@@ -83,7 +81,6 @@ class SqsQueueManager implements QueueManagerInterface
         $this->s3ClientFactory = $s3ClientFactory;
         $this->s3Client = $this->s3ClientFactory->create();
         $this->messageKeyGenerator = $messageKeyGenerator;
-        $this->queueWorkerState = $queueWorkerState;
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
         $this->queueNamePrefix = $queueNamePrefix;
@@ -168,17 +165,7 @@ class SqsQueueManager implements QueueManagerInterface
         $loopIterationsCounter = 0;
         $isLoopIterationsLimitEnabled = $this->consumeLoopIterationsCount !== self::CONSUME_LOOP_ITERATIONS_NO_LIMIT;
 
-        while (!$isLoopIterationsLimitEnabled || $loopIterationsCounter < $this->consumeLoopIterationsCount) {
-            if ($this->queueWorkerState->shouldStop()) {
-                // TODO: remove logging after testing
-                $this->logger->debug(
-                    'Processing of SQS queue is going to shut down gracefully.',
-                    [
-                        LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
-                    ],
-                );
-                break;
-            }
+        while (!$this->isBeingTerminated && (!$isLoopIterationsLimitEnabled || $loopIterationsCounter < $this->consumeLoopIterationsCount)) {
             try {
                 $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],
@@ -360,5 +347,21 @@ class SqsQueueManager implements QueueManagerInterface
         $jobJson[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($job->getExecutionPlannedAt());
 
         return Json::encode($jobJson);
+    }
+
+
+    public function terminateGracefully(): void
+    {
+        $this->writeDebugLog('SqsQueueManager::terminateGracefully() reached');
+
+        $this->isBeingTerminated = true;
+
+        $this->writeDebugLog('SqsQueueManager::isBeingTerminated set to ' . Json::encode($this->isBeingTerminated));
+    }
+
+
+    private function writeDebugLog(string $message): void
+    {
+        $this->logger->debug('Gracefully terminating command: ' . $message);
     }
 }
