@@ -213,6 +213,11 @@ class SqsQueueManager implements QueueManagerInterface
             self::DELAY_SECONDS => $delayInSeconds,
         ];
 
+        $timeOfExecution = $job->getTimeOfExecution();
+        if ($timeOfExecution !== null) {
+            $job->setTimeOfExecution($job->getCreatedAt()->getTimestamp() + $delayInSeconds);
+        }
+
         $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
     }
 
