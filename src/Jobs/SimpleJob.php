@@ -12,6 +12,8 @@ use function array_merge;
 
 class SimpleJob implements JobInterface
 {
+    use HasExecutionPlannedAt;
+
     private string $uuid;
 
     private DateTimeImmutable $createdAt;
@@ -22,8 +24,6 @@ class SimpleJob implements JobInterface
      * @var Collection<string, mixed>|mixed[]
      */
     private Collection $parameters;
-
-    private ?DateTimeImmutable $executionPlannedAt = null;
 
     protected ?DateTimeImmutable $executionStartedAt = null;
 
@@ -145,17 +145,5 @@ class SimpleJob implements JobInterface
     public function getJobDefinition(): JobDefinitionInterface
     {
         return $this->jobDefinition;
-    }
-
-
-    public function getExecutionPlannedAt(): ?DateTimeImmutable
-    {
-        return $this->executionPlannedAt;
-    }
-
-
-    public function setExecutionPlannedAt(?DateTimeImmutable $executionPlannedAt): void
-    {
-        $this->executionPlannedAt = $executionPlannedAt;
     }
 }
