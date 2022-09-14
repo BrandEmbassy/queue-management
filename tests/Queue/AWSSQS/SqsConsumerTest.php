@@ -223,7 +223,7 @@ class SqsConsumerTest extends TestCase
     public function testDelayJobWithExecutionPlannedAt(): void
     {
         $exampleJob = new ExampleJob();
-        $exampleJob->setExecutionPlannedAt(new DateTimeImmutable('2016-08-15T17:00:00+00:00'));
+        $exampleJob->executionPlanned(new DateTimeImmutable('2016-08-15T17:00:00+00:00'));
 
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
@@ -239,7 +239,7 @@ class SqsConsumerTest extends TestCase
             ]);
 
         $this->loggerMock->hasInfo(
-            'SQS job requeued [delay: 7200]',
+            'Job requeued, it\'s not planned to be executed yet. [delay: 7200]',
         );
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
@@ -251,7 +251,7 @@ class SqsConsumerTest extends TestCase
     public function testExecuteJobWithExecutionPlannedAt(): void
     {
         $exampleJob = new ExampleJob();
-        $exampleJob->setExecutionPlannedAt(new DateTimeImmutable('2016-08-15T14:00:00+00:00'));
+        $exampleJob->executionPlanned(new DateTimeImmutable('2016-08-15T14:00:00+00:00'));
 
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')

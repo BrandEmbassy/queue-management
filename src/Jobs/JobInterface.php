@@ -49,8 +49,14 @@ interface JobInterface
     public function getJobDefinition(): JobDefinitionInterface;
 
 
+    /**
+     * @see \BE\QueueManagement\Jobs\HasExecutionPlannedAt
+     */
     public function getExecutionPlannedAt(): ?DateTimeImmutable;
 
 
-    public function setExecutionPlannedAt(?DateTimeImmutable $executionPlannedAt): void;
+    /**
+     * @see \BE\QueueManagement\Jobs\HasExecutionPlannedAt
+     */
+    public function executionPlanned(DateTimeImmutable $executionPlannedAt): void;
 }

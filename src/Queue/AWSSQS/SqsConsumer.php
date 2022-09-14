@@ -126,8 +126,8 @@ class SqsConsumer implements SqsConsumerInterface
             $jobExecutionPlannedAt = $job->getExecutionPlannedAt();
 
             if ($jobExecutionPlannedAt !== null) {
-                $timeRemainsInSeconds = $jobExecutionPlannedAt->getTimestamp() -
-                    $this->dateTimeImmutableFactory->getNow()->getTimestamp();
+                $now = $this->dateTimeImmutableFactory->getNow();
+                $timeRemainsInSeconds = $jobExecutionPlannedAt->diff($now)->s;
 
                 if ($timeRemainsInSeconds > 0) {
                     $this->logSqsDelayJob($job, $timeRemainsInSeconds);
@@ -149,7 +149,7 @@ class SqsConsumer implements SqsConsumerInterface
     private function logSqsDelayJob(JobInterface $job, int $delay): void
     {
         $this->logger->info(
-            sprintf('SQS job requeued [delay: %d]', $delay),
+            sprintf('Job requeued, it\'s not planned to be executed yet. [delay: %d]', $delay),
             [
                 LoggerContextField::JOB_UUID => $job->getUuid(),
                 LoggerContextField::JOB_NAME => $job->getName(),

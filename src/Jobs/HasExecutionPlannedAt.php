@@ -15,7 +15,7 @@ trait HasExecutionPlannedAt
     }
 
 
-    public function setExecutionPlannedAt(?DateTimeImmutable $executionPlannedAt): void
+    public function executionPlanned(DateTimeImmutable $executionPlannedAt): void
     {
         $this->executionPlannedAt = $executionPlannedAt;
     }
