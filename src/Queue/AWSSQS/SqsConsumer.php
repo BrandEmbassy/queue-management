@@ -127,7 +127,7 @@ class SqsConsumer implements SqsConsumerInterface
 
             if ($jobExecutionPlannedAt !== null) {
                 $now = $this->dateTimeImmutableFactory->getNow();
-                $timeRemainsInSeconds = $jobExecutionPlannedAt->diff($now)->s;
+                $timeRemainsInSeconds = $jobExecutionPlannedAt->getTimestamp() - $now->getTimestamp();
 
                 if ($timeRemainsInSeconds > 0) {
                     $this->logSqsDelayJob($job, $timeRemainsInSeconds);

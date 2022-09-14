@@ -221,7 +221,7 @@ class SqsQueueManager implements QueueManagerInterface
                 sprintf('+ %d seconds', $delayInSeconds),
             );
             $this->logger->info(
-                'Requested delays is greater than SQS limit. Job execution has been planned and will be requeued until then.',
+                'Requested delas is greater than SQS limit. Job execution has been planned and will be requeued until then.',
                 ['executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt)],
             );
             $job->executionPlanned($executionPlannedAt);

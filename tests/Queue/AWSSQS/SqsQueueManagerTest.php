@@ -214,7 +214,7 @@ class SqsQueueManagerTest extends TestCase
 
         $queueManager->pushDelayed($exampleJob, 1800);
 
-        $this->loggerMock->hasInfo('Requested delays is greater than SQS limit. Job execution has been planned and will be requeued until then.');
+        $this->loggerMock->hasInfo('Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.');
     }
 
 
