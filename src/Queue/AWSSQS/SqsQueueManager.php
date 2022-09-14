@@ -221,7 +221,7 @@ class SqsQueueManager implements QueueManagerInterface
                 sprintf('+ %d seconds', $delayInSeconds),
             );
             $this->logger->info(
-                'Job execution plan is set. Because job delay is bigger than max SQS delay.',
+                'Job execution plan is set. Because job delay is over max SQS delay limit.',
                 ['executionPlanAt' => DateTimeFormatter::format($executionPlanAt)],
             );
             $job->setExecutionPlannedAt($executionPlanAt);
@@ -334,13 +334,13 @@ class SqsQueueManager implements QueueManagerInterface
             return $job->toJson();
         }
 
-        $jobJson = Json::decode($job->toJson());
+        $jobJson = Json::decode($job->toJson(), Json::FORCE_ARRAY);
 
         if (isset($jobJson[JobParameters::EXECUTION_PLANNED_AT])) {
             throw new LogicException('Unexpected state of executionPlannedAt.');
         }
 
-        $jobJson[JobParameters::EXECUTION_PLANNED_AT] = $job->getExecutionPlannedAt();
+        $jobJson[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($job->getExecutionPlannedAt());
 
         return Json::encode($jobJson);
     }

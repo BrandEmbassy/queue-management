@@ -18,6 +18,7 @@ use DateTimeImmutable;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
+use Nette\Utils\Json;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
@@ -85,7 +86,9 @@ class SqsQueueManagerTest extends TestCase
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
         $this->messageKeyGenerator = new TestOnlyMessageKeyGenerator();
-        $this->frozenDateTimeImmutableFactory = new FrozenDateTimeImmutableFactory(new DateTimeImmutable(self::FROZEN_DATE_TIME));
+        $this->frozenDateTimeImmutableFactory = new FrozenDateTimeImmutableFactory(
+            new DateTimeImmutable(self::FROZEN_DATE_TIME),
+        );
     }
 
 
@@ -175,6 +178,43 @@ class SqsQueueManagerTest extends TestCase
         $queueManager = $this->createQueueManager($queueNamePrefix);
 
         $queueManager->pushDelayed($exampleJob, 5);
+    }
+
+
+    /**
+     * @dataProvider queueNameDataProvider
+     */
+    public function testPushDelayedWithJobDelayOverSqsMaxDelayLimit(string $queueName, string $queueNamePrefix): void
+    {
+        $this->expectSetUpConnection();
+
+        $exampleJob = $this->createExampleJob($queueName);
+
+        $expectedMessageBody = [
+            'jobUuid' => 'some-job-uud',
+            'jobName' => 'exampleJob',
+            'attempts' => 1,
+            'createdAt' => '2018-08-01T10:15:47+01:00',
+            'jobParameters' => ['foo' => 'bar'],
+            'executionPlannedAt' => '2016-08-15T15:30:00+00:00',
+        ];
+
+        $this->sqsClientMock->expects('sendMessage')
+            ->with(
+                Mockery::on(
+                    static fn(array $message): bool => self::messageCheckOk(
+                        $message,
+                        Json::encode($expectedMessageBody),
+                        900,
+                    ),
+                ),
+            );
+
+        $queueManager = $this->createQueueManager($queueNamePrefix);
+
+        $queueManager->pushDelayed($exampleJob, 1800);
+
+        $this->loggerMock->hasInfo('Job execution plan is set. Because job delay is over max SQS delay limit.');
     }
 
 
