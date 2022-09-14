@@ -92,14 +92,7 @@ class JobLoaderTest extends TestCase
         Assert::assertSame(ExampleJob::ATTEMPTS, $simpleJob->getAttempts());
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(ExampleJob::CREATED_AT, $simpleJob->getCreatedAt());
         Assert::assertSame($exampleJobDefinition, $simpleJob->getJobDefinition());
-
-        if ($executionPlannedAt !== null) {
-            Assert::assertNotNull($simpleJob->getExecutionPlannedAt());
-        }
-
-        if ($executionPlannedAt === null) {
-            Assert::assertNull($simpleJob->getExecutionPlannedAt());
-        }
+        Assert::assertEquals($executionPlannedAt, $simpleJob->getExecutionPlannedAt());
     }
 
 
