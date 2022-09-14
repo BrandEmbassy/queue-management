@@ -47,7 +47,7 @@ class JobLoader implements JobLoaderInterface
             new ArrayCollection($messageParameters[JobParameters::PARAMETERS]),
         );
 
-        $job->setExecutionPlannedAt($executionPlannedAt);
+        $job->setExecutionPlannedAt(DateTimeFromString::create($executionPlannedAt));
 
         return $job;
     }

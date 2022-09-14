@@ -20,6 +20,7 @@ class ExampleJob extends SimpleJob
     public const CREATED_AT = '2018-08-01T10:15:47+01:00';
     public const JOB_NAME = 'exampleJob';
     public const PARAMETER_FOO = 'foo';
+    public const EXECUTION_PLANNED_AT = '2018-08-01T10:40:00+00:00';
 
 
     public function __construct(?JobDefinitionInterface $jobDefinition = null, string $bar = 'bar')

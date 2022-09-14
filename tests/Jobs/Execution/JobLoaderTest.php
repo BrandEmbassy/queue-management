@@ -67,6 +67,7 @@ class JobLoaderTest extends TestCase
             JobParameters::ATTEMPTS => ExampleJob::ATTEMPTS,
             JobParameters::JOB_NAME => ExampleJob::JOB_NAME,
             JobParameters::CREATED_AT => ExampleJob::CREATED_AT,
+            JobParameters::EXECUTION_PLANNED_AT => ExampleJob::EXECUTION_PLANNED_AT,
             JobParameters::PARAMETERS => [ExampleJob::PARAMETER_FOO => 'bar'],
         ];
 
@@ -80,6 +81,8 @@ class JobLoaderTest extends TestCase
         Assert::assertSame(ExampleJob::ATTEMPTS, $simpleJob->getAttempts());
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(ExampleJob::CREATED_AT, $simpleJob->getCreatedAt());
         Assert::assertSame($exampleJobDefinition, $simpleJob->getJobDefinition());
+        Assert::assertNotNull($simpleJob->getExecutionPlannedAt());
+        DateTimeAssertions::assertDateTimeAtomEqualsDateTime(ExampleJob::EXECUTION_PLANNED_AT, $simpleJob->getExecutionPlannedAt());
     }
 
 
