@@ -9,7 +9,6 @@ use Exception;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
-use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
@@ -44,7 +43,6 @@ class PushDelayedResolverTest extends TestCase
             ->withDelayRule(new ConstantDelayRule(5));
 
         $exampleJob = new ExampleJob($exampleJobDefinition);
-        $exampleJob->setTimeOfExecution(1663062333);
 
         $pushDelayedResolver = $this->createPushDelayedResolver();
 
@@ -55,7 +53,6 @@ class PushDelayedResolverTest extends TestCase
         $this->loggerMock->hasWarning('Job requeued [delay: 5.000]');
 
         $pushDelayedResolver->resolve($exampleJob, new Exception());
-        Assert::assertNull($exampleJob->getTimeOfExecution());
     }
 
 

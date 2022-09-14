@@ -13,6 +13,8 @@ use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\AWSSQS\SqsSendingMessageFields;
+use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
+use DateTimeImmutable;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -33,6 +35,7 @@ class SqsQueueManagerTest extends TestCase
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
     private const S3_BUCKET_NAME = 'thisIsS3Bucket';
+    private const FROZEN_DATE_TIME = '2016-08-15T15:00:00+00:00';
 
     /**
      * @var SqsClientFactory&MockInterface
@@ -68,6 +71,8 @@ class SqsQueueManagerTest extends TestCase
 
     private MessageKeyGeneratorInterface $messageKeyGenerator;
 
+    private FrozenDateTimeImmutableFactory $frozenDateTimeImmutableFactory;
+
 
     public function setUp(): void
     {
@@ -80,6 +85,7 @@ class SqsQueueManagerTest extends TestCase
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
         $this->messageKeyGenerator = new TestOnlyMessageKeyGenerator();
+        $this->frozenDateTimeImmutableFactory = new FrozenDateTimeImmutableFactory(new DateTimeImmutable(self::FROZEN_DATE_TIME));
     }
 
 
@@ -167,10 +173,8 @@ class SqsQueueManagerTest extends TestCase
             );
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
-        $exampleJob->setTimeOfExecution($exampleJob->getCreatedAt()->getTimestamp() + 5);
 
         $queueManager->pushDelayed($exampleJob, 5);
-        Assert::assertSame($exampleJob->getCreatedAt()->getTimestamp() + 5, $exampleJob->getTimeOfExecution());
     }
 
 
@@ -192,8 +196,6 @@ class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
-
-        Assert::assertSame($exampleJob->getCreatedAt()->getTimestamp() + 5, $exampleJob->getTimeOfExecution());
     }
 
 
@@ -402,6 +404,7 @@ class SqsQueueManagerTest extends TestCase
             $this->s3ClientFactoryMock,
             $this->messageKeyGenerator,
             $this->loggerMock,
+            $this->frozenDateTimeImmutableFactory,
             1,
             $queueNamePrefix,
         );

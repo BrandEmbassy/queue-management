@@ -31,7 +31,7 @@ class JobLoader implements JobLoaderInterface
 
         $jobUuid = $messageParameters[JobParameters::UUID];
         $attempts = $messageParameters[JobParameters::ATTEMPTS];
-        $executionPlannedAt = $messageParameters[JobParameters::EXECUTION_PLANNED_AT];
+        $executionPlannedAt = $messageParameters[JobParameters::EXECUTION_PLANNED_AT] ?? null;
 
         $this->checkUuidBlacklist($jobUuid, $attempts);
 

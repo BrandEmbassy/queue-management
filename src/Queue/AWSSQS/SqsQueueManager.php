@@ -10,6 +10,7 @@ use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
+use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use GuzzleHttp\Psr7\Stream;
 use LogicException;
@@ -21,7 +22,6 @@ use function assert;
 use function count;
 use function is_array;
 use function json_decode;
-use function min;
 use function sprintf;
 
 /**
@@ -55,11 +55,11 @@ class SqsQueueManager implements QueueManagerInterface
 
     private LoggerInterface $logger;
 
-    private DateTimeImmutableFactory $dateTimeImmutableFactory;
-
     private int $consumeLoopIterationsCount;
 
     private string $queueNamePrefix;
+
+    private DateTimeImmutableFactory $dateTimeImmutableFactory;
 
 
     public function __construct(
@@ -79,9 +79,9 @@ class SqsQueueManager implements QueueManagerInterface
         $this->s3Client = $this->s3ClientFactory->create();
         $this->messageKeyGenerator = $messageKeyGenerator;
         $this->logger = $logger;
-        $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
         $this->queueNamePrefix = $queueNamePrefix;
+        $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
     }
 
 
@@ -216,17 +216,19 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        $delayInSeconds = min($delayInSeconds, self::MAX_DELAY_SECONDS);
-
-        $parameters = [
-            self::DELAY_SECONDS => $delayInSeconds,
-        ];
-
-        $executionPlannedAt = $job->getExecutionPlannedAt();
-        if ($executionPlannedAt === null) {
-            $now = $this->dateTimeImmutableFactory->getNow();
-            $job->setExecutionPlannedAt($now->setTimestamp($job->getCreatedAt()->getTimestamp() + $delayInSeconds));
+        if ($delayInSeconds > self::MAX_DELAY_SECONDS) {
+            $executionPlanAt = $this->dateTimeImmutableFactory->getNow()->modify(
+                sprintf('+ %d seconds', $delayInSeconds),
+            );
+            $this->logger->info(
+                'Job execution plan is set. Because job delay is bigger than max SQS delay.',
+                ['executionPlanAt' => DateTimeFormatter::format($executionPlanAt)],
+            );
+            $job->setExecutionPlannedAt($executionPlanAt);
+            $delayInSeconds = self::MAX_DELAY_SECONDS;
         }
+
+        $parameters = [self::DELAY_SECONDS => $delayInSeconds];
 
         $this->publishMessage($this->getJobJson($job), $prefixedQueueName, $parameters);
     }

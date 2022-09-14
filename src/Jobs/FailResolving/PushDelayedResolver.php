@@ -2,7 +2,6 @@
 
 namespace BE\QueueManagement\Jobs\FailResolving;
 
-use BE\QueueManagement\Jobs\Execution\SqsJobDelayException;
 use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleWithMillisecondsInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerContextField;
@@ -27,8 +26,7 @@ class PushDelayedResolver
 
     public function resolve(JobInterface $job, Throwable $exception): void
     {
-        $this->resolveAttemptsIncrement($job, $exception);
-        $job->setExecutionPlannedAt(null);
+        $job->incrementAttempts();
 
         $pushDelayInMilliseconds = $this->getDelayInMilliseconds($job, $exception);
 
@@ -47,10 +45,6 @@ class PushDelayedResolver
 
     private function getDelayInMilliseconds(JobInterface $job, Throwable $exception): int
     {
-        if ($exception instanceof SqsJobDelayException) {
-            return $exception->getDelayInSeconds() * 1000;
-        }
-
         $delayRule = $job->getJobDefinition()->getDelayRule();
 
         if ($delayRule instanceof DelayRuleWithMillisecondsInterface) {
@@ -58,15 +52,5 @@ class PushDelayedResolver
         }
 
         return $delayRule->getDelay($job, $exception) * 1000;
-    }
-
-
-    private function resolveAttemptsIncrement(JobInterface $job, Throwable $exception): void
-    {
-        if ($exception instanceof SqsJobDelayException) {
-            return;
-        }
-
-        $job->incrementAttempts();
     }
 }

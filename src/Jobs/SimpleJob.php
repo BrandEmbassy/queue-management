@@ -23,7 +23,7 @@ class SimpleJob implements JobInterface
      */
     private Collection $parameters;
 
-    private ?DateTimeImmutable $executionPlannedAt;
+    private ?DateTimeImmutable $executionPlannedAt = null;
 
     protected ?DateTimeImmutable $executionStartedAt = null;
 

@@ -13,6 +13,9 @@ use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\QueueManagerInterface;
+use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
+use DateTimeImmutable;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -32,6 +35,7 @@ class SqsConsumerTest extends TestCase
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     private const RECEIPT_HANDLE = '123456777';
     private const MESSAGE_ID = 'c176f71b-ea77-4b0e-af6a-d76246d77057';
+    private const FROZEN_DATE_TIME = '2016-08-15T15:00:00+00:00';
 
     private TestLogger $loggerMock;
 
@@ -57,6 +61,13 @@ class SqsConsumerTest extends TestCase
 
     private MessageDeduplication $messageDeduplicationDisabled;
 
+    private FrozenDateTimeImmutableFactory $frozenDateTimeImmutableFactory;
+
+    /**
+     * @var QueueManagerInterface&MockInterface
+     */
+    private $queueManagerMock;
+
 
     public function setUp(): void
     {
@@ -67,6 +78,8 @@ class SqsConsumerTest extends TestCase
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
         $this->sqsClientMock = Mockery::mock(SqsClient::class);
         $this->messageDeduplicationDisabled = new MessageDeduplicationDisabled();
+        $this->frozenDateTimeImmutableFactory = new FrozenDateTimeImmutableFactory(new DateTimeImmutable(self::FROZEN_DATE_TIME));
+        $this->queueManagerMock = Mockery::mock(QueueManagerInterface::class);
     }
 
 
@@ -244,6 +257,8 @@ class SqsConsumerTest extends TestCase
             $this->jobLoaderMock,
             $sqsClient,
             $this->messageDeduplicationDisabled,
+            $this->frozenDateTimeImmutableFactory,
+            $this->queueManagerMock,
         );
     }
 }
