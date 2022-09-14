@@ -220,6 +220,58 @@ class SqsConsumerTest extends TestCase
     }
 
 
+    public function testDelayJobWithExecutionPlannedAt(): void
+    {
+        $exampleJob = new ExampleJob();
+        $exampleJob->setExecutionPlannedAt(new DateTimeImmutable('2016-08-15T17:00:00+00:00'));
+
+        $this->jobLoaderMock->expects('loadJob')
+            ->with('{"foo":"bar"}')
+            ->andReturn($exampleJob);
+
+        $this->queueManagerMock->expects('pushDelayed')
+            ->with($exampleJob, 7200);
+
+        $this->sqsClientMock->expects('deleteMessage')
+            ->with([
+                'QueueUrl' => self::QUEUE_URL ,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
+            ]);
+
+        $this->loggerMock->hasInfo(
+            'SQS job requeued [delay: 7200]',
+        );
+
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+        $sqsConsumer($sqsMessage);
+    }
+
+
+    public function testExecuteJobWithExecutionPlannedAt(): void
+    {
+        $exampleJob = new ExampleJob();
+        $exampleJob->setExecutionPlannedAt(new DateTimeImmutable('2016-08-15T14:00:00+00:00'));
+
+        $this->jobLoaderMock->expects('loadJob')
+            ->with('{"foo":"bar"}')
+            ->andReturn($exampleJob);
+
+        $this->jobExecutorMock->expects('execute')
+            ->with($exampleJob);
+
+        $this->sqsClientMock->expects('deleteMessage')
+            ->with([
+                'QueueUrl' => self::QUEUE_URL ,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
+            ]);
+
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+        $sqsConsumer($sqsMessage);
+    }
+
+
     /**
      * @return array<string, mixed>
      */
