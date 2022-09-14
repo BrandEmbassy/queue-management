@@ -221,7 +221,7 @@ class SqsQueueManager implements QueueManagerInterface
                 sprintf('+ %d seconds', $delayInSeconds),
             );
             $this->logger->info(
-                'Job execution plan is set. Because job delay is over max SQS delay limit.',
+                'Job execution plan is set, because job delay is over max SQS delay limit.',
                 ['executionPlanAt' => DateTimeFormatter::format($executionPlanAt)],
             );
             $job->setExecutionPlannedAt($executionPlanAt);

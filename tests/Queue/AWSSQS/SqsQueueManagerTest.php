@@ -214,7 +214,7 @@ class SqsQueueManagerTest extends TestCase
 
         $queueManager->pushDelayed($exampleJob, 1800);
 
-        $this->loggerMock->hasInfo('Job execution plan is set. Because job delay is over max SQS delay limit.');
+        $this->loggerMock->hasInfo('Job execution plan is set, because job delay is over max SQS delay limit.');
     }
 
 
