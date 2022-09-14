@@ -49,8 +49,8 @@ interface JobInterface
     public function getJobDefinition(): JobDefinitionInterface;
 
 
-    public function getTimeOfExecution(): ?int;
+    public function getExecutionPlannedAt(): ?DateTimeImmutable;
 
 
-    public function setTimeOfExecution(?int $timeOfExecution): void;
+    public function setExecutionPlannedAt(?DateTimeImmutable $executionPlannedAt): void;
 }

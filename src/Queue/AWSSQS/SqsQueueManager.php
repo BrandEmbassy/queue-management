@@ -6,11 +6,14 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
+use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use GuzzleHttp\Psr7\Stream;
 use LogicException;
+use Nette\Utils\Json;
 use Nette\Utils\Validators;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -18,6 +21,7 @@ use function assert;
 use function count;
 use function is_array;
 use function json_decode;
+use function min;
 use function sprintf;
 
 /**
@@ -32,7 +36,6 @@ class SqsQueueManager implements QueueManagerInterface
      */
     public const MAX_NUMBER_OF_MESSAGES = 'MaxNumberOfMessages';
     public const CONSUME_LOOP_ITERATIONS_NO_LIMIT = -1;
-
     private const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
     private const DELAY_SECONDS = 'DelaySeconds';
     // SQS allows maximum message delay of 15 minutes
@@ -52,6 +55,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private LoggerInterface $logger;
 
+    private DateTimeImmutableFactory $dateTimeImmutableFactory;
+
     private int $consumeLoopIterationsCount;
 
     private string $queueNamePrefix;
@@ -63,6 +68,7 @@ class SqsQueueManager implements QueueManagerInterface
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
+        DateTimeImmutableFactory $dateTimeImmutableFactory,
         int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
         string $queueNamePrefix = ''
     ) {
@@ -73,6 +79,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->s3Client = $this->s3ClientFactory->create();
         $this->messageKeyGenerator = $messageKeyGenerator;
         $this->logger = $logger;
+        $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
         $this->queueNamePrefix = $queueNamePrefix;
     }
@@ -194,7 +201,7 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        $this->publishMessage($job->toJson(), $prefixedQueueName);
+        $this->publishMessage($this->getJobJson($job), $prefixedQueueName);
         LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger);
     }
 
@@ -209,16 +216,19 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
+        $delayInSeconds = min($delayInSeconds, self::MAX_DELAY_SECONDS);
+
         $parameters = [
             self::DELAY_SECONDS => $delayInSeconds,
         ];
 
-        $timeOfExecution = $job->getTimeOfExecution();
-        if ($timeOfExecution === null) {
-            $job->setTimeOfExecution($job->getCreatedAt()->getTimestamp() + $delayInSeconds);
+        $executionPlannedAt = $job->getExecutionPlannedAt();
+        if ($executionPlannedAt === null) {
+            $now = $this->dateTimeImmutableFactory->getNow();
+            $job->setExecutionPlannedAt($now->setTimestamp($job->getCreatedAt()->getTimestamp() + $delayInSeconds));
         }
 
-        $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
+        $this->publishMessage($this->getJobJson($job), $prefixedQueueName, $parameters);
     }
 
 
@@ -313,5 +323,23 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         return $prefixedQueueName;
+    }
+
+
+    private function getJobJson(JobInterface $job): string
+    {
+        if ($job->getExecutionPlannedAt() === null) {
+            return $job->toJson();
+        }
+
+        $jobJson = Json::decode($job->toJson());
+
+        if (isset($jobJson[JobParameters::EXECUTION_PLANNED_AT])) {
+            throw new LogicException('Unexpected state of executionPlannedAt.');
+        }
+
+        $jobJson[JobParameters::EXECUTION_PLANNED_AT] = $job->getExecutionPlannedAt();
+
+        return Json::encode($jobJson);
     }
 }

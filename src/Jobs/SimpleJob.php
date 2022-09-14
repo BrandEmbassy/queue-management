@@ -23,9 +23,9 @@ class SimpleJob implements JobInterface
      */
     private Collection $parameters;
 
-    protected ?DateTimeImmutable $executionStartedAt = null;
+    private ?DateTimeImmutable $executionPlannedAt;
 
-    protected ?int $timeOfExecution = null;
+    protected ?DateTimeImmutable $executionStartedAt = null;
 
     protected JobDefinitionInterface $jobDefinition;
 
@@ -148,14 +148,14 @@ class SimpleJob implements JobInterface
     }
 
 
-    public function getTimeOfExecution(): ?int
+    public function getExecutionPlannedAt(): ?DateTimeImmutable
     {
-        return $this->timeOfExecution;
+        return $this->executionPlannedAt;
     }
 
 
-    public function setTimeOfExecution(?int $timeOfExecution): void
+    public function setExecutionPlannedAt(?DateTimeImmutable $executionPlannedAt): void
     {
-        $this->timeOfExecution = $timeOfExecution;
+        $this->executionPlannedAt = $executionPlannedAt;
     }
 }

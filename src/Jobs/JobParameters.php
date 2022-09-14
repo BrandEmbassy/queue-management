@@ -9,4 +9,5 @@ class JobParameters
     public const ATTEMPTS = 'attempts';
     public const CREATED_AT = 'createdAt';
     public const PARAMETERS = 'jobParameters';
+    public const EXECUTION_PLANNED_AT = 'executionPlannedAt';
 }

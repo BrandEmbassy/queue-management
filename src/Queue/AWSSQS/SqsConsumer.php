@@ -7,11 +7,14 @@ use BE\QueueManagement\Jobs\Execution\ConsumerFailedExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
+use BE\QueueManagement\Jobs\Execution\SqsJobDelayException;
 use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
+use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
+use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -31,6 +34,8 @@ class SqsConsumer implements SqsConsumerInterface
 
     protected MessageDeduplication $messageDeduplication;
 
+    private DateTimeImmutableFactory $dateTimeImmutableFactory;
+
 
     public function __construct(
         LoggerInterface $logger,
@@ -38,7 +43,8 @@ class SqsConsumer implements SqsConsumerInterface
         PushDelayedResolver $pushDelayedResolver,
         JobLoaderInterface $jobLoader,
         SqsClient $sqsClient,
-        MessageDeduplication $messageDeduplication
+        MessageDeduplication $messageDeduplication,
+        DateTimeImmutableFactory $dateTimeImmutableFactory
     ) {
         $this->logger = $logger;
         $this->pushDelayedResolver = $pushDelayedResolver;
@@ -46,6 +52,7 @@ class SqsConsumer implements SqsConsumerInterface
         $this->jobLoader = $jobLoader;
         $this->sqsClient = $sqsClient;
         $this->messageDeduplication = $messageDeduplication;
+        $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
     }
 
 
@@ -111,12 +118,30 @@ class SqsConsumer implements SqsConsumerInterface
     {
         try {
             $job = $this->jobLoader->loadJob($message->getBody());
+            $this->checkJobExecutionPlan($job);
 
             $this->jobExecutor->execute($job);
         } catch (DelayableProcessFailExceptionInterface $exception) {
             LoggerHelper::logDelayableProcessFailException($exception, $this->logger);
 
             $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
+        } catch (SqsJobDelayException $exception) {
+            $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
+        }
+    }
+
+
+    private function checkJobExecutionPlan(JobInterface $job): void
+    {
+        $jobExecutionPlannedAt = $job->getExecutionPlannedAt();
+
+        if ($jobExecutionPlannedAt !== null) {
+            $timeRemainsInSeconds = $jobExecutionPlannedAt->getTimestamp() -
+                $this->dateTimeImmutableFactory->getNow()->getTimestamp();
+
+            if ($timeRemainsInSeconds > 0) {
+                throw new SqsJobDelayException($job, $timeRemainsInSeconds);
+            }
         }
     }
 }
