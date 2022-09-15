@@ -9,7 +9,7 @@ use MabeEnum\Enum;
  */
 class JobType extends Enum
 {
-    public const SQS = 'sqs';
-    public const RABBIT_MQ = 'rabbitMq';
+    public const SQS = 'SQS';
+    public const RABBIT_MQ = 'RabbitMQ';
     public const UNKNOWN = 'unknown';
 }
