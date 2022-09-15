@@ -12,6 +12,7 @@ class LoggerContextField
     public const JOB_EXECUTION_TIME = 'executionTime';
     public const JOB_NAME = 'job_name';
     public const JOB_UUID = 'job_uuid';
+    public const JOB_TYPE = 'job_type';
     public const JOB_QUEUE_NAME = 'job_queue_name';
     public const MESSAGE_BODY = 'message_body';
     public const MESSAGE_ID = 'message_id';

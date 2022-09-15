@@ -6,6 +6,7 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
@@ -195,7 +196,7 @@ class SqsQueueManager implements QueueManagerInterface
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
         $this->publishMessage($job->toJson(), $prefixedQueueName);
-        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger);
+        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger, JobType::get(JobType::SQS));
     }
 
 
