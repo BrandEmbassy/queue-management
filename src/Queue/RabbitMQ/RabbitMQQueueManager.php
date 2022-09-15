@@ -3,6 +3,7 @@
 namespace BE\QueueManagement\Queue\RabbitMQ;
 
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -95,7 +96,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $this->publishMessage($job->toJson(), $queueName);
 
-        LoggerHelper::logJobPushedIntoQueue($job, $queueName, $this->logger);
+        LoggerHelper::logJobPushedIntoQueue($job, $queueName, $this->logger, JobType::get(JobType::RABBIT_MQ));
     }
 
 
