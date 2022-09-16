@@ -6,12 +6,16 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\QueueManagerInterface;
+use BrandEmbassy\DateTime\DateTimeFormatter;
+use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use GuzzleHttp\Psr7\Stream;
 use LogicException;
+use Nette\Utils\Json;
 use Nette\Utils\Validators;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -33,7 +37,6 @@ class SqsQueueManager implements QueueManagerInterface
      */
     public const MAX_NUMBER_OF_MESSAGES = 'MaxNumberOfMessages';
     public const CONSUME_LOOP_ITERATIONS_NO_LIMIT = -1;
-
     private const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
     private const DELAY_SECONDS = 'DelaySeconds';
     // SQS allows maximum message delay of 15 minutes
@@ -57,6 +60,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private string $queueNamePrefix;
 
+    private DateTimeImmutableFactory $dateTimeImmutableFactory;
+
 
     public function __construct(
         string $s3BucketName,
@@ -64,6 +69,7 @@ class SqsQueueManager implements QueueManagerInterface
         S3ClientFactoryInterface $s3ClientFactory,
         MessageKeyGeneratorInterface $messageKeyGenerator,
         LoggerInterface $logger,
+        DateTimeImmutableFactory $dateTimeImmutableFactory,
         int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
         string $queueNamePrefix = ''
     ) {
@@ -76,6 +82,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->logger = $logger;
         $this->consumeLoopIterationsCount = $consumeLoopIterationsCount;
         $this->queueNamePrefix = $queueNamePrefix;
+        $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
     }
 
 
@@ -210,11 +217,21 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        $parameters = [
-            self::DELAY_SECONDS => $delayInSeconds,
-        ];
+        if ($delayInSeconds > self::MAX_DELAY_SECONDS) {
+            $executionPlannedAt = $this->dateTimeImmutableFactory->getNow()->modify(
+                sprintf('+ %d seconds', $delayInSeconds),
+            );
+            $this->logger->info(
+                'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
+                ['executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt)],
+            );
+            $job->executionPlanned($executionPlannedAt);
+            $delayInSeconds = self::MAX_DELAY_SECONDS;
+        }
 
-        $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
+        $parameters = [self::DELAY_SECONDS => $delayInSeconds];
+
+        $this->publishMessage($this->getJobJson($job), $prefixedQueueName, $parameters);
     }
 
 
@@ -309,5 +326,23 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         return $prefixedQueueName;
+    }
+
+
+    private function getJobJson(JobInterface $job): string
+    {
+        if ($job->getExecutionPlannedAt() === null) {
+            return $job->toJson();
+        }
+
+        $jobJson = Json::decode($job->toJson(), Json::FORCE_ARRAY);
+
+        if (isset($jobJson[JobParameters::EXECUTION_PLANNED_AT])) {
+            throw new LogicException('JobInterface::toJson() must not return key "' . JobParameters::EXECUTION_PLANNED_AT . '".');
+        }
+
+        $jobJson[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($job->getExecutionPlannedAt());
+
+        return Json::encode($jobJson);
     }
 }

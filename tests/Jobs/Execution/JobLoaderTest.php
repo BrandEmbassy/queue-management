@@ -9,7 +9,10 @@ use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobTerminator;
 use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
 use BE\QueueManagement\Jobs\SimpleJob;
+use BrandEmbassy\DateTime\DateTimeFormatter;
+use BrandEmbassy\DateTime\DateTimeFromString;
 use BrandEmbassy\MockeryTools\DateTime\DateTimeAssertions;
+use DateTimeImmutable;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -25,6 +28,8 @@ use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 class JobLoaderTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
+
+    private const EXECUTION_PLANNED_AT = '2018-08-01T10:40:00+00:00';
 
     /**
      * @var JobDefinitionsContainer|MockInterface
@@ -45,7 +50,10 @@ class JobLoaderTest extends TestCase
     }
 
 
-    public function testLoadSimpleJob(): void
+    /**
+     * @dataProvider executionPlannedAtDataProvider
+     */
+    public function testLoadSimpleJob(?DateTimeImmutable $executionPlannedAt): void
     {
         $jobLoader = $this->createJobLoader();
 
@@ -70,6 +78,10 @@ class JobLoaderTest extends TestCase
             JobParameters::PARAMETERS => [ExampleJob::PARAMETER_FOO => 'bar'],
         ];
 
+        if ($executionPlannedAt !== null) {
+            $messageBodyData[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($executionPlannedAt);
+        }
+
         /** @var SimpleJob $simpleJob */
         $simpleJob = $jobLoader->loadJob(Json::encode($messageBodyData));
 
@@ -80,6 +92,7 @@ class JobLoaderTest extends TestCase
         Assert::assertSame(ExampleJob::ATTEMPTS, $simpleJob->getAttempts());
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(ExampleJob::CREATED_AT, $simpleJob->getCreatedAt());
         Assert::assertSame($exampleJobDefinition, $simpleJob->getJobDefinition());
+        Assert::assertEquals($executionPlannedAt, $simpleJob->getExecutionPlannedAt());
     }
 
 
@@ -111,5 +124,17 @@ class JobLoaderTest extends TestCase
     private function createJobLoader(): JobLoader
     {
         return new JobLoader($this->jobDefinitionsContainerMock, $this->jobTerminatorMock);
+    }
+
+
+    /**
+     * @return mixed[]
+     */
+    public function executionPlannedAtDataProvider(): array
+    {
+        return [
+            'Null executionPlannedAt' => ['executionPlannedAt' => null],
+            'Not Null executionPlannedAt' => ['executionPlannedAt' => DateTimeFromString::create(self::EXECUTION_PLANNED_AT)],
+        ];
     }
 }

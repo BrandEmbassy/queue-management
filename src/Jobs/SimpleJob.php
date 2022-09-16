@@ -12,6 +12,8 @@ use function array_merge;
 
 class SimpleJob implements JobInterface
 {
+    use HasExecutionPlannedAt;
+
     private string $uuid;
 
     private DateTimeImmutable $createdAt;

@@ -13,6 +13,9 @@ use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\QueueManagerInterface;
+use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
+use DateTimeImmutable;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -32,6 +35,7 @@ class SqsConsumerTest extends TestCase
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
     private const RECEIPT_HANDLE = '123456777';
     private const MESSAGE_ID = 'c176f71b-ea77-4b0e-af6a-d76246d77057';
+    private const FROZEN_DATE_TIME = '2016-08-15T15:00:00+00:00';
 
     private TestLogger $loggerMock;
 
@@ -57,6 +61,13 @@ class SqsConsumerTest extends TestCase
 
     private MessageDeduplication $messageDeduplicationDisabled;
 
+    private FrozenDateTimeImmutableFactory $frozenDateTimeImmutableFactory;
+
+    /**
+     * @var QueueManagerInterface&MockInterface
+     */
+    private $queueManagerMock;
+
 
     public function setUp(): void
     {
@@ -67,6 +78,10 @@ class SqsConsumerTest extends TestCase
         $this->jobLoaderMock = Mockery::mock(JobLoaderInterface::class);
         $this->sqsClientMock = Mockery::mock(SqsClient::class);
         $this->messageDeduplicationDisabled = new MessageDeduplicationDisabled();
+        $this->frozenDateTimeImmutableFactory = new FrozenDateTimeImmutableFactory(
+            new DateTimeImmutable(self::FROZEN_DATE_TIME),
+        );
+        $this->queueManagerMock = Mockery::mock(QueueManagerInterface::class);
     }
 
 
@@ -83,7 +98,7 @@ class SqsConsumerTest extends TestCase
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::QUEUE_URL ,
+                'QueueUrl' => self::QUEUE_URL,
                 'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
@@ -130,7 +145,7 @@ class SqsConsumerTest extends TestCase
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::QUEUE_URL ,
+                'QueueUrl' => self::QUEUE_URL,
                 'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
@@ -158,7 +173,7 @@ class SqsConsumerTest extends TestCase
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::QUEUE_URL ,
+                'QueueUrl' => self::QUEUE_URL,
                 'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
@@ -190,7 +205,7 @@ class SqsConsumerTest extends TestCase
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
-                'QueueUrl' => self::QUEUE_URL ,
+                'QueueUrl' => self::QUEUE_URL,
                 'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
@@ -204,6 +219,103 @@ class SqsConsumerTest extends TestCase
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
         $sqsConsumer($sqsMessage);
+    }
+
+
+    /**
+     * @dataProvider executionDelayedPlannedAtDataProvider
+     */
+    public function testDelayJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt, int $expectedDelay): void
+    {
+        $exampleJob = new ExampleJob();
+        $exampleJob->executionPlanned($executionPlannedAt);
+
+        $this->jobLoaderMock->expects('loadJob')
+            ->with('{"foo":"bar"}')
+            ->andReturn($exampleJob);
+
+        $this->queueManagerMock->expects('pushDelayed')
+            ->with($exampleJob, $expectedDelay);
+
+        $this->sqsClientMock->expects('deleteMessage')
+            ->with([
+                'QueueUrl' => self::QUEUE_URL,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
+            ]);
+
+        $this->loggerMock->hasInfo(
+            'Job requeued, it\'s not planned to be executed yet. [delay: 7200]',
+        );
+
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+        $sqsConsumer($sqsMessage);
+    }
+
+
+    /**
+     * @return mixed[]
+     */
+    public function executionDelayedPlannedAtDataProvider(): array
+    {
+        return [
+            'Delayed two hours' => [
+                'executionPlannedAt' => new DateTimeImmutable('2016-08-15T17:00:00+00:00'),
+                'expectedDelay' => 7200,
+            ],
+            'Delayed one second' => [
+                'executionPlannedAt' => new DateTimeImmutable('2016-08-15T15:00:01+00:0'),
+                'expectedDelay' => 1,
+            ],
+            'Delayed different time zone' => [
+                'executionPlannedAt' => new DateTimeImmutable('2016-08-15T20:00:00+02:0'),
+                'expectedDelay' => 10800,
+            ],
+        ];
+    }
+
+
+    /**
+     * @dataProvider executionPlannedAtDataProvider
+     */
+    public function testExecuteJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt): void
+    {
+        $exampleJob = new ExampleJob();
+        $exampleJob->executionPlanned($executionPlannedAt);
+
+        $this->jobLoaderMock->expects('loadJob')
+            ->with('{"foo":"bar"}')
+            ->andReturn($exampleJob);
+
+        $this->jobExecutorMock->expects('execute')
+            ->with($exampleJob);
+
+        $this->sqsClientMock->expects('deleteMessage')
+            ->with([
+                'QueueUrl' => self::QUEUE_URL,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
+            ]);
+
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+        $sqsConsumer($sqsMessage);
+    }
+
+
+    /**
+     * @return mixed[]
+     */
+    public function executionPlannedAtDataProvider(): array
+    {
+        return [
+            'One our late' => [
+                'executionPlannedAt' => new DateTimeImmutable('2016-08-15T14:00:00+00:00'),
+            ],
+            'Same dateTime' => [
+                'executionPlannedAt' => new DateTimeImmutable('2016-08-15T15:00:00+00:0'),
+            ],
+
+        ];
     }
 
 
@@ -244,6 +356,8 @@ class SqsConsumerTest extends TestCase
             $this->jobLoaderMock,
             $sqsClient,
             $this->messageDeduplicationDisabled,
+            $this->frozenDateTimeImmutableFactory,
+            $this->queueManagerMock,
         );
     }
 }
