@@ -5,6 +5,7 @@ namespace BE\QueueManagement\Logging;
 use BE\QueueManagement\Jobs\Execution\DelayableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
 use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Jobs\JobType;
 use Psr\Log\LoggerInterface;
 use function sprintf;
 
@@ -42,7 +43,7 @@ class LoggerHelper
     }
 
 
-    public static function logJobPushedIntoQueue(JobInterface $job, string $queueName, LoggerInterface $logger): void
+    public static function logJobPushedIntoQueue(JobInterface $job, string $queueName, LoggerInterface $logger, ?JobType $jobType = null): void
     {
         $logger->info(
             sprintf(
@@ -55,6 +56,7 @@ class LoggerHelper
                 LoggerContextField::JOB_QUEUE_NAME => $queueName,
                 LoggerContextField::JOB_NAME => $job->getName(),
                 LoggerContextField::JOB_UUID => $job->getUuid(),
+                LoggerContextField::JOB_TYPE => $jobType === null ? JobType::UNKNOWN : $jobType->getValue(),
             ],
         );
     }
