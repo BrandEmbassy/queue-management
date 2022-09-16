@@ -14,7 +14,6 @@ use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\QueueManagerInterface;
-use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
 use function sprintf;
@@ -129,8 +128,6 @@ class SqsConsumer implements SqsConsumerInterface
             if ($jobExecutionPlannedAt !== null) {
                 $now = $this->dateTimeImmutableFactory->getNow();
                 $timeRemainsInSeconds = $jobExecutionPlannedAt->getTimestamp() - $now->getTimestamp();
-
-                $this->logger->info(sprintf('now: %s, diff: %d', DateTimeFormatter::format($now), $timeRemainsInSeconds));
 
                 if ($timeRemainsInSeconds > 0) {
                     $this->logSqsDelayJob($job, $timeRemainsInSeconds);
