@@ -77,7 +77,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
             $this->logger->warning(
                 'Error when releasing lock: ' . $errorMessage,
                 [
-                    LoggerContextField::EXCEPTION => (string)$exception,
+                    LoggerContextField::EXCEPTION => $exception,
                     LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                 ],
@@ -103,7 +103,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
             $this->logger->error(
                 'Message duplication resolving failed',
                 [
-                    LoggerContextField::EXCEPTION => (string)$exception,
+                    LoggerContextField::EXCEPTION => $exception,
                     LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                 ],

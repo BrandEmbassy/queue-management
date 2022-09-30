@@ -26,8 +26,7 @@ class LoggerHelper
             $exception->getMessage(),
         );
         $context = [
-            LoggerContextField::EXCEPTION => (string)$exception,
-            LoggerContextField::PREVIOUS_EXCEPTION => (string)$exception->getPrevious(),
+            LoggerContextField::EXCEPTION => $exception,
             LoggerContextField::JOB_QUEUE_NAME => $job->getJobDefinition()->getQueueName(),
             LoggerContextField::JOB_NAME => $job->getJobDefinition()->getJobName(),
             LoggerContextField::JOB_UUID => $job->getUuid(),
