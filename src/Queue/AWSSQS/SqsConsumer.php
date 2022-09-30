@@ -86,7 +86,7 @@ class SqsConsumer implements SqsConsumerInterface
             $this->logger->error(
                 'Consumer failed, job requeued: ' . $exception->getMessage(),
                 [
-                    LoggerContextField::EXCEPTION => (string)$exception,
+                    LoggerContextField::EXCEPTION => $exception,
                     LoggerContextField::MESSAGE_BODY => $message->getBody(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                     LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
@@ -98,7 +98,7 @@ class SqsConsumer implements SqsConsumerInterface
             $this->logger->warning(
                 'Job removed from queue: ' . $exception->getMessage(),
                 [
-                    LoggerContextField::EXCEPTION => (string)$exception,
+                    LoggerContextField::EXCEPTION => $exception,
                     LoggerContextField::MESSAGE_BODY => $message->getBody(),
                     LoggerContextField::MESSAGE_ID => $message->getMessageId(),
                     LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
