@@ -2,10 +2,8 @@
 
 namespace Tests\BE\QueueManagement\Queue\RabbitMQ;
 
-use BE\QueueManagement\Queue\RabbitMQ\ConnectionException;
 use BE\QueueManagement\Queue\RabbitMQ\ConnectionFactory;
 use BE\QueueManagement\Queue\RabbitMQ\RabbitMQQueueManager;
-use Exception;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -173,35 +171,6 @@ class RabbitMQQueueManagerTest extends TestCase
 
         $this->amqpStreamConnectionMock->shouldReceive('close')
             ->withNoArgs()
-            ->once();
-
-        $queueManager = $this->createQueueManager();
-        $queueManager->push($exampleJob);
-    }
-
-
-    public function testPushWithConnectionException(): void
-    {
-        $this->connectionFactoryMock->expects('create')
-            ->withNoArgs()
-            ->andThrow(ConnectionException::createUnableToConnect(new Exception('Connection failed')));
-
-        $this->loggerMock->hasWarning('RabbitMQ connection creation failed. Waiting and retrying...');
-
-        $this->expectSetUpConnection();
-
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
-
-        $exampleJob = $this->createExampleJob();
-
-        $this->amqpChannelMock->shouldReceive('basic_publish')
-            ->with(
-                Mockery::on(
-                    static fn(AMQPMessage $message): bool => $message->getBody() === $exampleJob->toJson()
-                        && $message->get_properties()['delivery_mode'] === AMQPMessage::DELIVERY_MODE_PERSISTENT,
-                ),
-                ExampleJobDefinition::QUEUE_NAME . '.sync',
-            )
             ->once();
 
         $queueManager = $this->createQueueManager();
