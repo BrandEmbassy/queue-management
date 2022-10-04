@@ -17,6 +17,7 @@ use PhpAmqpLib\Wire\AMQPTable;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use function count;
+use function usleep;
 
 /**
  * @final
@@ -26,6 +27,11 @@ class RabbitMQQueueManager implements QueueManagerInterface
     public const PREFETCH_COUNT = 'prefetchCount';
     public const NO_ACK = 'noAck';
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
+    private const CREATE_CONNECTION_ATTEMPT_DELAYS_IN_MILLISECONDS = [
+        1 => 100,
+        2 => 500,
+        3 => 1000,
+    ];
 
     private ConnectionFactoryInterface $connectionFactory;
 
@@ -261,9 +267,30 @@ class RabbitMQQueueManager implements QueueManagerInterface
     }
 
 
-    private function createConnection(): AMQPStreamConnection
+    private function createConnection(int $attempt = 1): AMQPStreamConnection
     {
-        return $this->connectionFactory->create();
+        try {
+            return $this->connectionFactory->create();
+        } catch (ConnectionException $exception) {
+            if (!isset(self::CREATE_CONNECTION_ATTEMPT_DELAYS_IN_MILLISECONDS[$attempt])) {
+                $this->logger->error('RabbitMQ connection creation failed. Giving up.', [
+                    'attempt' => $attempt,
+                ]);
+
+                throw $exception;
+            }
+
+            $delayInMilliseconds = self::CREATE_CONNECTION_ATTEMPT_DELAYS_IN_MILLISECONDS[$attempt];
+            $this->logger->warning('RabbitMQ connection creation failed. Waiting and retrying...', [
+                'attempt' => $attempt,
+                'delayInMilliseconds' => $delayInMilliseconds,
+                'exception' => $exception,
+            ]);
+
+            usleep($delayInMilliseconds * 1000);
+
+            return $this->createConnection($attempt + 1);
+        }
     }
 
 
