@@ -238,7 +238,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
     private function reconnect(Throwable $exception, string $queueName): void
     {
         $this->clearConnection($queueName);
-        $this->connection = $this->createConnection();
+        $this->connection = $this->connectionFactory->create();
         $this->channel = $this->createChannel();
 
         $this->logger->warning(
@@ -254,16 +254,10 @@ class RabbitMQQueueManager implements QueueManagerInterface
     private function getConnection(): AMQPStreamConnection
     {
         if ($this->connection === null) {
-            $this->connection = $this->createConnection();
+            $this->connection = $this->connectionFactory->create();
         }
 
         return $this->connection;
-    }
-
-
-    private function createConnection(): AMQPStreamConnection
-    {
-        return $this->connectionFactory->create();
     }
 
 

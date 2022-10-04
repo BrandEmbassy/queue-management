@@ -3,8 +3,11 @@
 namespace BE\QueueManagement\Queue\AWSSQS;
 
 use Aws\Sqs\SqsClient;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Throwable;
 use function count;
+use function usleep;
 
 /**
  * Defines SQS client factory.
@@ -18,12 +21,26 @@ use function count;
  */
 class SqsClientFactory extends AwsClientFactory implements SqsClientFactoryInterface
 {
+    private const CREATE_CLIENT_ATTEMPT_DELAYS_IN_MILLISECONDS = [
+        1 => 100,
+        2 => 500,
+        3 => 1000,
+    ];
+
+    private LoggerInterface $logger;
+
+
     /**
      * @param mixed[] $connectionConfig
      */
-    public function __construct(array $connectionConfig)
+    public function __construct(array $connectionConfig, ?LoggerInterface $logger = null)
     {
+        if ($logger === null) {
+            $logger = new NullLogger();
+        }
+
         parent::__construct($connectionConfig);
+        $this->logger = $logger;
     }
 
 
@@ -36,9 +53,36 @@ class SqsClientFactory extends AwsClientFactory implements SqsClientFactoryInter
         }
 
         try {
-            return new SqsClient($this->connectionConfig);
+            return $this->createClientOrRetry();
         } catch (Throwable $exception) {
             throw SqsClientException::createUnableToConnect($exception);
+        }
+    }
+
+
+    private function createClientOrRetry(int $attempt = 1): SqsClient
+    {
+        try {
+            return new SqsClient($this->connectionConfig);
+        } catch (Throwable $exception) {
+            if (!isset(self::CREATE_CLIENT_ATTEMPT_DELAYS_IN_MILLISECONDS[$attempt])) {
+                $this->logger->error('SQS client creation failed. Giving up.', [
+                    'attempt' => $attempt,
+                ]);
+
+                throw $exception;
+            }
+
+            $delayInMilliseconds = self::CREATE_CLIENT_ATTEMPT_DELAYS_IN_MILLISECONDS[$attempt];
+            $this->logger->warning('SQS client creation failed. Waiting and retrying...', [
+                'attempt' => $attempt,
+                'delayInMilliseconds' => $delayInMilliseconds,
+                'exception' => $exception,
+            ]);
+
+            usleep($delayInMilliseconds * 1000);
+
+            return $this->createClientOrRetry($attempt + 1);
         }
     }
 }
