@@ -8,7 +8,6 @@ namespace BE\QueueManagement\Logging;
 class LoggerContextField
 {
     public const EXCEPTION = 'exception';
-    public const PREVIOUS_EXCEPTION = 'previousException';
     public const JOB_EXECUTION_TIME = 'executionTime';
     public const JOB_NAME = 'job_name';
     public const JOB_UUID = 'job_uuid';

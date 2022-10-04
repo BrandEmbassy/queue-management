@@ -187,7 +187,7 @@ class SqsQueueManager implements QueueManagerInterface
                 $this->logger->warning(
                     'AwsException: ' . $exception->getMessage(),
                     [
-                        LoggerContextField::EXCEPTION => (string)$exception,
+                        LoggerContextField::EXCEPTION => $exception,
                         LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
                     ],
                 );
@@ -300,7 +300,7 @@ class SqsQueueManager implements QueueManagerInterface
             'Reconnecting: ' . $exception->getMessage(),
             [
                 LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
-                LoggerContextField::EXCEPTION => (string)$exception,
+                LoggerContextField::EXCEPTION => $exception,
             ],
         );
     }
