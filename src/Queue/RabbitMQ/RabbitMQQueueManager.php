@@ -119,12 +119,14 @@ class RabbitMQQueueManager implements QueueManagerInterface
         ];
 
         $this->publishMessage($job->toJson(), $queueName, $parameters);
+
+        $delayInSeconds = $delayInMilliseconds / 1000;
         LoggerHelper::logJobPushedIntoQueue(
             $job,
             $queueName,
             $this->logger,
             JobType::get(JobType::RABBIT_MQ),
-            $delayInMilliseconds / 1000
+            (int)$delayInSeconds,
         );
     }
 
