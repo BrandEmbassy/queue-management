@@ -100,6 +100,8 @@ class RabbitMQQueueManagerTest extends TestCase
             )
             ->once();
 
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+
         $queueManager = $this->createQueueManager();
         $queueManager->pushDelayed($exampleJob, 5);
     }
@@ -128,6 +130,8 @@ class RabbitMQQueueManagerTest extends TestCase
                 ExampleJobDefinition::QUEUE_NAME . '.sync',
             )
             ->once();
+
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
         $queueManager = $this->createQueueManager();
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 500);
