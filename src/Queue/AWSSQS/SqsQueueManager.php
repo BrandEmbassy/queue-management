@@ -232,6 +232,7 @@ class SqsQueueManager implements QueueManagerInterface
         $parameters = [self::DELAY_SECONDS => $delayInSeconds];
 
         $this->publishMessage($this->getJobJson($job), $prefixedQueueName, $parameters);
+        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger, JobType::get(JobType::SQS), $delayInSeconds);
     }
 
 

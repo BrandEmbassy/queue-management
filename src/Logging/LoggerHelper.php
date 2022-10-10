@@ -17,6 +17,9 @@ use function sprintf;
  */
 class LoggerHelper
 {
+    private const NOT_DELAYED = -1;
+
+
     public static function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception, LoggerInterface $logger): void
     {
         $job = $exception->getJob();
@@ -28,7 +31,7 @@ class LoggerHelper
         $context = [
             LoggerContextField::EXCEPTION => $exception,
             LoggerContextField::JOB_QUEUE_NAME => $job->getJobDefinition()->getQueueName(),
-            LoggerContextField::JOB_NAME => $job->getJobDefinition()->getJobName(),
+            LoggerContextField::JOB_NAME => $job->getName(),
             LoggerContextField::JOB_UUID => $job->getUuid(),
         ];
 
@@ -42,8 +45,13 @@ class LoggerHelper
     }
 
 
-    public static function logJobPushedIntoQueue(JobInterface $job, string $queueName, LoggerInterface $logger, ?JobType $jobType = null): void
-    {
+    public static function logJobPushedIntoQueue(
+        JobInterface $job,
+        string $queueName,
+        LoggerInterface $logger,
+        ?JobType $jobType = null,
+        int $delayInSeconds = self::NOT_DELAYED
+    ): void {
         $logger->info(
             sprintf(
                 'Job (%s) [%s] pushed into %s queue',
@@ -56,6 +64,7 @@ class LoggerHelper
                 LoggerContextField::JOB_NAME => $job->getName(),
                 LoggerContextField::JOB_UUID => $job->getUuid(),
                 LoggerContextField::JOB_TYPE => $jobType === null ? JobType::UNKNOWN : $jobType->getValue(),
+                LoggerContextField::JOB_DELAY_IN_SECONDS => $delayInSeconds,
             ],
         );
     }

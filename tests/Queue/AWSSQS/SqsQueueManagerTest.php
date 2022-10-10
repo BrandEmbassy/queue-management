@@ -177,6 +177,8 @@ class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
 
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+
         $queueManager->pushDelayed($exampleJob, 5);
     }
 
@@ -213,6 +215,7 @@ class SqsQueueManagerTest extends TestCase
         $queueManager = $this->createQueueManager($queueNamePrefix);
 
         $this->loggerMock->hasInfo('Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
         $queueManager->pushDelayed($exampleJob, 1800);
     }
