@@ -165,7 +165,12 @@ class SqsQueueManager implements QueueManagerInterface
         $loopIterationsCounter = 0;
         $isLoopIterationsLimitEnabled = $this->consumeLoopIterationsCount !== self::CONSUME_LOOP_ITERATIONS_NO_LIMIT;
 
-        while (!$this->isBeingTerminated && (!$isLoopIterationsLimitEnabled || $loopIterationsCounter < $this->consumeLoopIterationsCount)) {
+        while (!$this->isBeingTerminated
+            && (
+                !$isLoopIterationsLimitEnabled
+                || $loopIterationsCounter < $this->consumeLoopIterationsCount
+            )
+        ) {
             try {
                 $result = $this->sqsClient->receiveMessage([
                     'AttributeNames' => ['All'],
