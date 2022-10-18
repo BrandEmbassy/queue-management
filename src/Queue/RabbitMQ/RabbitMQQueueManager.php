@@ -96,7 +96,7 @@ class RabbitMQQueueManager implements QueueManagerInterface
 
         $this->publishMessage($job->toJson(), $queueName);
 
-        LoggerHelper::logJobPushedIntoQueue($job, $queueName, $this->logger, JobType::get(JobType::RABBIT_MQ));
+        LoggerHelper::logJobPushedIntoQueue($job, $queueName, $this->logger, JobType::get(JobType::RABBIT_MQ), LoggerHelper::NOT_DELAYED);
     }
 
 

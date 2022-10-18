@@ -210,7 +210,7 @@ class SqsQueueManager implements QueueManagerInterface
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
         $this->publishMessage($job->toJson(), $prefixedQueueName);
-        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger, JobType::get(JobType::SQS));
+        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger, JobType::get(JobType::SQS), LoggerHelper::NOT_DELAYED);
     }
 
 

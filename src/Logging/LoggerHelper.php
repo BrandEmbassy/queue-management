@@ -17,7 +17,8 @@ use function sprintf;
  */
 class LoggerHelper
 {
-    private const NOT_DELAYED = -1;
+    public const UNKNOWN_DELAY = -1;
+    public const NOT_DELAYED = 0;
 
 
     public static function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception, LoggerInterface $logger): void
@@ -50,7 +51,7 @@ class LoggerHelper
         string $queueName,
         LoggerInterface $logger,
         ?JobType $jobType = null,
-        int $delayInSeconds = self::NOT_DELAYED
+        int $delayInSeconds = self::UNKNOWN_DELAY
     ): void {
         $logger->info(
             sprintf(
