@@ -372,7 +372,7 @@ class SqsQueueManagerTest extends TestCase
 
 
     /**
-     * @return mixed[]
+     * @return array<int, array<string, mixed>>
      */
     public function queueNameDataProvider(): array
     {
@@ -390,7 +390,7 @@ class SqsQueueManagerTest extends TestCase
 
 
     /**
-     * @return array<mixed>
+     * @return array<int, array<string, mixed>>
      */
     private function getSampleSqsMessages(): array
     {
@@ -419,7 +419,7 @@ class SqsQueueManagerTest extends TestCase
 
 
     /**
-     * @param array<mixed> $message
+     * @param array<string, mixed> $message
      */
     private static function messageCheckOk(array $message, string $messageBody, int $delay): bool
     {

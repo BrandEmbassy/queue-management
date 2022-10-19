@@ -29,4 +29,10 @@ class QueueWorker implements WorkerInterface
     {
         $this->queueManager->consumeMessages($this->consumer, $queueName, $parameters);
     }
+
+
+    public function terminateGracefully(): void
+    {
+        $this->queueManager->terminateGracefully();
+    }
 }
