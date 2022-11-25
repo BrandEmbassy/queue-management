@@ -61,7 +61,7 @@ class JobExecutor implements JobExecutorInterface
             throw new UnableToProcessLoadedJobException(
                 $job,
                 $exception->getMessage(),
-                $exception->getCode(),
+                (int)$exception->getCode(),
                 $exception,
             );
         }
