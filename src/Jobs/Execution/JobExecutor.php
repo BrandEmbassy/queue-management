@@ -4,6 +4,8 @@ namespace BE\QueueManagement\Jobs\Execution;
 
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerContextField;
+use BE\QueueManagement\ThrowableFilter\AlwaysApplicableThrowableFilter;
+use BE\QueueManagement\ThrowableFilter\ThrowableFilter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -16,11 +18,20 @@ class JobExecutor implements JobExecutorInterface
 
     protected DateTimeImmutableFactory $dateTimeImmutableFactory;
 
+    private ThrowableFilter $convertToUnableToProcessLoadedJobExceptionFilter;
 
-    public function __construct(LoggerInterface $logger, DateTimeImmutableFactory $dateTimeImmutableFactory)
-    {
+
+    public function __construct(
+        LoggerInterface $logger,
+        DateTimeImmutableFactory $dateTimeImmutableFactory,
+        ?ThrowableFilter $convertToUnableToProcessLoadedJobExceptionFilter = null
+    ) {
+        if ($convertToUnableToProcessLoadedJobExceptionFilter === null) {
+            $convertToUnableToProcessLoadedJobExceptionFilter = new AlwaysApplicableThrowableFilter();
+        }
         $this->logger = $logger;
         $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
+        $this->convertToUnableToProcessLoadedJobExceptionFilter = $convertToUnableToProcessLoadedJobExceptionFilter;
     }
 
 
@@ -58,6 +69,10 @@ class JobExecutor implements JobExecutorInterface
         } catch (ConsumerFailedExceptionInterface | UnresolvableProcessFailExceptionInterface $exception) {
             throw $exception;
         } catch (Throwable $exception) {
+            if (!$this->convertToUnableToProcessLoadedJobExceptionFilter->isApplicable($exception)) {
+                throw $exception;
+            }
+
             throw new UnableToProcessLoadedJobException(
                 $job,
                 $exception->getMessage(),
