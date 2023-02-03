@@ -23,6 +23,7 @@ use Nette\Utils\Json;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\Execution\ExampleExceptionWithPreviousWarningOnlyException;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 
 /**
@@ -194,6 +195,38 @@ class SqsConsumerTest extends TestCase
     {
         $exampleJob = new ExampleJob();
         $exampleWarningOnlyException = ExampleWarningOnlyException::create($exampleJob);
+
+        $this->jobLoaderMock->expects('loadJob')
+            ->with('{"foo":"bar"}')
+            ->andReturns($exampleJob);
+
+        $this->jobExecutorMock->expects('execute')
+            ->with($exampleJob)
+            ->andThrow($exampleWarningOnlyException);
+
+        $this->sqsClientMock->expects('deleteMessage')
+            ->with([
+                'QueueUrl' => self::QUEUE_URL,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
+            ]);
+
+        $this->loggerMock->hasWarning(
+            'Job execution failed [attempts: 1], reason: I will be logged as a warning',
+        );
+
+        $this->pushDelayedResolverMock->expects('resolve')
+            ->with($exampleJob, $exampleWarningOnlyException);
+
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+        $sqsConsumer($sqsMessage);
+    }
+
+
+    public function testRequeueDelayableProcessFailWithParentWarningOnlyException(): void
+    {
+        $exampleJob = new ExampleJob();
+        $exampleWarningOnlyException = ExampleExceptionWithPreviousWarningOnlyException::create($exampleJob);
 
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')

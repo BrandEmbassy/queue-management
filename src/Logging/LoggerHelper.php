@@ -21,8 +21,10 @@ class LoggerHelper
     public const NOT_DELAYED = 0;
 
 
-    public static function logDelayableProcessFailException(DelayableProcessFailExceptionInterface $exception, LoggerInterface $logger): void
-    {
+    public static function logDelayableProcessFailException(
+        DelayableProcessFailExceptionInterface $exception,
+        LoggerInterface $logger
+    ): void {
         $job = $exception->getJob();
         $message = sprintf(
             'Job execution failed [attempts: %s], reason: %s',
@@ -36,7 +38,9 @@ class LoggerHelper
             LoggerContextField::JOB_UUID => $job->getUuid(),
         ];
 
-        if ($exception instanceof WarningOnlyExceptionInterface) {
+        // The previous exception check is here because JobExecutor throw UnableToProcessLoadedJobException and their parent can be WarningOnly
+        if ($exception instanceof WarningOnlyExceptionInterface
+            || $exception->getPrevious() instanceof WarningOnlyExceptionInterface) {
             $logger->warning($message, $context);
 
             return;
