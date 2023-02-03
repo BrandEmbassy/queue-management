@@ -223,7 +223,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    public function testRequeueDelayableProcessFailWithParentWarningOnlyException(): void
+    public function testRequeueDelayableProcessFailWithPreviousWarningOnlyException(): void
     {
         $exampleJob = new ExampleJob();
         $exampleWarningOnlyException = ExampleExceptionWithPreviousWarningOnlyException::create($exampleJob);

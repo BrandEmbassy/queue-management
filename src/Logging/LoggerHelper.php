@@ -38,7 +38,7 @@ class LoggerHelper
             LoggerContextField::JOB_UUID => $job->getUuid(),
         ];
 
-        // The previous exception check is here because JobExecutor throw UnableToProcessLoadedJobException and their parent can be WarningOnly
+        // JobExecutor remaps the thrown exception to UnableToProcessLoadedJobException so we need to also check the previous exception
         if ($exception instanceof WarningOnlyExceptionInterface
             || $exception->getPrevious() instanceof WarningOnlyExceptionInterface) {
             $logger->warning($message, $context);
