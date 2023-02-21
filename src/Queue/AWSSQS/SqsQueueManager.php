@@ -244,7 +244,7 @@ class SqsQueueManager implements QueueManagerInterface
 
         $parameters = [self::DELAY_SECONDS => $delayInSeconds];
 
-        $this->publishMessage($this->getJobJson($job), $prefixedQueueName, $parameters);
+        $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
         LoggerHelper::logJobPushedIntoQueue(
             $job,
             $prefixedQueueName,
@@ -346,26 +346,6 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         return $prefixedQueueName;
-    }
-
-
-    private function getJobJson(JobInterface $job): string
-    {
-        if ($job->getExecutionPlannedAt() === null) {
-            return $job->toJson();
-        }
-
-        $jobJson = Json::decode($job->toJson(), Json::FORCE_ARRAY);
-
-        if (isset($jobJson[JobParameters::EXECUTION_PLANNED_AT])) {
-            throw new LogicException(
-                'JobInterface::toJson() must not return key "' . JobParameters::EXECUTION_PLANNED_AT . '".',
-            );
-        }
-
-        $jobJson[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($job->getExecutionPlannedAt());
-
-        return Json::encode($jobJson);
     }
 
 
