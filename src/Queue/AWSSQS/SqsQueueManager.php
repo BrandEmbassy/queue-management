@@ -6,7 +6,6 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
-use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
