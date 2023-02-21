@@ -86,6 +86,7 @@ class JobLoaderTest extends TestCase
         $simpleJob = $jobLoader->loadJob(Json::encode($messageBodyData));
 
         Assert::assertSame('bar', $simpleJob->getParameter('foo'));
+        Assert::assertSame(['foo' => 'bar'], $simpleJob->getParameters()->toArray());
         Assert::assertSame(ExampleJob::UUID, $simpleJob->getUuid());
         Assert::assertSame(ExampleJob::JOB_NAME, $simpleJob->getName());
         Assert::assertSame(ExampleJobDefinition::MAX_ATTEMPTS, $simpleJob->getMaxAttempts());

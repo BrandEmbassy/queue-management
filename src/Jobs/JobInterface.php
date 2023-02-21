@@ -4,6 +4,7 @@ namespace BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\Collection;
 
 interface JobInterface
 {
@@ -32,6 +33,12 @@ interface JobInterface
      * @return mixed
      */
     public function getParameter(string $key);
+
+
+    /**
+     * @return Collection<string,mixed>
+     */
+    public function getParameters(): Collection;
 
 
     public function getCreatedAt(): DateTimeImmutable;

@@ -43,6 +43,7 @@ class ExampleJobTest extends TestCase
 
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(self::JOB_CREATED_AT, $simpleJob->getCreatedAt());
         Assert::assertSame(JobInterface::INIT_ATTEMPTS, $simpleJob->getAttempts());
+        Assert::assertSame(['foo' => 'bar'], $simpleJob->getParameters()->toArray());
         Assert::assertSame('bar', $simpleJob->getParameter('foo'));
         Assert::assertSame(ExampleJob::UUID, $simpleJob->getUuid());
         Assert::assertSame(ExampleJob::JOB_NAME, $simpleJob->getName());

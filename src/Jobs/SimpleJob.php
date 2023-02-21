@@ -112,6 +112,15 @@ class SimpleJob implements JobInterface
     }
 
 
+    /**
+     * @return Collection<string,mixed>
+     */
+    public function getParameters(): Collection
+    {
+        return $this->parameters;
+    }
+
+
     public function incrementAttempts(): void
     {
         $this->attempts++;
