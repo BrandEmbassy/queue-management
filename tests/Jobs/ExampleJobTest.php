@@ -97,6 +97,7 @@ class ExampleJobTest extends TestCase
             JobInterface::INIT_ATTEMPTS,
             ExampleJobDefinition::create(),
             new ArrayCollection(['foo' => $foo]),
+            null,
         );
     }
 }

@@ -30,6 +30,7 @@ class ExampleJob extends SimpleJob
             self::ATTEMPTS,
             $jobDefinition ?? ExampleJobDefinition::create(),
             new ArrayCollection([self::PARAMETER_FOO => $bar]),
+            null,
         );
     }
 
