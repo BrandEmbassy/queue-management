@@ -18,11 +18,12 @@ class SimpleJobLoader implements JobLoaderInterface
         string $uuid,
         DateTimeImmutable $createdAt,
         int $attempts,
-        Collection $parameters
+        Collection $parameters,
+        ?DateTimeImmutable $executionPlannedAt = null
     ): JobInterface {
         /** @var SimpleJob $jobClass */
         $jobClass = $jobDefinition->getJobClass();
 
-        return new $jobClass($uuid, $createdAt, $attempts, $jobDefinition, $parameters);
+        return new $jobClass($uuid, $createdAt, $attempts, $jobDefinition, $parameters, $executionPlannedAt);
     }
 }

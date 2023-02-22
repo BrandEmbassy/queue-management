@@ -39,19 +39,18 @@ class JobLoader implements JobLoaderInterface
 
         $jobLoader = $jobDefinition->getJobLoader();
 
-        $job = $jobLoader->load(
+        $executionPlannedAtDateTime = $executionPlannedAt !== null
+            ? DateTimeFromString::create($executionPlannedAt)
+            : null;
+
+        return $jobLoader->load(
             $jobDefinition,
             $jobUuid,
             DateTimeFromString::create($messageParameters[JobParameters::CREATED_AT]),
             $attempts,
             new ArrayCollection($messageParameters[JobParameters::PARAMETERS]),
+            $executionPlannedAtDateTime,
         );
-
-        if ($executionPlannedAt !== null) {
-            $job->executionPlanned(DateTimeFromString::create($executionPlannedAt));
-        }
-
-        return $job;
     }
 
 

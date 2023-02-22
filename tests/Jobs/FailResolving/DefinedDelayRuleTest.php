@@ -48,6 +48,7 @@ class DefinedDelayRuleTest extends TestCase
             $attempts,
             $this->createQueueJobDefinition(),
             new ArrayCollection(),
+            null,
         );
         $delayRule = new DefinedDelayRule(
             self::MAXIMUM_DELAY,

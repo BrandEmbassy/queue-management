@@ -38,6 +38,7 @@ class ExampleJobTest extends TestCase
             JobParameters::ATTEMPTS => 1,
             JobParameters::CREATED_AT => self::JOB_CREATED_AT,
             JobParameters::PARAMETERS => ['foo' => 'bar'],
+            JobParameters::EXECUTION_PLANNED_AT => null,
         ];
 
         DateTimeAssertions::assertDateTimeAtomEqualsDateTime(self::JOB_CREATED_AT, $simpleJob->getCreatedAt());
@@ -97,6 +98,7 @@ class ExampleJobTest extends TestCase
             JobInterface::INIT_ATTEMPTS,
             ExampleJobDefinition::create(),
             new ArrayCollection(['foo' => $foo]),
+            null,
         );
     }
 }

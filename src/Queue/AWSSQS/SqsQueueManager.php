@@ -6,7 +6,6 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Jobs\JobInterface;
-use BE\QueueManagement\Jobs\JobParameters;
 use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
@@ -210,7 +209,13 @@ class SqsQueueManager implements QueueManagerInterface
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
         $this->publishMessage($job->toJson(), $prefixedQueueName);
-        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger, JobType::get(JobType::SQS), LoggerHelper::NOT_DELAYED);
+        LoggerHelper::logJobPushedIntoQueue(
+            $job,
+            $prefixedQueueName,
+            $this->logger,
+            JobType::get(JobType::SQS),
+            LoggerHelper::NOT_DELAYED,
+        );
     }
 
 
@@ -232,14 +237,20 @@ class SqsQueueManager implements QueueManagerInterface
                 'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
                 ['executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt)],
             );
-            $job->executionPlanned($executionPlannedAt);
+            $job->setExecutionPlannedAt($executionPlannedAt);
             $delayInSeconds = self::MAX_DELAY_SECONDS;
         }
 
         $parameters = [self::DELAY_SECONDS => $delayInSeconds];
 
-        $this->publishMessage($this->getJobJson($job), $prefixedQueueName, $parameters);
-        LoggerHelper::logJobPushedIntoQueue($job, $prefixedQueueName, $this->logger, JobType::get(JobType::SQS), $delayInSeconds);
+        $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
+        LoggerHelper::logJobPushedIntoQueue(
+            $job,
+            $prefixedQueueName,
+            $this->logger,
+            JobType::get(JobType::SQS),
+            $delayInSeconds,
+        );
     }
 
 
@@ -334,24 +345,6 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         return $prefixedQueueName;
-    }
-
-
-    private function getJobJson(JobInterface $job): string
-    {
-        if ($job->getExecutionPlannedAt() === null) {
-            return $job->toJson();
-        }
-
-        $jobJson = Json::decode($job->toJson(), Json::FORCE_ARRAY);
-
-        if (isset($jobJson[JobParameters::EXECUTION_PLANNED_AT])) {
-            throw new LogicException('JobInterface::toJson() must not return key "' . JobParameters::EXECUTION_PLANNED_AT . '".');
-        }
-
-        $jobJson[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($job->getExecutionPlannedAt());
-
-        return Json::encode($jobJson);
     }
 
 
