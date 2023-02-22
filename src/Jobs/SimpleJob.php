@@ -39,7 +39,7 @@ class SimpleJob implements JobInterface
         int $attempts,
         JobDefinitionInterface $jobDefinition,
         Collection $parameters,
-        ?DateTimeImmutable $executionPlannedAt
+        ?DateTimeImmutable $executionPlannedAt = null
     ) {
         $this->uuid = $uuid;
         $this->createdAt = $createdAt;
