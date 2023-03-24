@@ -118,6 +118,43 @@ class SqsQueueManagerTest extends TestCase
     /**
      * @dataProvider queueNameDataProvider
      */
+    public function testPushWithInvalidCharacters(string $queueName, string $queueNamePrefix): void
+    {
+        $this->expectSetUpConnection();
+
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+
+        $exampleJobWithInvalidCharacter = new ExampleJob(
+            ExampleJobDefinition::create()
+                ->withQueueName($queueName),
+            'This ￾is random text.',
+        );
+
+        $exampleJobWithValidCharacter = new ExampleJob(
+            ExampleJobDefinition::create()
+                ->withQueueName($queueName),
+            'This is random text.',
+        );
+
+        $this->sqsClientMock->expects('sendMessage')
+            ->with(
+                Mockery::on(
+                    static fn(array $message): bool => self::messageCheckOk(
+                        $message,
+                        $exampleJobWithValidCharacter->toJson(),
+                        0,
+                    ),
+                ),
+            );
+
+        $queueManager = $this->createQueueManager($queueNamePrefix);
+        $queueManager->push($exampleJobWithInvalidCharacter);
+    }
+
+
+    /**
+     * @dataProvider queueNameDataProvider
+     */
     public function testPushWithTooBigMessage(string $queueName, string $queueNamePrefix): void
     {
         $this->expectSetUpConnection();
@@ -214,7 +251,9 @@ class SqsQueueManagerTest extends TestCase
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
 
-        $this->loggerMock->hasInfo('Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.');
+        $this->loggerMock->hasInfo(
+            'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
+        );
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
         $queueManager->pushDelayed($exampleJob, 1800);

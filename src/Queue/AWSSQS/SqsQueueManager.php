@@ -21,7 +21,9 @@ use Throwable;
 use function assert;
 use function count;
 use function is_array;
+use function is_string;
 use function json_decode;
+use function preg_replace;
 use function sprintf;
 
 /**
@@ -266,6 +268,14 @@ class SqsQueueManager implements QueueManagerInterface
         array $properties = []
     ): void {
         $messageBody = $job->toJson();
+
+        // Remove invalid XML characters because AWS SQS supports only valid XML characters.
+        $messageBody = preg_replace(
+            '/[^\x{9}\x{a}\x{d}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]+/u',
+            '',
+            $messageBody,
+        );
+        assert(is_string($messageBody));
 
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
