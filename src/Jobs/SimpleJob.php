@@ -12,8 +12,6 @@ use function array_merge;
 
 class SimpleJob implements JobInterface
 {
-    use HasExecutionPlannedAt;
-
     private string $uuid;
 
     private DateTimeImmutable $createdAt;
@@ -29,6 +27,8 @@ class SimpleJob implements JobInterface
 
     protected JobDefinitionInterface $jobDefinition;
 
+    private ?DateTimeImmutable $executionPlannedAt;
+
 
     /**
      * @param Collection<string, mixed>|mixed[] $parameters
@@ -38,13 +38,15 @@ class SimpleJob implements JobInterface
         DateTimeImmutable $createdAt,
         int $attempts,
         JobDefinitionInterface $jobDefinition,
-        Collection $parameters
+        Collection $parameters,
+        ?DateTimeImmutable $executionPlannedAt
     ) {
         $this->uuid = $uuid;
         $this->createdAt = $createdAt;
         $this->attempts = $attempts;
         $this->parameters = $parameters;
         $this->jobDefinition = $jobDefinition;
+        $this->executionPlannedAt = $executionPlannedAt;
     }
 
 
@@ -77,7 +79,12 @@ class SimpleJob implements JobInterface
             JobParameters::ATTEMPTS => $this->attempts,
             JobParameters::CREATED_AT => DateTimeFormatter::format($this->createdAt),
             JobParameters::PARAMETERS => $this->parameters->toArray(),
+            JobParameters::EXECUTION_PLANNED_AT => null,
         ];
+
+        if ($this->getExecutionPlannedAt() !== null) {
+            $arrayData[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($this->getExecutionPlannedAt());
+        }
 
         return Json::encode(array_merge($arrayData, $customParameters));
     }
@@ -145,5 +152,17 @@ class SimpleJob implements JobInterface
     public function getJobDefinition(): JobDefinitionInterface
     {
         return $this->jobDefinition;
+    }
+
+
+    public function getExecutionPlannedAt(): ?DateTimeImmutable
+    {
+        return $this->executionPlannedAt;
+    }
+
+
+    public function setExecutionPlannedAt(DateTimeImmutable $executionPlannedAt): void
+    {
+        $this->executionPlannedAt = $executionPlannedAt;
     }
 }

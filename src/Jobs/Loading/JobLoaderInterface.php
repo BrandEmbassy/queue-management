@@ -17,6 +17,7 @@ interface JobLoaderInterface
         string $uuid,
         DateTimeImmutable $createdAt,
         int $attempts,
-        Collection $parameters
+        Collection $parameters,
+        ?DateTimeImmutable $executionPlannedAt = null
     ): JobInterface;
 }

@@ -2,7 +2,9 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
+use BE\QueueManagement\Jobs\JobInterface;
+
 interface MessageKeyGeneratorInterface
 {
-    public function generate(): string;
+    public function generate(JobInterface $job): string;
 }

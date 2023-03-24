@@ -261,7 +261,7 @@ class SqsConsumerTest extends TestCase
     public function testDelayJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt, int $expectedDelay): void
     {
         $exampleJob = new ExampleJob();
-        $exampleJob->executionPlanned($executionPlannedAt);
+        $exampleJob->setExecutionPlannedAt($executionPlannedAt);
 
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
@@ -314,7 +314,7 @@ class SqsConsumerTest extends TestCase
     public function testExecuteJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt): void
     {
         $exampleJob = new ExampleJob();
-        $exampleJob->executionPlanned($executionPlannedAt);
+        $exampleJob->setExecutionPlannedAt($executionPlannedAt);
 
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
