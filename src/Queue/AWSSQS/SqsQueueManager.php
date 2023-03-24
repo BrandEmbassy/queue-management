@@ -208,7 +208,7 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        $this->publishMessage($job->toJson(), $prefixedQueueName);
+        $this->publishMessage($job, $prefixedQueueName);
         LoggerHelper::logJobPushedIntoQueue(
             $job,
             $prefixedQueueName,
@@ -243,7 +243,7 @@ class SqsQueueManager implements QueueManagerInterface
 
         $parameters = [self::DELAY_SECONDS => $delayInSeconds];
 
-        $this->publishMessage($job->toJson(), $prefixedQueueName, $parameters);
+        $this->publishMessage($job, $prefixedQueueName, $parameters);
         LoggerHelper::logJobPushedIntoQueue(
             $job,
             $prefixedQueueName,
@@ -261,10 +261,12 @@ class SqsQueueManager implements QueueManagerInterface
      * @throws SqsClientException
      */
     private function publishMessage(
-        string $messageBody,
+        JobInterface $job,
         string $prefixedQueueName,
         array $properties = []
     ): void {
+        $messageBody = $job->toJson();
+
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
         if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
@@ -272,7 +274,7 @@ class SqsQueueManager implements QueueManagerInterface
         }
 
         if (SqsMessage::isTooBig($messageBody)) {
-            $key = $this->messageKeyGenerator->generate();
+            $key = $this->messageKeyGenerator->generate($job);
             $receipt = $this->s3Client->upload(
                 $this->s3BucketName,
                 $key,

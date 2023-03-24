@@ -2,15 +2,27 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-use Ramsey\Uuid\Uuid;
+use BE\QueueManagement\Jobs\JobInterface;
 
 /**
  * @final
  */
 class MessageKeyGenerator implements MessageKeyGeneratorInterface
 {
-    public function generate(): string
+    private string $serviceId;
+
+
+    /**
+     * @param string $serviceId - Identifier of a service using this library e.g. "platform-backend", "instagram", ...
+     */
+    public function __construct(string $serviceId)
     {
-        return Uuid::uuid4()->toString() . '.json';
+        $this->serviceId = $serviceId;
+    }
+
+
+    public function generate(JobInterface $job): string
+    {
+        return $this->serviceId . '/sqs-messages/' . $job->getName() . '/' . $job->getUuid() . '.json';
     }
 }
