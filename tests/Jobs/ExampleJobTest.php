@@ -92,12 +92,18 @@ class ExampleJobTest extends TestCase
 
     private function createSimpleJob(string $foo, DateTimeImmutable $jobCreatedAt): SimpleJob
     {
+        /**
+         * Prevent phpstan error Template type T on class Doctrine\Common\Collections\Collection is not covariant
+         * @var array<string,mixed> $parameters
+         */
+        $parameters = ['foo' => $foo];
+
         return new SimpleJob(
             ExampleJob::UUID,
             $jobCreatedAt,
             JobInterface::INIT_ATTEMPTS,
             ExampleJobDefinition::create(),
-            new ArrayCollection(['foo' => $foo]),
+            new ArrayCollection($parameters),
             null,
         );
     }

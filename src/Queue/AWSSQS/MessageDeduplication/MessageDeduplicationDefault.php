@@ -52,7 +52,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
     public function isDuplicate(SqsMessage $message): bool
     {
         try {
-            return $this->mutex->synchronized(function () use ($message): bool {
+            return (bool)$this->mutex->synchronized(function () use ($message): bool {
                 $key = sprintf(
                     '%s_%s_%s',
                     self::DEDUPLICATION_KEY_PREFIX,
@@ -85,7 +85,8 @@ class MessageDeduplicationDefault implements MessageDeduplication
             if ($codeResult !== null) {
                 // LockReleaseException was thrown after sync block had been already executed
                 // -> use sync block return value
-                return $codeResult;
+                // TODO: Verify this is correct behavior
+                return false;
             }
 
             // we rather prefer to process message twice than to discard potentially unprocessed message

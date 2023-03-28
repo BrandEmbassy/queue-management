@@ -14,14 +14,14 @@ use function json_encode;
  */
 class S3Pointer
 {
-  /**
-   * The name of the bucket.
-   */
+    /**
+     * The name of the bucket.
+     */
     protected string $bucketName;
 
-  /**
-   * The ID of the S3 document.
-   */
+    /**
+     * The ID of the S3 document.
+     */
     protected string $key;
 
     /**

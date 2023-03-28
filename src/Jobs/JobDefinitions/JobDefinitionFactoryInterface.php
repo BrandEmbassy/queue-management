@@ -2,6 +2,9 @@
 
 namespace BE\QueueManagement\Jobs\JobDefinitions;
 
+/**
+ * @phpstan-import-type TJobDefinition from JobDefinition
+ */
 interface JobDefinitionFactoryInterface
 {
     public const JOB_CLASS = 'class';
@@ -13,7 +16,7 @@ interface JobDefinitionFactoryInterface
 
 
     /**
-     * @param mixed[] $jobDefinition
+     * @param TJobDefinition $jobDefinition
      */
     public function create(string $jobName, array $jobDefinition): JobDefinitionInterface;
 }

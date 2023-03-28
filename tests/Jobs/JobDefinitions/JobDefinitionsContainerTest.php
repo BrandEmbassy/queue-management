@@ -3,6 +3,7 @@
 namespace Tests\BE\QueueManagement\Jobs\JobDefinitions;
 
 use BE\QueueManagement\Jobs\FailResolving\DelayRules\ConstantDelayRule;
+use BE\QueueManagement\Jobs\JobDefinitions\JobDefinition;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactory;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactoryInterface;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
@@ -16,6 +17,7 @@ use Tests\BE\QueueManagement\Jobs\Execution\ExampleJobProcessor;
 
 /**
  * @final
+ * @phpstan-import-type TJobDefinition from JobDefinition
  */
 class JobDefinitionsContainerTest extends TestCase
 {
@@ -89,7 +91,7 @@ class JobDefinitionsContainerTest extends TestCase
 
 
     /**
-     * @param mixed[] $jobDefinitionsConfig
+     * @param array<string, TJobDefinition> $jobDefinitionsConfig
      */
     private function createJobDefinitionsContainer(array $jobDefinitionsConfig): JobDefinitionsContainer
     {

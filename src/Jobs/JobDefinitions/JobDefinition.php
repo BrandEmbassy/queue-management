@@ -6,6 +6,16 @@ use BE\QueueManagement\Jobs\Execution\JobProcessorInterface;
 use BE\QueueManagement\Jobs\FailResolving\DelayRules\DelayRuleInterface;
 use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 
+/**
+ * @phpstan-type TJobDefinition array{
+ *     class: string,
+ *     queueName: string,
+ *     maxAttempts?: ?int,
+ *     jobLoader?: ?JobLoaderInterface,
+ *     jobDelayRule: DelayRuleInterface,
+ *     jobProcessor: JobProcessorInterface
+ * }
+ */
 class JobDefinition implements JobDefinitionInterface
 {
     private string $jobClass;

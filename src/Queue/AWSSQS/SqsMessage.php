@@ -14,9 +14,7 @@ use function strlen;
  */
 class SqsMessage
 {
-    /**
-     * The maximum size that SQS can accept.
-     */
+    /** The maximum size that SQS can accept. */
     public const MAX_SQS_SIZE_KB = 256;
 
     /**

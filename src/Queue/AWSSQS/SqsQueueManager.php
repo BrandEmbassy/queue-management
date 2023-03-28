@@ -102,9 +102,7 @@ class SqsQueueManager implements QueueManagerInterface
      */
     public function fromAwsResultMessages(array $awsResultMessages, string $queueUrl): array
     {
-        /**
-         * @var SqsMessage[]
-         */
+        /** @var SqsMessage[] */
         $sqsMessages = [];
 
         assert($queueUrl !== '');
