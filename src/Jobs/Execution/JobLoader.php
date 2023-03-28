@@ -11,6 +11,9 @@ use BrandEmbassy\DateTime\DateTimeFromString;
 use Doctrine\Common\Collections\ArrayCollection;
 use Nette\Utils\Json;
 
+/**
+ * @phpstan-import-type TJobParameters from JobParameters
+ */
 class JobLoader implements JobLoaderInterface
 {
     private JobDefinitionsContainer $jobDefinitionsContainer;
@@ -27,6 +30,7 @@ class JobLoader implements JobLoaderInterface
 
     public function loadJob(string $messageBody): JobInterface
     {
+        /** @var TJobParameters $messageParameters */
         $messageParameters = Json::decode($messageBody, Json::FORCE_ARRAY);
 
         $jobUuid = $messageParameters[JobParameters::UUID];

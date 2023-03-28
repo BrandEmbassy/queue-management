@@ -5,10 +5,13 @@ namespace BE\QueueManagement\Jobs\JobDefinitions;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
+/**
+ * @phpstan-import-type TJobDefinition from JobDefinition
+ */
 class JobDefinitionsContainer
 {
     /**
-     * @var mixed[]
+     * @var array<string, TJobDefinition>
      */
     private array $jobDefinitionsConfig;
 
@@ -21,7 +24,7 @@ class JobDefinitionsContainer
 
 
     /**
-     * @param mixed[] $jobDefinitionsConfig
+     * @param array<string, TJobDefinition> $jobDefinitionsConfig
      */
     public function __construct(array $jobDefinitionsConfig, JobDefinitionFactoryInterface $jobDefinitionFactory)
     {
@@ -63,7 +66,7 @@ class JobDefinitionsContainer
 
 
     /**
-     * @param mixed[] $jobDefinitionsConfig
+     * @param array<string, TJobDefinition> $jobDefinitionsConfig
      *
      * @return Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
      */

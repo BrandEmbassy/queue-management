@@ -19,7 +19,7 @@ class SimpleJob implements JobInterface
     private int $attempts;
 
     /**
-     * @var Collection<string, mixed>|mixed[]
+     * @var Collection<string, mixed>
      */
     private Collection $parameters;
 
@@ -31,7 +31,7 @@ class SimpleJob implements JobInterface
 
 
     /**
-     * @param Collection<string, mixed>|mixed[] $parameters
+     * @param Collection<string, mixed> $parameters
      */
     public function __construct(
         string $uuid,
