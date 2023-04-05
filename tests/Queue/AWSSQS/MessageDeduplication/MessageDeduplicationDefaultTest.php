@@ -5,7 +5,6 @@ namespace Tests\BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDefault;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Redis\RedisClient;
-use malkusch\lock\mutex\NoMutex;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\Assert;
@@ -107,6 +106,6 @@ class MessageDeduplicationDefaultTest extends TestCase
 
     private function creatMessageDeduplicationDefault(RedisClient $redisClient): MessageDeduplicationDefault
     {
-        return new MessageDeduplicationDefault($redisClient, new NoMutex(), new NullLogger());
+        return new MessageDeduplicationDefault($redisClient, new NullLogger());
     }
 }

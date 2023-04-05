@@ -5,9 +5,6 @@ namespace BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Redis\RedisClient;
-use Exception;
-use malkusch\lock\exception\LockReleaseException;
-use malkusch\lock\mutex\Mutex;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use function end;
@@ -28,77 +25,40 @@ class MessageDeduplicationDefault implements MessageDeduplication
 
     private RedisClient $redisClient;
 
-    private Mutex $mutex;
-
     private int $deduplicationWindowSizeInSeconds;
 
 
     public function __construct(
         RedisClient $redisClient,
-        Mutex $mutex,
         LoggerInterface $logger,
         int $deduplicationWindowSizeInSeconds = 300
     ) {
         $this->logger = $logger;
         $this->redisClient = $redisClient;
-        $this->mutex = $mutex;
         $this->deduplicationWindowSizeInSeconds = $deduplicationWindowSizeInSeconds;
     }
 
 
     /**
-     * @throws Exception
+     * @throws Throwable
      */
     public function isDuplicate(SqsMessage $message): bool
     {
         try {
-            return $this->mutex->synchronized(function () use ($message): bool {
-                $key = sprintf(
-                    '%s_%s_%s',
-                    self::DEDUPLICATION_KEY_PREFIX,
-                    $this->getQueueNameFromQueueUrl($message->getQueueUrl()),
-                    $message->getMessageId(),
-                );
-                $deduplicationKeyVal = $this->redisClient->get($key);
-                if ($deduplicationKeyVal === null) {
-                    $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds);
-
-                    return false;
-                }
-
-                return true;
-            });
-        } catch (LockReleaseException $exception) {
-            $codeResult = $exception->getCodeResult();
-            $errorMessage = $exception->getCodeException() !== null
-                ? $exception->getCodeException()->getMessage()
-                : 'exception message not available';
-
-            $this->logger->warning(
-                'Error when releasing lock: ' . $errorMessage,
-                [
-                    LoggerContextField::EXCEPTION => $exception,
-                    LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
-                    LoggerContextField::MESSAGE_ID => $message->getMessageId(),
-                ],
+            $key = sprintf(
+                '%s_%s_%s',
+                self::DEDUPLICATION_KEY_PREFIX,
+                $this->getQueueNameFromQueueUrl($message->getQueueUrl()),
+                $message->getMessageId(),
             );
-            if ($codeResult !== null) {
-                // LockReleaseException was thrown after sync block had been already executed
-                // -> use sync block return value
-                return $codeResult;
+            $deduplicationKeyVal = $this->redisClient->get($key);
+            if ($deduplicationKeyVal === null) {
+                $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds);
+
+                return false;
             }
 
-            // we rather prefer to process message twice than to discard potentially unprocessed message
-            $this->logger->warning(
-                'Code result unavailable when releasing lock, ' .
-                'assuming false to indicate the message has not been seen yet.',
-                [
-                    LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
-                    LoggerContextField::MESSAGE_ID => $message->getMessageId(),
-                ],
-            );
-
-            return false;
+            return true;
         } catch (Throwable $exception) {
             $this->logger->error(
                 'Message duplication resolving failed',
