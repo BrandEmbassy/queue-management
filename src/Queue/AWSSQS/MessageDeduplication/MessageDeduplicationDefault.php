@@ -51,17 +51,12 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 $this->getQueueNameFromQueueUrl($message->getQueueUrl()),
                 $message->getMessageId(),
             );
-            $deduplicationKeyVal = $this->redisClient->get($key);
-            if ($deduplicationKeyVal === null) {
-                $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds);
 
-                return false;
-            }
-
-            return true;
+            // when key was already set (result is false), it means that message was already consumed by other process
+            return $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds) === false;
         } catch (Throwable $exception) {
             $this->logger->error(
-                'Message duplication resolving failed',
+                'Message duplication resolving failed.',
                 [
                     LoggerContextField::EXCEPTION => $exception,
                     LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
