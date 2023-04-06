@@ -5,8 +5,6 @@ namespace BE\QueueManagement\Redis;
 use Predis\ClientInterface;
 use Predis\Response\Status;
 use Throwable;
-use function gettype;
-use function is_string;
 
 /**
  * TODO:  extract into a separate package
@@ -30,50 +28,18 @@ class RedisClient
     /**
      * @throws RedisClientException
      */
-    public function set(string $key, string $value): void
-    {
-        try {
-            $result = $this->client->set($key, $value);
-        } catch (Throwable $exception) {
-            throw RedisClientException::byAnotherExceptionWhenSettingValue($exception);
-        }
-
-        $this->assertSavingSucceeded($result);
-    }
-
-
-    /**
-     * @throws RedisClientException
-     */
     public function setWithTtl(
         string $key,
         string $value,
         int $timeToLiveSeconds
-    ): void {
+    ): bool {
         try {
-            $result = $this->client->set($key, $value, 'EX', $timeToLiveSeconds);
+            $result = $this->client->set($key, $value, 'EX', $timeToLiveSeconds, 'NX');
         } catch (Throwable $exception) {
             throw RedisClientException::byAnotherExceptionWhenSettingValueWithTtl($exception);
         }
 
-        $this->assertSavingSucceeded($result);
-    }
-
-
-    /**
-     * @throws RedisClientException
-     */
-    public function get(string $key): ?string
-    {
-        try {
-            $fetchedValue = $this->client->get($key);
-        } catch (Throwable $exception) {
-            throw RedisClientException::byAnotherExceptionWhenGettingValue($exception);
-        }
-
-        $this->assertFetchedValueIsValid($fetchedValue);
-
-        return $fetchedValue;
+        return $this->isSavingSucceeded($result);
     }
 
 
@@ -82,8 +48,13 @@ class RedisClient
      *
      * @throws RedisClientException
      */
-    private function assertSavingSucceeded($result): void
+    private function isSavingSucceeded($result): bool
     {
+        // null means that key already exists
+        if ($result === null) {
+            return false;
+        }
+
         if (!$result instanceof Status) {
             throw RedisClientException::byInvalidResultStatus((string)$result);
         }
@@ -91,29 +62,7 @@ class RedisClient
         if ($result->getPayload() !== self::SAVE_SUCCESS) {
             throw RedisClientException::byInvalidSavedStatus($result->getPayload());
         }
-    }
 
-
-    /**
-     * @param mixed $fetchedValue
-     *
-     * @throws RedisClientException
-     */
-    private function assertFetchedValueIsValid($fetchedValue): void
-    {
-        $isValidValue = $this->checkFetchedValueIsValid($fetchedValue);
-
-        if (!$isValidValue) {
-            throw RedisClientException::byInvalidReturnValue(gettype($fetchedValue));
-        }
-    }
-
-
-    /**
-     * @param mixed $fetchedValue
-     */
-    public function checkFetchedValueIsValid($fetchedValue): bool
-    {
-        return $fetchedValue === null || is_string($fetchedValue);
+        return true;
     }
 }

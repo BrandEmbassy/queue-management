@@ -5,11 +5,12 @@ namespace Tests\BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDefault;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Redis\RedisClient;
-use malkusch\lock\mutex\NoMutex;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
+use Predis\Client;
+use Predis\Response\Status;
 use Psr\Log\NullLogger;
 
 /**
@@ -49,15 +50,14 @@ class MessageDeduplicationDefaultTest extends TestCase
     public function testMessageNotYetSeen(): void
     {
         $message = new SqsMessage(self::TEST_MESSAGE, self::TEST_QUEUE_URL);
-        $redisClient = Mockery::mock(RedisClient::class);
+        $clientMock = Mockery::mock(Client::class);
+        $redisClient = new RedisClient($clientMock);
+
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault($redisClient);
 
-        $redisClient->expects('get')
-            ->with(self::EXPECTED_REDIS_KEY)
-            ->andReturn(null);
-
-        $redisClient->expects('setWithTtl')
-            ->with(self::EXPECTED_REDIS_KEY, '1', self::DEFAULT_TTL_VALUE);
+        $clientMock->expects('set')
+            ->with(self::EXPECTED_REDIS_KEY, '1', 'EX', self::DEFAULT_TTL_VALUE, 'NX')
+            ->andReturn(new Status('OK'));
 
         Assert::assertFalse($messageDeduplicationRedis->isDuplicate($message));
     }
@@ -66,12 +66,13 @@ class MessageDeduplicationDefaultTest extends TestCase
     public function testMessageAlreadySeen(): void
     {
         $message = $this->createTestMessage();
-        $redisClient = Mockery::mock(RedisClient::class);
+        $clientMock = Mockery::mock(Client::class);
+        $redisClient = new RedisClient($clientMock);
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault($redisClient);
 
-        $redisClient->expects('get')
-            ->with(self::EXPECTED_REDIS_KEY)
-            ->andReturn('1');
+        $clientMock->expects('set')
+            ->with(self::EXPECTED_REDIS_KEY, '1', 'EX', self::DEFAULT_TTL_VALUE, 'NX')
+            ->andReturn(null);
 
         Assert::assertTrue($messageDeduplicationRedis->isDuplicate($message));
     }
@@ -80,19 +81,17 @@ class MessageDeduplicationDefaultTest extends TestCase
     public function testMessageNotYetSeenThenAlreadySeen(): void
     {
         $message = $this->createTestMessage();
-        $redisClient = Mockery::mock(RedisClient::class);
+        $clientMock = Mockery::mock(Client::class);
+        $redisClient = new RedisClient($clientMock);
         $messageDeduplicationRedis = $this->creatMessageDeduplicationDefault($redisClient);
 
-        $redisClient->expects('get')
-            ->with(self::EXPECTED_REDIS_KEY)
+        $clientMock->expects('set')
+            ->with(self::EXPECTED_REDIS_KEY, '1', 'EX', self::DEFAULT_TTL_VALUE, 'NX')
+            ->andReturn(new Status('OK'));
+
+        $clientMock->expects('set')
+            ->with(self::EXPECTED_REDIS_KEY, '1', 'EX', self::DEFAULT_TTL_VALUE, 'NX')
             ->andReturn(null);
-
-        $redisClient->expects('setWithTtl')
-            ->with(self::EXPECTED_REDIS_KEY, '1', self::DEFAULT_TTL_VALUE);
-
-        $redisClient->expects('get')
-            ->with(self::EXPECTED_REDIS_KEY)
-            ->andReturn('1');
 
         Assert::assertFalse($messageDeduplicationRedis->isDuplicate($message));
         Assert::assertTrue($messageDeduplicationRedis->isDuplicate($message));
@@ -107,6 +106,6 @@ class MessageDeduplicationDefaultTest extends TestCase
 
     private function creatMessageDeduplicationDefault(RedisClient $redisClient): MessageDeduplicationDefault
     {
-        return new MessageDeduplicationDefault($redisClient, new NoMutex(), new NullLogger());
+        return new MessageDeduplicationDefault($redisClient, new NullLogger());
     }
 }
