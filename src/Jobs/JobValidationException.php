@@ -30,7 +30,7 @@ class JobValidationException extends RuntimeException
      */
     public static function createFromUnknownParameter(string $key, array $existingKeys, JobInterface $job): self
     {
-        return new JobValidationException(
+        return new self(
             sprintf(
                 'Parameter %s not found, available parameters: %s',
                 $key,

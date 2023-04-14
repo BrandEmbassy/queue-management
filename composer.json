@@ -12,31 +12,32 @@
         }
     },
     "require": {
-        "php": ">=7.4.0",
+        "php": "^7.4 || >=8.1",
         "ext-json": "*",
         "psr/log": "^1.1",
-        "doctrine/collections": "^1.5",
-        "php-amqplib/php-amqplib": "^2.12.2",
+        "doctrine/collections": "^1.8.0",
+        "php-amqplib/php-amqplib": "^3.5.2",
         "brandembassy/datetime": "^3.0",
         "nette/utils": "^3.0",
         "aws/aws-sdk-php": "^3.209",
-        "predis/predis": "^1.1",
+        "predis/predis": "^2.1.2",
         "ramsey/uuid": "^4.2",
         "tracy/tracy": "^2.9"
     },
     "require-dev": {
-        "brandembassy/coding-standard": "^8.6",
-        "brandembassy/mockery-tools": "^3.9",
-        "mockery/mockery": "^1.2",
-        "phpunit/phpunit": "^8.5",
+        "brandembassy/coding-standard": "10.0.0-beta",
+        "brandembassy/mockery-tools": "^3.18.1",
+        "mockery/mockery": "^1.5.1",
+        "phpunit/phpunit": ">=8.5.23",
         "roave/security-advisories": "dev-latest",
         "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2"
     },
     "scripts": {
-        "phpcs": "./vendor/bin/phpcs --standard=BrandEmbassyCodingStandard src tests --runtime-set php_version 70400",
-        "phpcbf": "./vendor/bin/phpcbf --standard=BrandEmbassyCodingStandard src tests --runtime-set php_version 70400",
-        "phpstan": "./vendor/bin/phpstan analyze -c phpstan.neon src tests --memory-limit=-1",
-        "phpunit": "./vendor/bin/phpunit tests --no-coverage",
+        "check-cs": "vendor/bin/ecs check --ansi",
+        "fix-cs": "vendor/bin/ecs check --fix --ansi",
+        "phpstan": "php -dxdebug.mode=off vendor/bin/phpstan analyse --memory-limit=-1",
+        "phpstan-generate-baseline": "php -dxdebug.mode=off vendor/bin/phpstan analyse --memory-limit=-1 --generate-baseline",
+        "test": "./vendor/bin/phpunit tests --no-coverage",
         "phpunit-cc": "./vendor/bin/phpunit tests"
     },
     "config": {

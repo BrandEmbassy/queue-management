@@ -4,6 +4,9 @@ namespace BE\QueueManagement\Jobs\JobDefinitions;
 
 use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 
+/**
+ * @phpstan-import-type TJobDefinition from JobDefinition
+ */
 class JobDefinitionFactory implements JobDefinitionFactoryInterface
 {
     protected JobLoaderInterface $defaultJobLoader;
@@ -16,7 +19,7 @@ class JobDefinitionFactory implements JobDefinitionFactoryInterface
 
 
     /**
-     * @param mixed[] $jobDefinition
+     * @param TJobDefinition $jobDefinition
      */
     public function create(string $jobName, array $jobDefinition): JobDefinitionInterface
     {

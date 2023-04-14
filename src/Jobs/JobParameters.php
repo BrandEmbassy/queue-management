@@ -2,6 +2,16 @@
 
 namespace BE\QueueManagement\Jobs;
 
+/**
+ * @phpstan-type TJobParameters array{
+ *     jobUuid: string,
+ *     jobName: string,
+ *     attempts: int,
+ *     createdAt: string,
+ *     jobParameters: mixed[],
+ *     executionPlannedAt?: ?string
+ * }
+ */
 class JobParameters
 {
     public const UUID = 'jobUuid';

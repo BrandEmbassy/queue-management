@@ -52,7 +52,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
                 $message->getMessageId(),
             );
 
-            // when key was already set (result is false), it means that message was already consumed by other process
+            // when key was already set (result is false), it means that message was already consumed by another process
             return $this->redisClient->setWithTtl($key, '1', $this->deduplicationWindowSizeInSeconds) === false;
         } catch (Throwable $exception) {
             $this->logger->error(

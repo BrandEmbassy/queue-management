@@ -24,12 +24,18 @@ class ExampleJob extends SimpleJob
 
     public function __construct(?JobDefinitionInterface $jobDefinition = null, string $bar = 'bar')
     {
+        /**
+         * Prevent phpstan error Template type T on class Doctrine\Common\Collections\Collection is not covariant
+         * @var array<string,mixed> $parameters
+         */
+        $parameters = [self::PARAMETER_FOO => $bar];
+
         parent::__construct(
             self::UUID,
             DateTimeFromString::create(self::CREATED_AT),
             self::ATTEMPTS,
             $jobDefinition ?? ExampleJobDefinition::create(),
-            new ArrayCollection([self::PARAMETER_FOO => $bar]),
+            new ArrayCollection($parameters),
             null,
         );
     }
@@ -43,6 +49,10 @@ class ExampleJob extends SimpleJob
 
     public function getFoo(): string
     {
-        return $this->getParameter(self::PARAMETER_FOO);
+        $foo = $this->getParameter(self::PARAMETER_FOO);
+
+        assert(is_string($foo));
+
+        return $foo;
     }
 }
