@@ -94,8 +94,8 @@ class SqsMessage
         $messageSize = strlen($messageBody);
         foreach ($messageAttributes as $messageAttributeKey => $messageAttribute) {
             $messageSize += strlen($messageAttributeKey);
-            $messageSize += strlen($messageAttribute['DataType']);
-            $messageSize += strlen($messageAttribute['StringValue']);
+            $messageSize += strlen($messageAttribute['DataType'] ?? '');
+            $messageSize += strlen($messageAttribute['StringValue'] ?? '');
         }
 
         return $messageSize > self::MAX_SQS_SIZE_KB * 1024;
