@@ -88,9 +88,18 @@ class SqsMessage
 
     /**
      * Returns true if message is bigger than 256 KB (AWS SQS message size limit), false otherwise
+     *
+     * @param array<string, array<string, string>> $messageAttributes
      */
-    public static function isTooBig(string $messageBody): bool
+    public static function isTooBig(string $messageBody, array $messageAttributes): bool
     {
-        return strlen($messageBody) > self::MAX_SQS_SIZE_KB * 1024;
+        $messageSize = strlen($messageBody);
+        foreach ($messageAttributes as $messageAttributeKey => $messageAttribute) {
+            $messageSize += strlen($messageAttributeKey);
+            $messageSize += strlen($messageAttribute['DataType'] ?? '');
+            $messageSize += strlen($messageAttribute['StringValue'] ?? '');
+        }
+
+        return $messageSize > self::MAX_SQS_SIZE_KB * 1024;
     }
 }

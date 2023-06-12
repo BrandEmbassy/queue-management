@@ -283,7 +283,17 @@ class SqsQueueManager implements QueueManagerInterface
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
-        if (SqsMessage::isTooBig($messageBody)) {
+        $messageAttributes = [
+            SqsSendingMessageFields::QUEUE_URL => [
+                'DataType' => 'String',
+                // queueName might be handy here if we want to consume
+                // from multiple queues in parallel via promises.
+                // Then we need queue in message directly so that we can delete it.
+                'StringValue' => $prefixedQueueName,
+            ],
+        ];
+
+        if (SqsMessage::isTooBig($messageBody, $messageAttributes)) {
             $key = $this->messageKeyGenerator->generate($job);
             $receipt = $this->s3Client->upload(
                 $this->s3BucketName,
@@ -297,15 +307,7 @@ class SqsQueueManager implements QueueManagerInterface
 
         $messageToSend = [
             SqsSendingMessageFields::DELAY_SECONDS => $delaySeconds,
-            SqsSendingMessageFields::MESSAGE_ATTRIBUTES => [
-                SqsSendingMessageFields::QUEUE_URL => [
-                    'DataType' => 'String',
-                    // queueName might be handy here if we want to consume
-                    // from multiple queues in parallel via promises.
-                    // Then we need queue in message directly so that we can delete it.
-                    'StringValue' => $prefixedQueueName,
-                ],
-            ],
+            SqsSendingMessageFields::MESSAGE_ATTRIBUTES => $messageAttributes,
             SqsSendingMessageFields::MESSAGE_BODY => $messageBody,
             SqsSendingMessageFields::QUEUE_URL => $prefixedQueueName,
         ];
