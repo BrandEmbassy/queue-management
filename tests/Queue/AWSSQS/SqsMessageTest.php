@@ -13,11 +13,13 @@ use function str_pad;
 class SqsMessageTest extends TestCase
 {
     /**
+     * @param array<string, array<string, string>> $messageAttributes
+     *
      * @dataProvider messageProvider
      */
-    public function testIsTooBig(bool $expectedIsTooBig, string $message): void
+    public function testIsTooBig(bool $expectedIsTooBig, string $messageBody, array $messageAttributes): void
     {
-        Assert::assertSame($expectedIsTooBig, SqsMessage::isTooBig($message));
+        Assert::assertSame($expectedIsTooBig, SqsMessage::isTooBig($messageBody, $messageAttributes));
     }
 
 
@@ -26,18 +28,33 @@ class SqsMessageTest extends TestCase
      */
     public function messageProvider(): array
     {
+        $messageAttributes = [
+            'QueueUrl' => [
+                'DataType' => 'String',
+                'StringValue' => 'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
+            ],
+        ];
+
+        $messageBodySizeLimit = SqsMessage::MAX_SQS_SIZE_KB * 1024
+            - strlen('QueueUrl')
+            - strlen('String')
+            - strlen('https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue');
+
         return [
-            [
+            'small message' => [
                 'expectedIsTooBig' => false,
-                'message' => 'very small message',
+                'messageBody' => 'very small message',
+                'messageAttributes' => $messageAttributes,
             ],
-            [
+            'message just within the limit' => [
                 'expectedIsTooBig' => false,
-                'message' => str_pad('very small message', SqsMessage::MAX_SQS_SIZE_KB * 1024),
+                'messageBody' => str_pad('very small message', $messageBodySizeLimit),
+                'messageAttributes' => $messageAttributes,
             ],
-            [
+            'too big message' => [
                 'expectedIsTooBig' => true,
-                'message' => str_pad('very small message', SqsMessage::MAX_SQS_SIZE_KB * 1024 + 1),
+                'messageBody' => str_pad('very small message', $messageBodySizeLimit + 1),
+                'messageAttributes' => $messageAttributes,
             ],
         ];
     }
