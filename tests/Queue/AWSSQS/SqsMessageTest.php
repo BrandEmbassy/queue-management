@@ -5,7 +5,7 @@ namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
-use function str_pad;
+use function str_repeat;
 
 /**
  * @final
@@ -43,17 +43,17 @@ class SqsMessageTest extends TestCase
         return [
             'small message' => [
                 'expectedIsTooBig' => false,
-                'messageBody' => 'very small message',
+                'messageBody' => 'message',
                 'messageAttributes' => $messageAttributes,
             ],
             'message just within the limit' => [
                 'expectedIsTooBig' => false,
-                'messageBody' => str_pad('very small message', $messageBodySizeLimit),
+                'messageBody' => str_repeat('A', $messageBodySizeLimit),
                 'messageAttributes' => $messageAttributes,
             ],
             'too big message' => [
                 'expectedIsTooBig' => true,
-                'messageBody' => str_pad('very small message', $messageBodySizeLimit + 1),
+                'messageBody' => str_repeat('A', $messageBodySizeLimit + 1),
                 'messageAttributes' => $messageAttributes,
             ],
         ];
