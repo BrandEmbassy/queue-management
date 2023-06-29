@@ -11,13 +11,13 @@ class JobDefinitionFactory implements JobDefinitionFactoryInterface
 {
     protected JobLoaderInterface $defaultJobLoader;
 
-    private string $queueNamePrefix;
+    private QueueNameStrategy $queueNameStrategy;
 
 
-    public function __construct(JobLoaderInterface $defaultJobLoader, string $queueNamePrefix = '')
+    public function __construct(JobLoaderInterface $defaultJobLoader, ?QueueNameStrategy $queueNameStrategy = null)
     {
         $this->defaultJobLoader = $defaultJobLoader;
-        $this->queueNamePrefix = $queueNamePrefix;
+        $this->queueNameStrategy = $queueNameStrategy ?? PrefixedQueueNameStrategy::createDefault();
     }
 
 
@@ -26,10 +26,12 @@ class JobDefinitionFactory implements JobDefinitionFactoryInterface
      */
     public function create(string $jobName, array $jobDefinition): JobDefinitionInterface
     {
+        $queueName = $this->queueNameStrategy->getQueueName($jobDefinition[self::QUEUE_NAME]);
+
         return new JobDefinition(
             $jobName,
             $jobDefinition[self::JOB_CLASS],
-            $this->queueNamePrefix . $jobDefinition[self::QUEUE_NAME],
+            $queueName,
             $jobDefinition[self::MAX_ATTEMPTS] ?? null,
             $jobDefinition[self::JOB_LOADER] ?? $this->defaultJobLoader,
             $jobDefinition[self::JOB_DELAY_RULE],
