@@ -7,6 +7,7 @@ use BE\QueueManagement\Jobs\JobDefinitions\JobDefinition;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactory;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionFactoryInterface;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionsContainer;
+use BE\QueueManagement\Jobs\JobDefinitions\PrefixedQueueNameStrategy;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
 use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
 use BE\QueueManagement\Jobs\SimpleJob;
@@ -115,7 +116,7 @@ class JobDefinitionsContainerTest extends TestCase
      */
     private function createJobDefinitionsContainer(array $jobDefinitionsConfig, string $queueNamePrefix = ''): JobDefinitionsContainer
     {
-        $jobDefinitionFactory = new JobDefinitionFactory(new SimpleJobLoader(), $queueNamePrefix);
+        $jobDefinitionFactory = new JobDefinitionFactory(new SimpleJobLoader(), new PrefixedQueueNameStrategy($queueNamePrefix));
 
         return new JobDefinitionsContainer($jobDefinitionsConfig, $jobDefinitionFactory);
     }

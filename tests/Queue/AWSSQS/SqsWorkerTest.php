@@ -2,6 +2,8 @@
 
 namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
+use BE\QueueManagement\Jobs\JobDefinitions\PrefixedQueueNameStrategy;
+use BE\QueueManagement\Jobs\JobDefinitions\QueueNameStrategy;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\QueueWorker;
@@ -37,9 +39,12 @@ class SqsWorkerTest extends TestCase
     }
 
 
-    public function testStart(): void
+    /**
+     * @dataProvider differentQueueNameStrategyDataProvider
+     */
+    public function testStart(string $expectedQueueName, ?QueueNameStrategy $queueNameStrategy): void
     {
-        $sqsWorker = $this->createSqsWorker();
+        $sqsWorker = $this->createSqsWorker($queueNameStrategy);
 
         $customConsumeParameters = ['foo' => 'bar'];
 
@@ -48,15 +53,33 @@ class SqsWorkerTest extends TestCase
             ->andReturn(1);
 
         $this->sqsQueueManagerMock->shouldReceive('consumeMessages')
-            ->with($this->sqsConsumerMock, ExampleJobDefinition::QUEUE_NAME, $customConsumeParameters)
+            ->with($this->sqsConsumerMock, $expectedQueueName, $customConsumeParameters)
             ->once();
 
         $sqsWorker->start(ExampleJobDefinition::QUEUE_NAME, $customConsumeParameters);
     }
 
 
-    private function createSqsWorker(): QueueWorker
+    /**
+     * @return mixed[][]
+     */
+    public function differentQueueNameStrategyDataProvider(): array
     {
-        return new QueueWorker($this->sqsQueueManagerMock, $this->sqsConsumerMock);
+        return [
+            'default' => [
+                'expectedQueueName' => ExampleJobDefinition::QUEUE_NAME,
+                'queueNameStrategy' => null,
+            ],
+            'prefixed' => [
+                'expectedQueueName' => 'test_' . ExampleJobDefinition::QUEUE_NAME,
+                'queueNameStrategy' => new PrefixedQueueNameStrategy('test_'),
+            ],
+        ];
+    }
+
+
+    private function createSqsWorker(?QueueNameStrategy $queueNameStrategy): QueueWorker
+    {
+        return new QueueWorker($this->sqsQueueManagerMock, $this->sqsConsumerMock, $queueNameStrategy);
     }
 }
