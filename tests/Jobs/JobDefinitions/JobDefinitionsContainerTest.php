@@ -26,7 +26,10 @@ class JobDefinitionsContainerTest extends TestCase
     private const SIMPLE_JOB_NAME = 'simpleJob';
 
 
-    public function testGetJobDefinition(): void
+    /**
+     * @dataProvider queueDefinitionDataProvider
+     */
+    public function testGetJobDefinition(string $expectedQueueName, string $queueNamePrefix): void
     {
         $exampleJobProcessor = new ExampleJobProcessor();
         $simpleJobLoader = new SimpleJobLoader();
@@ -42,18 +45,35 @@ class JobDefinitionsContainerTest extends TestCase
                 JobDefinitionFactoryInterface::JOB_DELAY_RULE => $constantDelayRule,
             ],
         ];
-        $jobDefinitionContainer = $this->createJobDefinitionsContainer($jobDefinitionsConfig);
+        $jobDefinitionContainer = $this->createJobDefinitionsContainer($jobDefinitionsConfig, $queueNamePrefix);
 
         $simpleJobDefinition = $jobDefinitionContainer->get(self::SIMPLE_JOB_NAME);
 
         Assert::assertTrue($jobDefinitionContainer->has(self::SIMPLE_JOB_NAME));
         Assert::assertFalse($jobDefinitionContainer->has('unknownJobName'));
         Assert::assertNull($simpleJobDefinition->getMaxAttempts());
-        Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
-        Assert::assertSame(ExampleJobDefinition::QUEUE_NAME, $simpleJobDefinition->getQueueName());
+        Assert::assertSame($expectedQueueName, $simpleJobDefinition->getQueueName());
         Assert::assertSame($exampleJobProcessor, $simpleJobDefinition->getJobProcessor());
         Assert::assertSame($simpleJobLoader, $simpleJobDefinition->getJobLoader());
         Assert::assertSame($constantDelayRule, $simpleJobDefinition->getDelayRule());
+    }
+
+
+    /**
+     * @return string[][]
+     */
+    public function queueDefinitionDataProvider(): array
+    {
+        return [
+            'without queue name prefix' => [
+                'expectedQueueName' => ExampleJobDefinition::QUEUE_NAME,
+                'queueNamePrefix' => '',
+            ],
+            'with queue name prefix' => [
+                'expectedQueueName' => 'prefix_' . ExampleJobDefinition::QUEUE_NAME,
+                'queueNamePrefix' => 'prefix_',
+            ],
+        ];
     }
 
 
@@ -93,9 +113,9 @@ class JobDefinitionsContainerTest extends TestCase
     /**
      * @param array<string, TJobDefinition> $jobDefinitionsConfig
      */
-    private function createJobDefinitionsContainer(array $jobDefinitionsConfig): JobDefinitionsContainer
+    private function createJobDefinitionsContainer(array $jobDefinitionsConfig, string $queueNamePrefix = ''): JobDefinitionsContainer
     {
-        $jobDefinitionFactory = new JobDefinitionFactory(new SimpleJobLoader());
+        $jobDefinitionFactory = new JobDefinitionFactory(new SimpleJobLoader(), $queueNamePrefix);
 
         return new JobDefinitionsContainer($jobDefinitionsConfig, $jobDefinitionFactory);
     }
