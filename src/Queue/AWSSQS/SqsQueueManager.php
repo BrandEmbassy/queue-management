@@ -235,7 +235,11 @@ class SqsQueueManager implements QueueManagerInterface
             );
             $this->logger->info(
                 'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
-                ['executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt)],
+                [
+                    'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
+                    LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
+                    LoggerContextField::JOB_UUID => $job->getUuid(),
+                ],
             );
             $job->setExecutionPlannedAt($executionPlannedAt);
             $delayInSeconds = self::MAX_DELAY_SECONDS;
