@@ -20,7 +20,7 @@
         "brandembassy/datetime": "^3.0",
         "nette/utils": "^3.0",
         "aws/aws-sdk-php": "^3.209",
-        "predis/predis": "^2.1.2",
+        "predis/predis": "^1.2 || ^2.1.2",
         "ramsey/uuid": "^4.2",
         "tracy/tracy": "^2.9"
     },

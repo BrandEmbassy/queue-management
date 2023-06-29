@@ -10,6 +10,7 @@ use BE\QueueManagement\Jobs\Loading\JobLoaderInterface;
 class JobDefinitionFactory implements JobDefinitionFactoryInterface
 {
     protected JobLoaderInterface $defaultJobLoader;
+
     private string $queueNamePrefix;
 
 
