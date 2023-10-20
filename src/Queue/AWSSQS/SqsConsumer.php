@@ -49,7 +49,8 @@ class SqsConsumer implements SqsConsumerInterface
         MessageDeduplication $messageDeduplication,
         DateTimeImmutableFactory $dateTimeImmutableFactory,
         QueueManagerInterface $queueManager
-    ) {
+    )
+    {
         $this->logger = $logger;
         $this->pushDelayedResolver = $pushDelayedResolver;
         $this->jobExecutor = $jobExecutor;
@@ -116,6 +117,15 @@ class SqsConsumer implements SqsConsumerInterface
             SqsMessageFields::QUEUE_URL => $message->getQueueUrl(),
             SqsMessageFields::RECEIPT_HANDLE => $message->getReceiptHandle(),
         ]);
+
+        $this->logger->info(
+            'Message deleted from queue',
+            [
+                LoggerContextField::MESSAGE_ID => $message->getMessageId(),
+                LoggerContextField::MESSAGE_BODY => $message->getBody(),
+                LoggerContextField::JOB_QUEUE_NAME => $message->getQueueUrl(),
+            ]
+        );
     }
 
 

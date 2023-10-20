@@ -55,7 +55,8 @@ class LoggerHelper
         string $queueName,
         LoggerInterface $logger,
         ?JobType $jobType = null,
-        int $delayInSeconds = self::UNKNOWN_DELAY
+        int $delayInSeconds = self::UNKNOWN_DELAY,
+        string $sqsMessageId = 'unknown'
     ): void {
         $logger->info(
             sprintf(
@@ -70,6 +71,7 @@ class LoggerHelper
                 LoggerContextField::JOB_UUID => $job->getUuid(),
                 LoggerContextField::JOB_TYPE => $jobType === null ? JobType::UNKNOWN : $jobType->getValue(),
                 LoggerContextField::JOB_DELAY_IN_SECONDS => $delayInSeconds,
+                LoggerContextField::MESSAGE_ID => $sqsMessageId,
             ],
         );
     }

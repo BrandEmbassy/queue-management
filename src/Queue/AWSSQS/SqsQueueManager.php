@@ -75,7 +75,8 @@ class SqsQueueManager implements QueueManagerInterface
         DateTimeImmutableFactory $dateTimeImmutableFactory,
         int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
         string $queueNamePrefix = ''
-    ) {
+    )
+    {
         $this->s3BucketName = $s3BucketName;
         $this->sqsClientFactory = $sqsClientFactory;
         $this->sqsClient = $this->sqsClientFactory->create();
@@ -208,13 +209,14 @@ class SqsQueueManager implements QueueManagerInterface
     {
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        $this->publishMessage($job, $prefixedQueueName);
+        $sqsMessageId = $this->publishMessage($job, $prefixedQueueName);
         LoggerHelper::logJobPushedIntoQueue(
             $job,
             $prefixedQueueName,
             $this->logger,
             JobType::get(JobType::SQS),
             LoggerHelper::NOT_DELAYED,
+            $sqsMessageId,
         );
     }
 
@@ -247,13 +249,14 @@ class SqsQueueManager implements QueueManagerInterface
 
         $parameters = [self::DELAY_SECONDS => $delayInSeconds];
 
-        $this->publishMessage($job, $prefixedQueueName, $parameters);
+        $sqsMessageId = $this->publishMessage($job, $prefixedQueueName, $parameters);
         LoggerHelper::logJobPushedIntoQueue(
             $job,
             $prefixedQueueName,
             $this->logger,
             JobType::get(JobType::SQS),
             $delayInSeconds,
+            $sqsMessageId
         );
     }
 
@@ -268,7 +271,8 @@ class SqsQueueManager implements QueueManagerInterface
         JobInterface $job,
         string $prefixedQueueName,
         array $properties = []
-    ): void {
+    ): string
+    {
         $messageBody = $job->toJson();
 
         // Remove invalid XML characters because AWS SQS supports only valid XML characters.
@@ -315,11 +319,20 @@ class SqsQueueManager implements QueueManagerInterface
         ];
 
         try {
-            $this->sqsClient->sendMessage($messageToSend);
+            return $this->sendMessage($messageToSend);
         } catch (AwsException $exception) {
             $this->reconnect($exception, $prefixedQueueName);
-            $this->sqsClient->sendMessage($messageToSend);
+
+            return $this->sendMessage($messageToSend);
         }
+    }
+
+
+    private function sendMessage(array $messageToSend): string
+    {
+        $result = $this->sqsClient->sendMessage($messageToSend);
+
+        return $result->get(SqsMessageFields::MESSAGE_ID);
     }
 
 
