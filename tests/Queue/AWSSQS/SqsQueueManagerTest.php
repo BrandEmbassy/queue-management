@@ -37,6 +37,7 @@ class SqsQueueManagerTest extends TestCase
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
     private const S3_BUCKET_NAME = 'thisIsS3Bucket';
     private const FROZEN_DATE_TIME = '2016-08-15T15:00:00+00:00';
+    private const SQS_MESSAGE_ID = '96819875-6e43-4a14-9652-6b5d239f5e1b';
 
     /**
      * @var SqsClientFactory&MockInterface
@@ -108,7 +109,8 @@ class SqsQueueManagerTest extends TestCase
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
                 ),
-            );
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
@@ -145,7 +147,8 @@ class SqsQueueManagerTest extends TestCase
                         0,
                     ),
                 ),
-            );
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJobWithInvalidCharacter);
@@ -189,7 +192,8 @@ class SqsQueueManagerTest extends TestCase
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $messageBody, 0),
                 ),
-            );
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
@@ -210,7 +214,8 @@ class SqsQueueManagerTest extends TestCase
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 5),
                 ),
-            );
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
 
@@ -247,7 +252,8 @@ class SqsQueueManagerTest extends TestCase
                         900,
                     ),
                 ),
-            );
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
 
@@ -274,7 +280,8 @@ class SqsQueueManagerTest extends TestCase
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 5),
                 ),
-            );
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
 
         $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
@@ -307,7 +314,8 @@ class SqsQueueManagerTest extends TestCase
                 Mockery::on(
                     static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
                 ),
-            );
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
 
         $this->loggerMock->hasWarning(
             'Reconnecting: Some nasty error',
@@ -606,5 +614,19 @@ class SqsQueueManagerTest extends TestCase
 
         Assert::assertCount(1, $sqsMessages);
         Assert::assertSame($messageBodyExpected, $sqsMessages[0]->getBody());
+    }
+
+
+    /**
+     * @return Result<mixed>&MockInterface
+     */
+    private function createSqsSendMessageResultMock(): Result
+    {
+        $mock = Mockery::mock(Result::class);
+        $mock->allows('get')
+            ->with('MessageId')
+            ->andReturn(self::SQS_MESSAGE_ID);
+
+        return $mock;
     }
 }
