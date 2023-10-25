@@ -44,7 +44,7 @@ class MessageDeduplicationDefaultTest extends TestCase
         ],
     ];
     private const EXPECTED_REDIS_KEY = 'AWS_DEDUP_PREFIX_' . self::QUEUE_NAME . '_' . self::MESSAGE_ID;
-    private const DEFAULT_TTL_VALUE = 300;
+    private const DEFAULT_TTL_VALUE = 7200;
 
 
     public function testMessageNotYetSeen(): void
