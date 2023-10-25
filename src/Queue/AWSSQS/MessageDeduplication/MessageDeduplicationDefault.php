@@ -5,6 +5,7 @@ namespace BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Redis\RedisClient;
+use BrandEmbassy\DateTime\AmountOfTime\TimeInSeconds;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use function end;
@@ -20,6 +21,7 @@ use function sprintf;
 class MessageDeduplicationDefault implements MessageDeduplication
 {
     private const DEDUPLICATION_KEY_PREFIX = 'AWS_DEDUP_PREFIX';
+    private const DEFAULT_DEDUPLICATION_WINDOW_SIZE_IN_SECONDS = TimeInSeconds::HOUR * 2;
 
     private LoggerInterface $logger;
 
@@ -31,7 +33,7 @@ class MessageDeduplicationDefault implements MessageDeduplication
     public function __construct(
         RedisClient $redisClient,
         LoggerInterface $logger,
-        int $deduplicationWindowSizeInSeconds = 300
+        int $deduplicationWindowSizeInSeconds = self::DEFAULT_DEDUPLICATION_WINDOW_SIZE_IN_SECONDS
     ) {
         $this->logger = $logger;
         $this->redisClient = $redisClient;
