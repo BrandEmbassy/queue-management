@@ -38,7 +38,20 @@ class LoggerHelper
             LoggerContextField::JOB_UUID => $job->getUuid(),
         ];
 
-        // JobExecutor remaps the thrown exception to UnableToProcessLoadedJobException so we need to also check the previous exception
+        if ($exception instanceof CustomLogLevelFromJobExceptionInterface) {
+            $logger->log($exception->getLogLevelForJob($job), $message, $context);
+
+            return;
+        }
+
+        // JobExecutor remaps the thrown exception to UnableToProcessLoadedJobException, so we need to also check the previous exception
+        if ($exception->getPrevious() instanceof CustomLogLevelFromJobExceptionInterface) {
+            $logger->log($exception->getPrevious()->getLogLevelForJob($job), $message, $context);
+
+            return;
+        }
+
+        // JobExecutor remaps the thrown exception to UnableToProcessLoadedJobException, so we need to also check the previous exception
         if ($exception instanceof WarningOnlyExceptionInterface
             || $exception->getPrevious() instanceof WarningOnlyExceptionInterface) {
             $logger->warning($message, $context);

@@ -9,6 +9,7 @@ use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
+use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
@@ -16,6 +17,7 @@ use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
 use DateTimeImmutable;
+use Exception;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
@@ -23,8 +25,11 @@ use Nette\Utils\Json;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
+use Tests\BE\QueueManagement\Jobs\Execution\ExampleExceptionWithCustomLogLevel;
+use Tests\BE\QueueManagement\Jobs\Execution\ExampleExceptionWithPreviousCustomLogLevelException;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleExceptionWithPreviousWarningOnlyException;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
+use Throwable;
 
 /**
  * @final
@@ -191,18 +196,18 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    public function testRequeueDelayableProcessFailWarningOnly(): void
+    /**
+     * @dataProvider possibleLogLevelAlteringExceptionsThrownDataProvider
+     */
+    public function testRequeueDelayableProcessFailWithLogLevelControl(Exception $thrownException, JobInterface $job, callable $setupLoggerExpectationCallable): void
     {
-        $exampleJob = new ExampleJob();
-        $exampleWarningOnlyException = ExampleWarningOnlyException::create($exampleJob);
-
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
-            ->andReturns($exampleJob);
+            ->andReturns($job);
 
         $this->jobExecutorMock->expects('execute')
-            ->with($exampleJob)
-            ->andThrow($exampleWarningOnlyException);
+            ->with($job)
+            ->andThrow($thrownException);
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
@@ -210,12 +215,10 @@ class SqsConsumerTest extends TestCase
                 'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
-        $this->loggerMock->hasWarning(
-            'Job execution failed [attempts: 1], reason: I will be logged as a warning',
-        );
+        $setupLoggerExpectationCallable($this->loggerMock);
 
         $this->pushDelayedResolverMock->expects('resolve')
-            ->with($exampleJob, $exampleWarningOnlyException);
+            ->with($job, $thrownException);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
@@ -223,35 +226,49 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    public function testRequeueDelayableProcessFailWithPreviousWarningOnlyException(): void
+    /**
+     * @return mixed[]
+     */
+    public function possibleLogLevelAlteringExceptionsThrownDataProvider(): array
     {
-        $exampleJob = new ExampleJob();
-        $exampleWarningOnlyException = ExampleExceptionWithPreviousWarningOnlyException::create($exampleJob);
+        return [
+            'exception is warning only' => (static function() {
+                $exampleJob = new ExampleJob();
 
-        $this->jobLoaderMock->expects('loadJob')
-            ->with('{"foo":"bar"}')
-            ->andReturns($exampleJob);
+                return [
+                    'thrownException' => ExampleWarningOnlyException::create($exampleJob),
+                    'job' => $exampleJob,
+                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
+                ];
+            })(),
+            'previous of the exception is warning only' => (static function() {
+                $exampleJob = new ExampleJob();
 
-        $this->jobExecutorMock->expects('execute')
-            ->with($exampleJob)
-            ->andThrow($exampleWarningOnlyException);
+                return [
+                    'thrownException' => ExampleExceptionWithPreviousWarningOnlyException::create($exampleJob),
+                    'job' => $exampleJob,
+                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
+                ];
+            })(),
+            'exception is custom log level' => (static function() {
+                $exampleJob = new ExampleJob();
 
-        $this->sqsClientMock->expects('deleteMessage')
-            ->with([
-                'QueueUrl' => self::QUEUE_URL,
-                'ReceiptHandle' => self::RECEIPT_HANDLE,
-            ]);
+                return [
+                    'thrownException' => ExampleExceptionWithCustomLogLevel::create($exampleJob),
+                    'job' => $exampleJob,
+                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
+                ];
+            })(),
+            'previous of the exception is custom log level' => (static function() {
+                $exampleJob = new ExampleJob();
 
-        $this->loggerMock->hasWarning(
-            'Job execution failed [attempts: 1], reason: I will be logged as a warning',
-        );
-
-        $this->pushDelayedResolverMock->expects('resolve')
-            ->with($exampleJob, $exampleWarningOnlyException);
-
-        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
-        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+                return [
+                    'thrownException' => ExampleExceptionWithPreviousCustomLogLevelException::create($exampleJob),
+                    'job' => $exampleJob,
+                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
+                ];
+            })(),
+        ];
     }
 
 
