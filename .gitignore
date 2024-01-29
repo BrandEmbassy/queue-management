@@ -1,2 +1,4 @@
 /vendor/
 /var/
+coverage.xml
+test-report.xml
