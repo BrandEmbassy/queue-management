@@ -12,8 +12,6 @@ jobs:
     uses: BrandEmbassy/github-actions/.github/workflows/php-phpstan.yml@master
     with:
       PHP_VERSION: ${{ matrix.php-version }}
-    secrets:
-      COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
 
   ecs:
     strategy:
@@ -25,16 +23,12 @@ jobs:
     uses: BrandEmbassy/github-actions/.github/workflows/php-ecs.yml@master
     with:
       PHP_VERSION: ${{ matrix.php-version }}
-    secrets:
-      COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
 
   rector:
     uses: BrandEmbassy/github-actions/.github/workflows/php-rector.yml@master
     with:
       PHP_VERSION: '8.1'
       RECTOR_CACHE_PATH: './var/rector'
-    secrets:
-      COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
 
   phpunit:
     strategy:
@@ -52,11 +46,8 @@ jobs:
     with:
       COMPOSER_ARG: ${{ matrix.composer-arg }}
       PHP_VERSION: ${{ matrix.php-version }}
-    secrets:
-      COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
 
   phpunit-with-sonar-qube:
     uses: BrandEmbassy/github-actions/.github/workflows/php-phpunit-with-sonar-qube.yml@master
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      COMPOSER_TOKEN: ${{ secrets.COMPOSER_TOKEN }}
