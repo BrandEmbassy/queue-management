@@ -37,9 +37,13 @@ class SqsQueueManager implements QueueManagerInterface
      * Valid values: 1 to 10. Default: 1.
      */
     public const MAX_NUMBER_OF_MESSAGES = 'MaxNumberOfMessages';
+
     public const CONSUME_LOOP_ITERATIONS_NO_LIMIT = -1;
+
     private const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
+
     private const DELAY_SECONDS = 'DelaySeconds';
+
     // SQS allows maximum message delay of 15 minutes
     private const MAX_DELAY_SECONDS = 15 * 60;
 
@@ -110,36 +114,32 @@ class SqsQueueManager implements QueueManagerInterface
         foreach ($awsResultMessages as $message) {
             $decodedMessageBody = json_decode($message[SqsMessageFields::BODY]);
 
-            if (is_array($decodedMessageBody)) { /* message stored in S3 */
-                if (S3Pointer::isS3Pointer($decodedMessageBody)) {
-                    $bucketName = S3Pointer::getBucketNameFromValidS3Pointer($decodedMessageBody);
-                    $s3Key = S3Pointer::getS3KeyFromValidS3Pointer($decodedMessageBody);
-
-                    $this->logger->info(
-                        sprintf(
-                            'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
-                            $message[SqsMessageFields::MESSAGE_ID],
-                            $bucketName,
-                            $s3Key,
-                        ),
-                        [
-                            LoggerContextField::JOB_QUEUE_NAME => $queueUrl,
-                            LoggerContextField::MESSAGE_ID => $message[SqsMessageFields::MESSAGE_ID],
-                        ],
-                    );
-
-                    $s3Object = $this->s3Client->getObject([
-                        'Bucket' => $bucketName,
-                        'Key' => $s3Key,
-                    ]);
-                    $s3ObjectBody = $s3Object->get('Body');
-                    assert($s3ObjectBody instanceof Stream);
-
-                    // convert Stream into string content
-                    // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
-                    $content = (string)$s3ObjectBody;
-                    $message[SqsMessageFields::BODY] = $content;
-                }
+            /* message stored in S3 */
+            if (is_array($decodedMessageBody) && S3Pointer::isS3Pointer($decodedMessageBody)) {
+                $bucketName = S3Pointer::getBucketNameFromValidS3Pointer($decodedMessageBody);
+                $s3Key = S3Pointer::getS3KeyFromValidS3Pointer($decodedMessageBody);
+                $this->logger->info(
+                    sprintf(
+                        'Message with ID %s will be downloaded from S3 bucket: %s. Key: %s',
+                        $message[SqsMessageFields::MESSAGE_ID],
+                        $bucketName,
+                        $s3Key,
+                    ),
+                    [
+                        LoggerContextField::JOB_QUEUE_NAME => $queueUrl,
+                        LoggerContextField::MESSAGE_ID => $message[SqsMessageFields::MESSAGE_ID],
+                    ],
+                );
+                $s3Object = $this->s3Client->getObject([
+                    'Bucket' => $bucketName,
+                    'Key' => $s3Key,
+                ]);
+                $s3ObjectBody = $s3Object->get('Body');
+                assert($s3ObjectBody instanceof Stream);
+                // convert Stream into string content
+                // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
+                $content = (string)$s3ObjectBody;
+                $message[SqsMessageFields::BODY] = $content;
             }
 
             $sqsMessages[] = new SqsMessage($message, $queueUrl);
@@ -186,8 +186,9 @@ class SqsQueueManager implements QueueManagerInterface
                         $consumer($sqsMessage);
                     }
                 }
+
                 if ($isLoopIterationsLimitEnabled) {
-                    $loopIterationsCounter++;
+                    ++$loopIterationsCounter;
                 }
             } catch (AwsException $exception) {
                 $this->logger->warning(

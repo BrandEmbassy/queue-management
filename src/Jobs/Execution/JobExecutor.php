@@ -29,6 +29,7 @@ class JobExecutor implements JobExecutorInterface
         if ($convertToUnableToProcessLoadedJobExceptionFilter === null) {
             $convertToUnableToProcessLoadedJobExceptionFilter = new AlwaysApplicableThrowableFilter();
         }
+
         $this->logger = $logger;
         $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
         $this->convertToUnableToProcessLoadedJobExceptionFilter = $convertToUnableToProcessLoadedJobExceptionFilter;

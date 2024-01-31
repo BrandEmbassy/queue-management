@@ -32,7 +32,7 @@ class JobExecutorTest extends TestCase
     private $dateTimeImmutableFactory;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->loggerMock = new TestLogger();

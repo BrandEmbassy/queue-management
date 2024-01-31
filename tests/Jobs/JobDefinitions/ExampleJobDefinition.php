@@ -15,6 +15,7 @@ use Tests\BE\QueueManagement\Jobs\ExampleJob;
 class ExampleJobDefinition implements JobDefinitionInterface
 {
     public const QUEUE_NAME = 'exampleJobQueue';
+
     public const MAX_ATTEMPTS = 3;
 
     private ?JobLoaderInterface $jobLoader = null;

@@ -26,10 +26,15 @@ class DefinedDelayRuleTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     private const JOB_NAME = 'jobName';
+
     private const JOB_CLASS = 'jobClass';
+
     private const QUEUE_NAME = 'queueName';
+
     private const QUEUE_JOB_MAX_ATTEMPTS = 10;
+
     private const MAXIMUM_DELAY = 300;
+
     private const LINEAR_DELAY_DEFINITION = [4 => 30, 0 => 5];
 
 
@@ -63,7 +68,7 @@ class DefinedDelayRuleTest extends TestCase
     /**
      * @return array<string, mixed>
      */
-    public function attemptsDataProvider(): array
+    public static function attemptsDataProvider(): array
     {
         return [
             '1. attempt' => [
@@ -122,7 +127,7 @@ class DefinedDelayRuleTest extends TestCase
     /**
      * @return array<string, mixed>
      */
-    public function badDataProvider(): array
+    public static function badDataProvider(): array
     {
         return [
             'Missing definition for 0 attempts' => [

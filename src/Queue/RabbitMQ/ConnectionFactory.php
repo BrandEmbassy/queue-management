@@ -7,7 +7,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
 use function array_key_exists;
-use function count;
 use function usleep;
 
 /**
@@ -16,20 +15,35 @@ use function usleep;
 class ConnectionFactory implements ConnectionFactoryInterface
 {
     public const HOST = 'host';
+
     public const PORT = 'port';
+
     public const USER = 'user';
+
     public const PASSWORD = 'password';
+
     public const VHOST = 'vhost';
+
     public const INSIST = 'insist';
+
     public const LOGIN_METHOD = 'loginMethod';
+
     public const LOGIN_RESPONSE = 'loginResponse';
+
     public const LOCALE = 'locale';
+
     public const CONNECTION_TIMEOUT = 'connectionTimeout';
+
     public const READ_WRITE_TIMEOUT = 'readWriteTimeout';
+
     public const CONTEXT = 'context';
+
     public const KEEP_ALIVE = 'keepAlive';
+
     public const HEART_BEAT = 'heartBeat';
+
     public const CHANNEL_RPC_TIMEOUT = 'channelRpcTimeout';
+
     public const SSL_PROTOCOL = 'sslProtocol';
 
     private const CREATE_CONNECTION_ATTEMPT_DELAYS_IN_MILLISECONDS = [
@@ -139,7 +153,7 @@ class ConnectionFactory implements ConnectionFactoryInterface
             $missing[] = $requiredKey;
         }
 
-        if (count($missing) > 0) {
+        if ($missing !== []) {
             throw ConnectionException::createFromMissingParameters($missing);
         }
     }

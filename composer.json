@@ -12,7 +12,7 @@
         }
     },
     "require": {
-        "php": "^7.4 || >=8.1",
+        "php": ">=8.1",
         "ext-json": "*",
         "psr/log": "^1.1",
         "doctrine/collections": "^1.8.0",
@@ -25,10 +25,10 @@
         "tracy/tracy": "^2.9"
     },
     "require-dev": {
-        "brandembassy/coding-standard": "10.0.0-beta",
-        "brandembassy/mockery-tools": "^3.18.1",
+        "brandembassy/coding-standard": "^11.1",
+        "brandembassy/mockery-tools": "^4.1.1",
         "mockery/mockery": "^1.5.1",
-        "phpunit/phpunit": ">=8.5.23",
+        "phpunit/phpunit": "^10.0",
         "roave/security-advisories": "dev-latest",
         "dealerdirect/phpcodesniffer-composer-installer": "^0.7.2"
     },
@@ -37,9 +37,10 @@
         "fix-cs": "vendor/bin/ecs check --fix --ansi",
         "phpstan": "php -dxdebug.mode=off vendor/bin/phpstan analyse --memory-limit=-1",
         "phpstan-generate-baseline": "php -dxdebug.mode=off vendor/bin/phpstan analyse --memory-limit=-1 --generate-baseline",
-        "test": "./vendor/bin/phpunit tests --no-coverage",
-        "phpunit-cc": "./vendor/bin/phpunit tests",
-        "test-with-coverage": "php -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-clover=coverage.xml --log-junit=test-report.xml"
+        "phpunit": "./vendor/bin/phpunit tests --no-coverage",
+        "phpunit-cc": "php -dxdebug.mode=coverage ./vendor/bin/phpunit --coverage-clover=coverage.xml --log-junit=test-report.xml",
+        "check-rector": "vendor/bin/rector process --dry-run --ansi",
+        "fix-rector": "vendor/bin/rector process --ansi"
     },
     "config": {
         "allow-plugins": {

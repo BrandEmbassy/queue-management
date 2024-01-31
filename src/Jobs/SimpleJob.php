@@ -114,7 +114,7 @@ class SimpleJob implements JobInterface
 
     public function incrementAttempts(): void
     {
-        $this->attempts++;
+        ++$this->attempts;
         $maxAttempts = $this->getMaxAttempts();
 
         if ($maxAttempts !== null && $this->attempts > $maxAttempts) {

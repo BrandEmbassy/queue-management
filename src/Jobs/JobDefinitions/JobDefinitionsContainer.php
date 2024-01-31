@@ -20,7 +20,7 @@ class JobDefinitionsContainer
     /**
      * @var Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]|null
      */
-    private ?Collection $jobDefinitions;
+    private ?Collection $jobDefinitions = null;
 
 
     /**
@@ -30,7 +30,6 @@ class JobDefinitionsContainer
     {
         $this->jobDefinitionsConfig = $jobDefinitionsConfig;
         $this->jobDefinitionFactory = $jobDefinitionFactory;
-        $this->jobDefinitions = null;
     }
 
 

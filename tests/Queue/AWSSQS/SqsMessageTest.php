@@ -26,7 +26,7 @@ class SqsMessageTest extends TestCase
     /**
      * @return array<array<string, mixed>>
      */
-    public function messageProvider(): array
+    public static function messageProvider(): array
     {
         $messageAttributes = [
             'QueueUrl' => [

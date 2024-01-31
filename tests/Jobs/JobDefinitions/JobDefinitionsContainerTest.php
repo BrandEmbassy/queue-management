@@ -63,7 +63,7 @@ class JobDefinitionsContainerTest extends TestCase
     /**
      * @return string[][]
      */
-    public function queueDefinitionDataProvider(): array
+    public static function queueDefinitionDataProvider(): array
     {
         return [
             'without queue name prefix' => [

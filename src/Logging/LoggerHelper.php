@@ -18,6 +18,7 @@ use function sprintf;
 class LoggerHelper
 {
     public const UNKNOWN_DELAY = -1;
+
     public const NOT_DELAYED = 0;
 
 

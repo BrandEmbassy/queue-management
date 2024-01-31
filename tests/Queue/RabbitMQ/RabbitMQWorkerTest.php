@@ -29,7 +29,7 @@ class RabbitMQWorkerTest extends TestCase
     private $rabbitMQConsumerMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->rabbitMQQueueManagerMock = Mockery::mock(RabbitMQQueueManager::class);

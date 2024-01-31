@@ -6,7 +6,6 @@ use Aws\Sqs\SqsClient;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
-use function count;
 use function usleep;
 
 /**
@@ -48,7 +47,7 @@ class SqsClientFactory extends AwsClientFactory implements SqsClientFactoryInter
     {
         $missing = $this->getMissingRequiredElements();
 
-        if (count($missing) > 0) {
+        if ($missing !== []) {
             throw SqsClientException::createFromMissingParameters($missing);
         }
 
