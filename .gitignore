@@ -1,2 +1,5 @@
 /vendor/
-/var/
+/var/*
+!.gitkeep
+coverage.xml
+test-report.xml

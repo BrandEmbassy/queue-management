@@ -44,7 +44,7 @@ class S3Pointer
     public function __toString(): string
     {
         $info_keys = ['@metadata', 'ObjectURL'];
-        $metadata = array_map([$this->s3Result, 'get'], $info_keys);
+        $metadata = array_map(fn(string $key) => $this->s3Result->get($key), $info_keys);
         $pointer = ['s3BucketName' => $this->bucketName, 's3Key' => $this->key];
 
         return (string)json_encode([$metadata, $pointer]);

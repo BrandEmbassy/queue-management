@@ -10,6 +10,7 @@ use function array_key_exists;
 abstract class AwsClientFactory
 {
     private const VERSION = 'version';
+
     private const REGION = 'region';
 
     /**

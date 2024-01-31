@@ -42,7 +42,7 @@ class JobLoaderTest extends TestCase
     private $jobTerminatorMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->jobDefinitionsContainerMock = Mockery::mock(JobDefinitionsContainer::class);
@@ -130,7 +130,7 @@ class JobLoaderTest extends TestCase
     /**
      * @return mixed[]
      */
-    public function executionPlannedAtDataProvider(): array
+    public static function executionPlannedAtDataProvider(): array
     {
         return [
             'Null executionPlannedAt' => ['executionPlannedAt' => null],

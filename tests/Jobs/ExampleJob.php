@@ -16,9 +16,13 @@ use function str_repeat;
 class ExampleJob extends SimpleJob
 {
     public const UUID = 'some-job-uud';
+
     public const ATTEMPTS = JobInterface::INIT_ATTEMPTS;
+
     public const CREATED_AT = '2018-08-01T10:15:47+01:00';
+
     public const JOB_NAME = 'exampleJob';
+
     public const PARAMETER_FOO = 'foo';
 
 

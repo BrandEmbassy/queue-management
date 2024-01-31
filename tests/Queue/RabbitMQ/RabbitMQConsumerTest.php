@@ -52,7 +52,7 @@ class RabbitMQConsumerTest extends TestCase
     private $amqpChannelMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->loggerMock = new TestLogger();

@@ -158,7 +158,7 @@ class SqsConsumer implements SqsConsumerInterface
     private function logSqsDelayJob(JobInterface $job, int $delay): void
     {
         $this->logger->info(
-            sprintf('Job requeued, it\'s not planned to be executed yet. [delay: %d]', $delay),
+            sprintf("Job requeued, it's not planned to be executed yet. [delay: %d]", $delay),
             [
                 LoggerContextField::JOB_UUID => $job->getUuid(),
                 LoggerContextField::JOB_NAME => $job->getName(),

@@ -4,7 +4,6 @@ namespace BE\QueueManagement\Queue\AWSSQS;
 
 use Aws\S3\S3Client;
 use Throwable;
-use function count;
 
 /**
  * Defines S3 client factory.
@@ -31,7 +30,7 @@ class S3ClientFactory extends AwsClientFactory implements S3ClientFactoryInterfa
     {
         $missing = $this->getMissingRequiredElements();
 
-        if (count($missing) > 0) {
+        if ($missing !== []) {
             throw S3ClientException::createFromMissingParameters($missing);
         }
 

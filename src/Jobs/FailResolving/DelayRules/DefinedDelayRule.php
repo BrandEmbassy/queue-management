@@ -63,7 +63,7 @@ class DefinedDelayRule implements DelayRuleInterface
             throw DelayRuleException::byMissingDefinitionForZeroAttempts();
         }
 
-        for ($attemptsCount = 1; $attemptsCount < $attemptsDefinitionCount; $attemptsCount++) {
+        for ($attemptsCount = 1; $attemptsCount < $attemptsDefinitionCount; ++$attemptsCount) {
             if ($attemptsDefinition[$attemptsCount - 1] < $attemptsDefinition[$attemptsCount]) {
                 throw DelayRuleException::byIncorrectDefinitionOrder();
             }

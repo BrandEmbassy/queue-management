@@ -7,7 +7,6 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
-use BE\QueueManagement\Queue\AWSSQS\MessageKeyGeneratorInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
@@ -34,62 +33,45 @@ class SqsQueueManagerTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
+
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
+
     private const S3_BUCKET_NAME = 'thisIsS3Bucket';
+
     private const FROZEN_DATE_TIME = '2016-08-15T15:00:00+00:00';
+
     private const SQS_MESSAGE_ID = '96819875-6e43-4a14-9652-6b5d239f5e1b';
-
-    /**
-     * @var SqsClientFactory&MockInterface
-     */
-    private $sqsClientFactoryMock;
-
-    /**
-     * @var S3ClientFactory&MockInterface
-     */
-    private $s3ClientFactoryMock;
 
     private TestLogger $loggerMock;
 
     /**
      * @var SqsClient&MockInterface
      */
-    private $sqsClientMock;
+    private SqsClient $sqsClientMock;
 
     /**
      * @var S3Client&MockInterface
      */
-    private $s3ClientMock;
+    private S3Client $s3ClientMock;
 
     /**
      * @var CommandInterface<mixed>&MockInterface
      */
-    private $awsCommandMock;
+    private CommandInterface $awsCommandMock;
 
     /**
      * @var Result<mixed>&MockInterface
      */
-    private $awsResultMock;
+    private Result $awsResultMock;
 
-    private MessageKeyGeneratorInterface $messageKeyGenerator;
-
-    private FrozenDateTimeImmutableFactory $frozenDateTimeImmutableFactory;
-
-
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
-        $this->sqsClientFactoryMock = Mockery::mock(SqsClientFactory::class);
-        $this->s3ClientFactoryMock = Mockery::mock(S3ClientFactory::class);
         $this->loggerMock = new TestLogger();
         $this->sqsClientMock = Mockery::mock(SqsClient::class);
         $this->s3ClientMock = Mockery::mock(S3Client::class);
         $this->awsCommandMock = Mockery::mock(CommandInterface::class);
         $this->awsResultMock = Mockery::mock(Result::class);
-        $this->messageKeyGenerator = new TestOnlyMessageKeyGenerator();
-        $this->frozenDateTimeImmutableFactory = new FrozenDateTimeImmutableFactory(
-            new DateTimeImmutable(self::FROZEN_DATE_TIME),
-        );
     }
 
 
@@ -98,7 +80,7 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testPush(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection();
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
@@ -107,12 +89,11 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
+                    fn(array $message): bool => $this->messageCheckOk($message, $exampleJob->toJson(), 0),
                 ),
             )
             ->andReturn($this->createSqsSendMessageResultMock());
 
-        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
     }
 
@@ -122,7 +103,7 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testPushWithInvalidCharacters(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection();
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
@@ -141,7 +122,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk(
+                    fn(array $message): bool => $this->messageCheckOk(
                         $message,
                         $exampleJobWithValidCharacter->toJson(),
                         0,
@@ -150,7 +131,6 @@ class SqsQueueManagerTest extends TestCase
             )
             ->andReturn($this->createSqsSendMessageResultMock());
 
-        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJobWithInvalidCharacter);
     }
 
@@ -160,7 +140,7 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testPushWithTooBigMessage(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection();
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
@@ -190,12 +170,11 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $messageBody, 0),
+                    fn(array $message): bool => $this->messageCheckOk($message, $messageBody, 0),
                 ),
             )
             ->andReturn($this->createSqsSendMessageResultMock());
 
-        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
     }
 
@@ -205,19 +184,17 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testPushDelayed(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection();
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
         $exampleJob = $this->createExampleJob($queueName);
 
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 5),
+                    fn(array $message): bool => $this->messageCheckOk($message, $exampleJob->toJson(), 5),
                 ),
             )
             ->andReturn($this->createSqsSendMessageResultMock());
-
-        $queueManager = $this->createQueueManager($queueNamePrefix);
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
@@ -230,7 +207,7 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testPushDelayedWithJobDelayOverSqsMaxDelayLimit(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection();
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
         $exampleJob = $this->createExampleJob($queueName);
 
@@ -246,7 +223,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk(
+                    fn(array $message): bool => $this->messageCheckOk(
                         $message,
                         Json::encode($expectedMessageBody),
                         900,
@@ -254,8 +231,6 @@ class SqsQueueManagerTest extends TestCase
                 ),
             )
             ->andReturn($this->createSqsSendMessageResultMock());
-
-        $queueManager = $this->createQueueManager($queueNamePrefix);
 
         $this->loggerMock->hasInfo(
             'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
@@ -271,19 +246,18 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testPushDelayedWithMilliSeconds(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection();
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
         $exampleJob = $this->createExampleJob($queueName);
 
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 5),
+                    fn(array $message): bool => $this->messageCheckOk($message, $exampleJob->toJson(), 5),
                 ),
             )
             ->andReturn($this->createSqsSendMessageResultMock());
 
-        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->pushDelayedWithMilliseconds($exampleJob, 5000);
     }
 
@@ -293,7 +267,7 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testPushWithReconnect(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection(2);
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);
 
         $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
 
@@ -304,7 +278,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
+                    fn(array $message): bool => $this->messageCheckOk($message, $exampleJob->toJson(), 0),
                 ),
             )
             ->andThrow($awsException);
@@ -312,7 +286,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    static fn(array $message): bool => self::messageCheckOk($message, $exampleJob->toJson(), 0),
+                    fn(array $message): bool => $this->messageCheckOk($message, $exampleJob->toJson(), 0),
                 ),
             )
             ->andReturn($this->createSqsSendMessageResultMock());
@@ -321,7 +295,6 @@ class SqsQueueManagerTest extends TestCase
             'Reconnecting: Some nasty error',
         );
 
-        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->push($exampleJob);
     }
 
@@ -331,7 +304,7 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testConsume(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection();
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
         $expectedCallback = static function (SqsMessage $message): void {
         };
@@ -353,7 +326,6 @@ class SqsQueueManagerTest extends TestCase
             ])
             ->andReturns($this->awsResultMock);
 
-        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->consumeMessages(
             $expectedCallback,
             $queueName,
@@ -369,7 +341,7 @@ class SqsQueueManagerTest extends TestCase
      */
     public function testConsumeWithReconnect(string $queueName, string $queueNamePrefix): void
     {
-        $this->expectSetUpConnection(2);
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);
 
         $expectedCallback = static function (SqsMessage $message): void {
         };
@@ -407,7 +379,6 @@ class SqsQueueManagerTest extends TestCase
 
         $this->loggerMock->hasWarning('Reconnecting: Some nasty error');
 
-        $queueManager = $this->createQueueManager($queueNamePrefix);
         $queueManager->consumeMessages(
             $expectedCallback,
             $queueName,
@@ -421,7 +392,7 @@ class SqsQueueManagerTest extends TestCase
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function queueNameDataProvider(): array
+    public static function queueNameDataProvider(): array
     {
         return [
             [
@@ -468,7 +439,7 @@ class SqsQueueManagerTest extends TestCase
     /**
      * @param array<string, mixed> $message
      */
-    private static function messageCheckOk(array $message, string $messageBody, int $delay): bool
+    private function messageCheckOk(array $message, string $messageBody, int $delay): bool
     {
         return $message['MessageBody'] === $messageBody
             && $message[SqsSendingMessageFields::DELAY_SECONDS] === $delay
@@ -486,32 +457,60 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    private function createQueueManager(string $queueNamePrefix = ''): SqsQueueManager
+    private function createQueueManagerWithExpectations(
+        string $queueNamePrefix = '',
+        int $connectionIsCreatedTimes = 1
+    ): SqsQueueManager
     {
         return new SqsQueueManager(
             self::S3_BUCKET_NAME,
-            $this->sqsClientFactoryMock,
-            $this->s3ClientFactoryMock,
-            $this->messageKeyGenerator,
+            $this->createSqsClientFactoryMock($this->sqsClientMock, $connectionIsCreatedTimes),
+            $this->createS3ClientFactoryMock($this->s3ClientMock, $connectionIsCreatedTimes),
+            new TestOnlyMessageKeyGenerator(),
             $this->loggerMock,
-            $this->frozenDateTimeImmutableFactory,
+            new FrozenDateTimeImmutableFactory(
+                new DateTimeImmutable(self::FROZEN_DATE_TIME),
+            ),
             1,
             $queueNamePrefix,
         );
     }
 
 
-    private function expectSetUpConnection(int $connectionIsCreatedTimes = 1): void
+    /**
+     * @return SqsClientFactory&MockInterface
+     */
+    private function createSqsClientFactoryMock(
+        SqsClient $sqsClientMock,
+        int $connectionIsCreatedTimes = 1
+    ): SqsClientFactory
     {
-        $this->sqsClientFactoryMock->expects('create')
-            ->withNoArgs()
-            ->times($connectionIsCreatedTimes)
-            ->andReturns($this->sqsClientMock);
+        $sqsClientFactoryMock = Mockery::mock(SqsClientFactory::class);
 
-        $this->s3ClientFactoryMock->expects('create')
+        $sqsClientFactoryMock->expects('create')
             ->withNoArgs()
             ->times($connectionIsCreatedTimes)
-            ->andReturns($this->s3ClientMock);
+            ->andReturns($sqsClientMock);
+
+        return $sqsClientFactoryMock;
+    }
+
+    /**
+     * @return S3ClientFactory&MockInterface
+     */
+    private function createS3ClientFactoryMock(
+        S3Client $s3ClientMock,
+        int $connectionIsCreatedTimes = 1
+    ): S3ClientFactory
+    {
+        $s3ClientFactoryMock = Mockery::mock(S3ClientFactory::class);
+
+        $s3ClientFactoryMock->expects('create')
+            ->withNoArgs()
+            ->times($connectionIsCreatedTimes)
+            ->andReturns($s3ClientMock);
+
+        return $s3ClientFactoryMock;
     }
 
 
@@ -545,9 +544,7 @@ class SqsQueueManagerTest extends TestCase
 
         $expectedMessageBody = '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-04-21T14:05:47+00:00","jobParameters":{"foo":"bar"}}';
 
-        $this->expectSetUpConnection();
-
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManagerWithExpectations();
 
         $this->s3ClientMock->expects('getObject')
             ->andReturns($this->awsResultMock);
@@ -598,9 +595,7 @@ class SqsQueueManagerTest extends TestCase
 
         $messageBodyExpected = '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-04-22T09:11:05+00:00","jobParameters":{"foo":"bar"}}';
 
-        $this->expectSetUpConnection();
-
-        $queueManager = $this->createQueueManager();
+        $queueManager = $this->createQueueManagerWithExpectations();
 
         $this->s3ClientMock->allows('getObject')->never();
 

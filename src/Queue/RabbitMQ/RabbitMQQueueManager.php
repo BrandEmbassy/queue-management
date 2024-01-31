@@ -24,7 +24,9 @@ use function count;
 class RabbitMQQueueManager implements QueueManagerInterface
 {
     public const PREFETCH_COUNT = 'prefetchCount';
+
     public const NO_ACK = 'noAck';
+
     private const QUEUES_EXCHANGE_SUFFIX = '.sync';
 
     private ConnectionFactoryInterface $connectionFactory;

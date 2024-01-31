@@ -21,6 +21,7 @@ use function sprintf;
 class MessageDeduplicationDefault implements MessageDeduplication
 {
     private const DEDUPLICATION_KEY_PREFIX = 'AWS_DEDUP_PREFIX';
+
     private const DEFAULT_DEDUPLICATION_WINDOW_SIZE_IN_SECONDS = TimeInSeconds::HOUR * 2;
 
     private LoggerInterface $logger;

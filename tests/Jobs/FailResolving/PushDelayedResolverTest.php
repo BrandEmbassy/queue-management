@@ -29,7 +29,7 @@ class PushDelayedResolverTest extends TestCase
     private TestLogger $loggerMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->queueManagerMock = Mockery::mock(QueueManagerInterface::class);

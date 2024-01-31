@@ -39,8 +39,11 @@ class SqsConsumerTest extends TestCase
     use MockeryPHPUnitIntegration;
 
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
+
     private const RECEIPT_HANDLE = '123456777';
+
     private const MESSAGE_ID = 'c176f71b-ea77-4b0e-af6a-d76246d77057';
+
     private const FROZEN_DATE_TIME = '2016-08-15T15:00:00+00:00';
 
     private TestLogger $loggerMock;
@@ -75,7 +78,7 @@ class SqsConsumerTest extends TestCase
     private $queueManagerMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->loggerMock = new TestLogger();
@@ -229,43 +232,43 @@ class SqsConsumerTest extends TestCase
     /**
      * @return mixed[]
      */
-    public function possibleLogLevelAlteringExceptionsThrownDataProvider(): array
+    public static function possibleLogLevelAlteringExceptionsThrownDataProvider(): array
     {
         return [
-            'exception is warning only' => (static function() {
+            'exception is warning only' => (static function(): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleWarningOnlyException::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
                 ];
             })(),
-            'previous of the exception is warning only' => (static function() {
+            'previous of the exception is warning only' => (static function(): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleExceptionWithPreviousWarningOnlyException::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
                 ];
             })(),
-            'exception is custom log level' => (static function() {
+            'exception is custom log level' => (static function(): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleExceptionWithCustomLogLevel::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
                 ];
             })(),
-            'previous of the exception is custom log level' => (static function() {
+            'previous of the exception is custom log level' => (static function(): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleExceptionWithPreviousCustomLogLevelException::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
                 ];
             })(),
         ];
@@ -294,7 +297,7 @@ class SqsConsumerTest extends TestCase
             ]);
 
         $this->loggerMock->hasInfo(
-            'Job requeued, it\'s not planned to be executed yet. [delay: 7200]',
+            "Job requeued, it's not planned to be executed yet. [delay: 7200]",
         );
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
@@ -306,7 +309,7 @@ class SqsConsumerTest extends TestCase
     /**
      * @return mixed[]
      */
-    public function executionDelayedPlannedAtDataProvider(): array
+    public static function executionDelayedPlannedAtDataProvider(): array
     {
         return [
             'Delayed two hours' => [
@@ -355,7 +358,7 @@ class SqsConsumerTest extends TestCase
     /**
      * @return mixed[]
      */
-    public function executionPlannedAtDataProvider(): array
+    public static function executionPlannedAtDataProvider(): array
     {
         return [
             'One our late' => [

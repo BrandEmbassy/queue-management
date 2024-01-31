@@ -31,7 +31,7 @@ class JobTerminatorTest extends TestCase
     private $loggerMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->jobUuidBlacklistMock = Mockery::mock(JobUuidBlacklistInterface::class);

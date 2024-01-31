@@ -43,7 +43,7 @@ class RabbitMQQueueManagerTest extends TestCase
     private $amqpStreamConnectionMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->connectionFactoryMock = Mockery::mock(ConnectionFactory::class);
@@ -186,7 +186,7 @@ class RabbitMQQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection();
 
-        $expectedCallback = function (AMQPMessage $message): void {
+        $expectedCallback = static function (AMQPMessage $message) : void {
         };
 
         $this->amqpChannelMock->shouldReceive('basic_qos')
@@ -221,7 +221,7 @@ class RabbitMQQueueManagerTest extends TestCase
     {
         $this->expectSetUpConnection(2, 2);
 
-        $expectedCallback = function (AMQPMessage $message): void {
+        $expectedCallback = static function (AMQPMessage $message) : void {
         };
 
         $amqpChannelMock = $this->amqpChannelMock;
@@ -298,7 +298,7 @@ class RabbitMQQueueManagerTest extends TestCase
     /**
      * @return bool[][]
      */
-    public function connectionStatusDataProvider(): array
+    public static function connectionStatusDataProvider(): array
     {
         return [
             [true],

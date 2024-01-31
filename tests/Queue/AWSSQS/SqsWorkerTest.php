@@ -31,7 +31,7 @@ class SqsWorkerTest extends TestCase
     private $sqsConsumerMock;
 
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->sqsQueueManagerMock = Mockery::mock(SqsQueueManager::class);
@@ -63,7 +63,7 @@ class SqsWorkerTest extends TestCase
     /**
      * @return mixed[][]
      */
-    public function differentQueueNameStrategyDataProvider(): array
+    public static function differentQueueNameStrategyDataProvider(): array
     {
         return [
             'default' => [
