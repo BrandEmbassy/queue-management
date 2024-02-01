@@ -56,6 +56,11 @@ class RedisClient
         }
 
         if (!$result instanceof Status) {
+            // Relay is returning raw string output
+            if ($result === self::SAVE_SUCCESS) {
+                return true;
+            }
+
             throw RedisClientException::byInvalidResultStatus((string)$result);
         }
 
