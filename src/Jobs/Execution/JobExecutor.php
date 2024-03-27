@@ -39,7 +39,6 @@ class JobExecutor implements JobExecutorInterface
     public function execute(JobInterface $job): void
     {
         try {
-            Debugger::timer('job-execution');
             $jobDefinition = $job->getJobDefinition();
             $processor = $jobDefinition->getJobProcessor();
 
