@@ -14,9 +14,8 @@ class SqsMessageTest extends TestCase
 {
     /**
      * @param array<string, array<string, string>> $messageAttributes
-     *
-     * @dataProvider messageProvider
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('messageProvider')]
     public function testIsTooBig(bool $expectedIsTooBig, string $messageBody, array $messageAttributes): void
     {
         Assert::assertSame($expectedIsTooBig, SqsMessage::isTooBig($messageBody, $messageAttributes));

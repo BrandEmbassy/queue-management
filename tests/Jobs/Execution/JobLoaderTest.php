@@ -50,9 +50,7 @@ class JobLoaderTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider executionPlannedAtDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('executionPlannedAtDataProvider')]
     public function testLoadSimpleJob(?DateTimeImmutable $executionPlannedAt): void
     {
         $jobLoader = $this->createJobLoader();

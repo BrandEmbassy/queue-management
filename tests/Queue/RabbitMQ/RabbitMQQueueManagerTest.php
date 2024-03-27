@@ -274,9 +274,7 @@ class RabbitMQQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider connectionStatusDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('connectionStatusDataProvider')]
     public function testCheckConnection(bool $connectionStatus): void
     {
         $this->amqpStreamConnectionMock->shouldReceive('isConnected')

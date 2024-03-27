@@ -39,9 +39,7 @@ class SqsWorkerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider differentQueueNameStrategyDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('differentQueueNameStrategyDataProvider')]
     public function testStart(string $expectedQueueName, ?QueueNameStrategy $queueNameStrategy): void
     {
         $sqsWorker = $this->createSqsWorker($queueNameStrategy);

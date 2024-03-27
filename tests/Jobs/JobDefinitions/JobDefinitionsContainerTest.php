@@ -27,9 +27,7 @@ class JobDefinitionsContainerTest extends TestCase
     private const SIMPLE_JOB_NAME = 'simpleJob';
 
 
-    /**
-     * @dataProvider queueDefinitionDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueDefinitionDataProvider')]
     public function testGetJobDefinition(string $expectedQueueName, string $queueNamePrefix): void
     {
         $exampleJobProcessor = new ExampleJobProcessor();
