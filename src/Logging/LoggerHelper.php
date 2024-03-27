@@ -7,6 +7,8 @@ use BE\QueueManagement\Jobs\Execution\WarningOnlyExceptionInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\JobType;
 use Psr\Log\LoggerInterface;
+use Tracy\Debugger;
+use function round;
 use function sprintf;
 
 /**
@@ -37,6 +39,7 @@ class LoggerHelper
             LoggerContextField::JOB_QUEUE_NAME => $job->getJobDefinition()->getQueueName(),
             LoggerContextField::JOB_NAME => $job->getName(),
             LoggerContextField::JOB_UUID => $job->getUuid(),
+            LoggerContextField::JOB_EXECUTION_TIME => round(Debugger::timer('job-execution') * 1000, 5),
         ];
 
         if ($exception instanceof CustomLogLevelFromJobExceptionInterface) {

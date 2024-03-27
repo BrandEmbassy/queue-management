@@ -8,8 +8,10 @@ use Rector\Php74\Rector\LNumber\AddLiteralSeparatorToNumberRector;
 use Rector\PHPUnit\Set\PHPUnitSetList;
 
 return static function (RectorConfig $rectorConfig): void {
-    $defaultRectorConfigurationSetup = require 'vendor/brandembassy/coding-standard/default-rector.php';
-    $defaultSkipList = $defaultRectorConfigurationSetup($rectorConfig);
+    $rectorConfigBuilder = RectorConfig::configure();
+    $defaultRectorConfigurationSetup = require __DIR__ . '/vendor/brandembassy/coding-standard/default-rector.php';
+
+    $defaultSkipList = $defaultRectorConfigurationSetup($rectorConfigBuilder);
 
     $rectorConfig->phpstanConfig(__DIR__ . '/phpstan.neon');
 

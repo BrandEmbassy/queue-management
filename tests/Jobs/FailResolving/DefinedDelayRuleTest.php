@@ -39,10 +39,9 @@ class DefinedDelayRuleTest extends TestCase
 
 
     /**
-     * @dataProvider attemptsDataProvider
-     *
      * @throw Throwable
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('attemptsDataProvider')]
     public function testCorrectDelayIsReturned(
         int $expectedDelay,
         int $attempts
@@ -104,11 +103,11 @@ class DefinedDelayRuleTest extends TestCase
 
 
     /**
-     * @dataProvider badDataProvider
      *
      * @param class-string<Throwable> $expectedException
      * @param int[] $linearDelayDefinition
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('badDataProvider')]
     public function testExceptionIsThrownWithBadDelayDefinition(
         string $expectedException,
         string $expectedExceptionMessage,

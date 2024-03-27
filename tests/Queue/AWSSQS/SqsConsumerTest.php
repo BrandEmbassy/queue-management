@@ -199,9 +199,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider possibleLogLevelAlteringExceptionsThrownDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('possibleLogLevelAlteringExceptionsThrownDataProvider')]
     public function testRequeueDelayableProcessFailWithLogLevelControl(Exception $thrownException, JobInterface $job, callable $setupLoggerExpectationCallable): void
     {
         $this->jobLoaderMock->expects('loadJob')
@@ -275,9 +273,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider executionDelayedPlannedAtDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('executionDelayedPlannedAtDataProvider')]
     public function testDelayJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt, int $expectedDelay): void
     {
         $exampleJob = new ExampleJob();
@@ -328,9 +324,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider executionPlannedAtDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('executionPlannedAtDataProvider')]
     public function testExecuteJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt): void
     {
         $exampleJob = new ExampleJob();

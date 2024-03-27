@@ -75,9 +75,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPush(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -98,9 +96,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPushWithInvalidCharacters(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -135,9 +131,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPushWithTooBigMessage(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -179,9 +173,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPushDelayed(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -202,9 +194,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPushDelayedWithJobDelayOverSqsMaxDelayLimit(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -241,9 +231,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPushDelayedWithMilliSeconds(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -262,9 +250,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPushWithReconnect(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);
@@ -299,9 +285,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testConsume(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -336,9 +320,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    /**
-     * @dataProvider queueNameDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testConsumeWithReconnect(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);

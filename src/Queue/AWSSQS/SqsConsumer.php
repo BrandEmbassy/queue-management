@@ -16,6 +16,8 @@ use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
+use Tracy\Debugger;
+use function round;
 use function sprintf;
 
 /**
@@ -63,6 +65,7 @@ class SqsConsumer implements SqsConsumerInterface
 
     public function __invoke(SqsMessage $message): void
     {
+        Debugger::timer('job-execution');
         try {
             if ($this->messageDeduplication->isDuplicate($message)) {
                 $this->logger->warning(
@@ -163,6 +166,7 @@ class SqsConsumer implements SqsConsumerInterface
                 LoggerContextField::JOB_UUID => $job->getUuid(),
                 LoggerContextField::JOB_NAME => $job->getName(),
                 LoggerContextField::JOB_QUEUE_NAME => $job->getJobDefinition()->getQueueName(),
+                LoggerContextField::JOB_EXECUTION_TIME => round(Debugger::timer('job-execution') * 1000, 5),
             ],
         );
     }
