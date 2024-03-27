@@ -17,6 +17,7 @@ use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
 use Tracy\Debugger;
+use function round;
 use function sprintf;
 
 /**

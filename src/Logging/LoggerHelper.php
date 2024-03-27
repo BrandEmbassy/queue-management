@@ -8,6 +8,7 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\JobType;
 use Psr\Log\LoggerInterface;
 use Tracy\Debugger;
+use function round;
 use function sprintf;
 
 /**
