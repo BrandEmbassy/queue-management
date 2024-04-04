@@ -9,7 +9,7 @@ class LoggerContextField
 {
     public const EXCEPTION = 'exception';
 
-    public const JOB_EXECUTION_TIME = 'executionTime';
+    public const JOB_EXECUTION_TIME = 'execution_time';
 
     public const JOB_NAME = 'job_name';
 
