@@ -13,6 +13,7 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
+use BE\QueueManagement\Queue\JobExecutionStatus;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
 use Psr\Log\LoggerInterface;
@@ -63,7 +64,7 @@ class SqsConsumer implements SqsConsumerInterface
     }
 
 
-    public function __invoke(SqsMessage $message): void
+    public function __invoke(SqsMessage $message): JobExecutionStatus
     {
         Debugger::timer('job-execution');
         try {
@@ -78,11 +79,13 @@ class SqsConsumer implements SqsConsumerInterface
                 );
                 $this->deleteMessageFromQueue($message);
 
-                return;
+                return JobExecutionStatus::REMOVED_DUPLICATE;
             }
 
-            $this->executeJob($message);
+            $jobExecutionStatus = $this->executeJob($message);
             $this->deleteMessageFromQueue($message);
+
+            return $jobExecutionStatus;
         } catch (ConsumerFailedExceptionInterface $exception) {
             // do not delete message.
             // After visibility timeout message should be visible to other consumers.
@@ -109,6 +112,8 @@ class SqsConsumer implements SqsConsumerInterface
             );
 
             $this->deleteMessageFromQueue($message);
+
+            return JobExecutionStatus::FAILED_UNRESOLVABLE;
         }
     }
 
@@ -131,7 +136,7 @@ class SqsConsumer implements SqsConsumerInterface
     }
 
 
-    private function executeJob(SqsMessage $message): void
+    private function executeJob(SqsMessage $message): JobExecutionStatus
     {
         try {
             $job = $this->jobLoader->loadJob($message->getBody());
@@ -145,15 +150,19 @@ class SqsConsumer implements SqsConsumerInterface
                     $this->logSqsDelayJob($job, $timeRemainsInSeconds);
                     $this->queueManager->pushDelayed($job, $timeRemainsInSeconds);
 
-                    return;
+                    return JobExecutionStatus::DELAYED_NOT_PLANNED_YET;
                 }
             }
 
             $this->jobExecutor->execute($job);
+
+            return JobExecutionStatus::SUCCESS;
         } catch (DelayableProcessFailExceptionInterface $exception) {
             LoggerHelper::logDelayableProcessFailException($exception, $this->logger);
 
             $this->pushDelayedResolver->resolve($exception->getJob(), $exception);
+
+            return JobExecutionStatus::FAILED_DELAYED;
         }
     }
 
