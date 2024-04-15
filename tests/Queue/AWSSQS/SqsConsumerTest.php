@@ -22,6 +22,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
@@ -199,8 +200,8 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('possibleLogLevelAlteringExceptionsThrownDataProvider')]
-    public function testRequeueDelayableProcessFailWithLogLevelControl(Exception $thrownException, JobInterface $job, callable $setupLoggerExpectationCallable): void
+    #[DataProvider('possibleLogLevelAlteringExceptionsThrownDataProvider')]
+    public function testRequeueDelayableProcessFailWithLogLevelControl(Exception $thrownException, JobInterface $job, callable $loggerExpectationCallable): void
     {
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
@@ -216,7 +217,7 @@ class SqsConsumerTest extends TestCase
                 'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
-        $setupLoggerExpectationCallable($this->loggerMock);
+        $loggerExpectationCallable($this->loggerMock);
 
         $this->pushDelayedResolverMock->expects('resolve')
             ->with($job, $thrownException);
@@ -273,7 +274,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('executionDelayedPlannedAtDataProvider')]
+    #[DataProvider('executionDelayedPlannedAtDataProvider')]
     public function testDelayJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt, int $expectedDelay): void
     {
         $exampleJob = new ExampleJob();
@@ -324,7 +325,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('executionPlannedAtDataProvider')]
+    #[DataProvider('executionPlannedAtDataProvider')]
     public function testExecuteJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt): void
     {
         $exampleJob = new ExampleJob();
