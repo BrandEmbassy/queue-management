@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.0/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
          cacheDirectory="var/.phpunit.cache"
@@ -11,13 +11,6 @@
          failOnRisky="true"
          failOnWarning="true">
     <coverage>
-        <include>
-            <directory suffix=".php">./src</directory>
-        </include>
-        <exclude>
-            <directory>./tests</directory>
-            <directory>./vendor</directory>
-        </exclude>
         <report>
             <html outputDirectory="./var/code-coverage" lowUpperBound="50" highLowerBound="80"/>
         </report>
@@ -28,4 +21,13 @@
     <logging>
         <testdoxHtml outputFile="./var/code-coverage/index.html"/>
     </logging>
+    <source>
+        <include>
+            <directory suffix=".php">./src</directory>
+        </include>
+        <exclude>
+            <directory>./tests</directory>
+            <directory>./vendor</directory>
+        </exclude>
+    </source>
 </phpunit>
