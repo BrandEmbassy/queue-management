@@ -7,6 +7,7 @@ use BE\QueueManagement\Jobs\BlacklistedJobUuidException;
 use BE\QueueManagement\Jobs\Execution\JobExecutorInterface;
 use BE\QueueManagement\Jobs\Execution\JobLoaderInterface;
 use BE\QueueManagement\Jobs\Execution\UnableToProcessLoadedJobException;
+use BE\QueueManagement\Jobs\Execution\UnresolvableProcessFailExceptionInterface;
 use BE\QueueManagement\Jobs\FailResolving\PushDelayedResolver;
 use BE\QueueManagement\Jobs\JobDefinitions\UnknownJobDefinitionException;
 use BE\QueueManagement\Jobs\JobInterface;
@@ -14,6 +15,7 @@ use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\JobExecutionStatus;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
 use DateTimeImmutable;
@@ -22,6 +24,8 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
+use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
@@ -113,7 +117,8 @@ class SqsConsumerTest extends TestCase
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+
+        Assert::assertSame(JobExecutionStatus::SUCCESS, $sqsConsumer($sqsMessage));
     }
 
 
@@ -136,6 +141,7 @@ class SqsConsumerTest extends TestCase
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+
         $sqsConsumer($sqsMessage);
     }
 
@@ -160,7 +166,33 @@ class SqsConsumerTest extends TestCase
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+
+        Assert::assertSame(JobExecutionStatus::FAILED_UNRESOLVABLE, $sqsConsumer($sqsMessage));
+    }
+
+
+    public function testRemoveJobWithUnresolvableExceptionFailure(): void
+    {
+        $unresolvableProcessFailException = new class() extends Exception implements UnresolvableProcessFailExceptionInterface{};
+
+        $this->jobLoaderMock->expects('loadJob')
+            ->with('{"foo":"bar"}')
+            ->andThrow(new $unresolvableProcessFailException('Unresolvable process failure.'));
+
+        $this->loggerMock->hasWarning(
+            'Job removed from queue: Unresolvable process failure.',
+        );
+
+        $this->sqsClientMock->expects('deleteMessage')
+            ->with([
+                'QueueUrl' => self::QUEUE_URL,
+                'ReceiptHandle' => self::RECEIPT_HANDLE,
+            ]);
+
+        $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
+        $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
+
+        Assert::assertSame(JobExecutionStatus::FAILED_UNRESOLVABLE, $sqsConsumer($sqsMessage));
     }
 
 
@@ -195,12 +227,13 @@ class SqsConsumerTest extends TestCase
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+
+        Assert::assertSame(JobExecutionStatus::FAILED_DELAYED, $sqsConsumer($sqsMessage));
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('possibleLogLevelAlteringExceptionsThrownDataProvider')]
-    public function testRequeueDelayableProcessFailWithLogLevelControl(Exception $thrownException, JobInterface $job, callable $setupLoggerExpectationCallable): void
+    #[DataProvider('possibleLogLevelAlteringExceptionsThrownDataProvider')]
+    public function testRequeueDelayableProcessFailWithLogLevelControl(Exception $thrownException, JobInterface $job, callable $loggerExpectationCallable): void
     {
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
@@ -216,14 +249,15 @@ class SqsConsumerTest extends TestCase
                 'ReceiptHandle' => self::RECEIPT_HANDLE,
             ]);
 
-        $setupLoggerExpectationCallable($this->loggerMock);
+        $loggerExpectationCallable($this->loggerMock);
 
         $this->pushDelayedResolverMock->expects('resolve')
             ->with($job, $thrownException);
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+
+        Assert::assertSame(JobExecutionStatus::FAILED_DELAYED, $sqsConsumer($sqsMessage));
     }
 
 
@@ -273,7 +307,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('executionDelayedPlannedAtDataProvider')]
+    #[DataProvider('executionDelayedPlannedAtDataProvider')]
     public function testDelayJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt, int $expectedDelay): void
     {
         $exampleJob = new ExampleJob();
@@ -298,7 +332,8 @@ class SqsConsumerTest extends TestCase
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+
+        Assert::assertSame(JobExecutionStatus::DELAYED_NOT_PLANNED_YET, $sqsConsumer($sqsMessage));
     }
 
 
@@ -324,7 +359,7 @@ class SqsConsumerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('executionPlannedAtDataProvider')]
+    #[DataProvider('executionPlannedAtDataProvider')]
     public function testExecuteJobWithExecutionPlannedAt(DateTimeImmutable $executionPlannedAt): void
     {
         $exampleJob = new ExampleJob();
@@ -345,7 +380,8 @@ class SqsConsumerTest extends TestCase
 
         $sqsMessage = $this->createSqsMessage($this->getSqsMessageData());
         $sqsConsumer = $this->createSqsConsumer($this->sqsClientMock);
-        $sqsConsumer($sqsMessage);
+
+        Assert::assertSame(JobExecutionStatus::SUCCESS, $sqsConsumer($sqsMessage));
     }
 
 

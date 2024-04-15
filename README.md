@@ -121,7 +121,6 @@ class JobPusher
 
 namespace BE\AdapterSdk\Console\Commands\Queue;
 
-use BE\QueueManagement\Queue\RabbitMQ\RabbitMQQueueManager;
 use BE\QueueManagement\Queue\WorkerInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -151,13 +150,10 @@ class WorkerStartCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->worker->start(
-            'example_queue',
-            [
-                RabbitMQQueueManager::PREFETCH_COUNT => 1,
-                RabbitMQQueueManager::NO_ACK => true,
-            ]
-        );
+        $queueName = $input->getArgument(self::QUEUE_NAME);
+        assert(is_string($queueName));
+
+        $this->sqsWorker->start($queueName);
         
         $output->writeln('Worker started');
 
