@@ -5,6 +5,9 @@ namespace BE\QueueManagement\Jobs\FailResolving\DelayRules;
 use BE\QueueManagement\Jobs\JobInterface;
 use Throwable;
 
+/**
+ * @final
+ */
 class ConstantDelayRule implements DelayRuleInterface
 {
     private int $constantDelayInSeconds;
