@@ -26,9 +26,9 @@ class PushDelayedResolver
 
     public function resolve(JobInterface $job, Throwable $exception): void
     {
-        $job->incrementAttempts();
-
         $pushDelayInMilliseconds = $this->getDelayInMilliseconds($job, $exception);
+
+        $job->incrementAttempts();
 
         $this->queueManager->pushDelayedWithMilliseconds($job, $pushDelayInMilliseconds);
 
