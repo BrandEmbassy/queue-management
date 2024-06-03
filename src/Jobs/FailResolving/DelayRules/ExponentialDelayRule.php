@@ -28,7 +28,7 @@ class ExponentialDelayRule implements DelayRuleInterface, DelayRuleWithMilliseco
     public function getDelayWithMilliseconds(JobInterface $job, Throwable $exception): int
     {
         $attempts = $job->getAttempts();
-        $exponentialMultiplier = 2 ** $attempts;
+        $exponentialMultiplier = 2 ** ($attempts - 1);
 
         $delayInMilliseconds = $exponentialMultiplier * $this->initialDelayInMilliseconds;
 
