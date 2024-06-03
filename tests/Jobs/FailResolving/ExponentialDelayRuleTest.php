@@ -56,54 +56,59 @@ class ExponentialDelayRuleTest extends TestCase
     public static function attemptNumberDataProvider(): Generator
     {
         yield 'attempt #1' => [
-            'expectedDelayInMilliseconds' => 6,
+            'expectedDelayInMilliseconds' => 3,
             'expectedDelayInSeconds' => 0,
             'attemptNumber' => 1,
         ];
         yield 'attempt #2' => [
-            'expectedDelayInMilliseconds' => 12,
+            'expectedDelayInMilliseconds' => 6,
             'expectedDelayInSeconds' => 0,
             'attemptNumber' => 2,
         ];
         yield 'attempt #3' => [
-            'expectedDelayInMilliseconds' => 24,
+            'expectedDelayInMilliseconds' => 12,
             'expectedDelayInSeconds' => 0,
             'attemptNumber' => 3,
         ];
         yield 'attempt #4' => [
-            'expectedDelayInMilliseconds' => 48,
+            'expectedDelayInMilliseconds' => 24,
             'expectedDelayInSeconds' => 0,
             'attemptNumber' => 4,
         ];
         yield 'attempt #5' => [
-            'expectedDelayInMilliseconds' => 96,
+            'expectedDelayInMilliseconds' => 48,
             'expectedDelayInSeconds' => 0,
             'attemptNumber' => 5,
         ];
-        yield 'attempt #8' => [
-            'expectedDelayInMilliseconds' => 768,
+        yield 'attempt #6' => [
+            'expectedDelayInMilliseconds' => 96,
             'expectedDelayInSeconds' => 0,
-            'attemptNumber' => 8,
+            'attemptNumber' => 6,
         ];
         yield 'attempt #9' => [
-            'expectedDelayInMilliseconds' => 1536,
-            'expectedDelayInSeconds' => 1,
+            'expectedDelayInMilliseconds' => 768,
+            'expectedDelayInSeconds' => 0,
             'attemptNumber' => 9,
         ];
         yield 'attempt #10' => [
-            'expectedDelayInMilliseconds' => 3072,
-            'expectedDelayInSeconds' => 3,
+            'expectedDelayInMilliseconds' => 1536,
+            'expectedDelayInSeconds' => 1,
             'attemptNumber' => 10,
         ];
         yield 'attempt #11' => [
-            'expectedDelayInMilliseconds' => 6144,
-            'expectedDelayInSeconds' => 6,
+            'expectedDelayInMilliseconds' => 3072,
+            'expectedDelayInSeconds' => 3,
             'attemptNumber' => 11,
         ];
         yield 'attempt #12' => [
+            'expectedDelayInMilliseconds' => 6144,
+            'expectedDelayInSeconds' => 6,
+            'attemptNumber' => 12,
+        ];
+        yield 'attempt #13' => [
             'expectedDelayInMilliseconds' => 9000,
             'expectedDelayInSeconds' => 9,
-            'attemptNumber' => 12,
+            'attemptNumber' => 13,
         ];
         yield 'attempt #100' => [
             'expectedDelayInMilliseconds' => 9000,
