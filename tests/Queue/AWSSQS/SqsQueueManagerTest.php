@@ -80,7 +80,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob($queueName);
 
@@ -101,7 +101,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJobWithInvalidCharacter = new ExampleJob(
             ExampleJobDefinition::create()
@@ -136,7 +136,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJob = ExampleJob::createTooBigForSqs(
             ExampleJobDefinition::create()
@@ -188,7 +188,7 @@ class SqsQueueManagerTest extends TestCase
             )
             ->andReturn($this->createSqsSendMessageResultMock());
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $queueManager->pushDelayed($exampleJob, 5);
     }
@@ -202,7 +202,7 @@ class SqsQueueManagerTest extends TestCase
         $exampleJob = $this->createExampleJob($queueName);
 
         $expectedMessageBody = [
-            'jobUuid' => 'some-job-uud',
+            'jobUuid' => 'some-job-uuid',
             'jobName' => 'exampleJob',
             'attempts' => 1,
             'createdAt' => '2018-08-01T10:15:47+01:00',
@@ -225,7 +225,7 @@ class SqsQueueManagerTest extends TestCase
         $this->loggerMock->hasInfo(
             'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
         );
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $queueManager->pushDelayed($exampleJob, 1800);
     }
@@ -255,7 +255,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob($queueName);
 

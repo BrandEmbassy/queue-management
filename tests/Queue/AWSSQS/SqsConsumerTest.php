@@ -155,7 +155,7 @@ class SqsConsumerTest extends TestCase
             ->andThrow($blacklistedJobUuidException);
 
         $this->loggerMock->hasWarning(
-            'Job removed from queue: Job some-job-uud blacklisted',
+            'Job removed from queue: Job some-job-uuid blacklisted',
         );
 
         $this->sqsClientMock->expects('deleteMessage')

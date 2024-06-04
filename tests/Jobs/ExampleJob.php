@@ -15,7 +15,7 @@ use function str_repeat;
  */
 class ExampleJob extends SimpleJob
 {
-    public const UUID = 'some-job-uud';
+    public const UUID = 'some-job-uuid';
 
     public const ATTEMPTS = JobInterface::INIT_ATTEMPTS;
 
