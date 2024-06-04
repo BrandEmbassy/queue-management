@@ -7,6 +7,8 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Jobs\JobInterface;
+use BE\QueueManagement\Queue\AWSSQS\DelayedJobSchedulerInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
@@ -21,6 +23,7 @@ use Nette\Utils\Json;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
+use Ramsey\Uuid\Uuid;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 use function sprintf;
@@ -80,7 +83,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob($queueName);
 
@@ -101,7 +104,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJobWithInvalidCharacter = new ExampleJob(
             ExampleJobDefinition::create()
@@ -136,7 +139,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJob = ExampleJob::createTooBigForSqs(
             ExampleJobDefinition::create()
@@ -188,7 +191,7 @@ class SqsQueueManagerTest extends TestCase
             )
             ->andReturn($this->createSqsSendMessageResultMock());
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $queueManager->pushDelayed($exampleJob, 5);
     }
@@ -202,7 +205,7 @@ class SqsQueueManagerTest extends TestCase
         $exampleJob = $this->createExampleJob($queueName);
 
         $expectedMessageBody = [
-            'jobUuid' => 'some-job-uud',
+            'jobUuid' => 'some-job-uuid',
             'jobName' => 'exampleJob',
             'attempts' => 1,
             'createdAt' => '2018-08-01T10:15:47+01:00',
@@ -225,7 +228,37 @@ class SqsQueueManagerTest extends TestCase
         $this->loggerMock->hasInfo(
             'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
         );
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
+
+        $queueManager->pushDelayed($exampleJob, 1800);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    public function testPushDelayedWithJobDelayOverSqsMaxDelayLimitUsingDelayedJobScheduler(string $queueName, string $queueNamePrefix): void
+    {
+        $jobUuid = '86dac5fb-cd24-4f77-b3dd-409ebf5e4b9f';
+        $exampleJob = $this->createExampleJob($queueName);
+
+        /** @var DelayedJobSchedulerInterface&MockInterface $delayedJobSchedulerMock */
+        $delayedJobSchedulerMock = Mockery::mock(DelayedJobSchedulerInterface::class);
+        $fullQueueName = $queueNamePrefix . $queueName;
+        $delayedJobSchedulerMock
+            ->expects('scheduleJob')
+            ->with($exampleJob, $fullQueueName)
+            ->andReturn($jobUuid);
+        $delayedJobSchedulerMock
+            ->expects('getSchedulerName')
+            ->andReturn('SQS Scheduler');
+
+        $queueManager = $this->createQueueManagerWithExpectations(
+            $queueNamePrefix,
+            1,
+            $delayedJobSchedulerMock
+        );
+
+        $this->loggerMock->hasInfo(
+            'Requested delay is greater than SQS limit. Job execution has been planned using SQS Scheduler.',
+        );
 
         $queueManager->pushDelayed($exampleJob, 1800);
     }
@@ -255,7 +288,7 @@ class SqsQueueManagerTest extends TestCase
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);
 
-        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uud] pushed into exampleJobQueue queue');
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
 
         $exampleJob = $this->createExampleJob($queueName);
 
@@ -441,7 +474,8 @@ class SqsQueueManagerTest extends TestCase
 
     private function createQueueManagerWithExpectations(
         string $queueNamePrefix = '',
-        int $connectionIsCreatedTimes = 1
+        int $connectionIsCreatedTimes = 1,
+        ?DelayedJobSchedulerInterface $delayedJobScheduler = null,
     ): SqsQueueManager
     {
         return new SqsQueueManager(
@@ -453,6 +487,7 @@ class SqsQueueManagerTest extends TestCase
             new FrozenDateTimeImmutableFactory(
                 new DateTimeImmutable(self::FROZEN_DATE_TIME),
             ),
+            $delayedJobScheduler,
             1,
             $queueNamePrefix,
         );
