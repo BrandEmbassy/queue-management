@@ -24,6 +24,14 @@ interface JobInterface
 
     /**
      * @param mixed[] $customParameters
+     *
+     * @return mixed[]
+     */
+    public function toArray(array $customParameters = []): array;
+
+
+    /**
+     * @param mixed[] $customParameters
      */
     public function toJson(array $customParameters = []): string;
 
