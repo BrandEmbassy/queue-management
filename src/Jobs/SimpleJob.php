@@ -70,8 +70,10 @@ class SimpleJob implements JobInterface
 
     /**
      * @param mixed[] $customParameters
+     *
+     * @return mixed[]
      */
-    public function toJson(array $customParameters = []): string
+    public function toArray(array $customParameters = []): array
     {
         $arrayData = [
             JobParameters::UUID => $this->uuid,
@@ -86,7 +88,16 @@ class SimpleJob implements JobInterface
             $arrayData[JobParameters::EXECUTION_PLANNED_AT] = DateTimeFormatter::format($this->getExecutionPlannedAt());
         }
 
-        return Json::encode(array_merge($arrayData, $customParameters));
+        return array_merge($arrayData, $customParameters);
+    }
+
+
+    /**
+     * @param mixed[] $customParameters
+     */
+    public function toJson(array $customParameters = []): string
+    {
+        return Json::encode($this->toArray($customParameters));
     }
 
 
