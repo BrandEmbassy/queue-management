@@ -15,7 +15,7 @@
         "php": ">=8.1",
         "ext-json": "*",
         "psr/log": "^1.1",
-        "doctrine/collections": "^1.8.0",
+        "doctrine/collections": "^1.8.0 || ^2.0",
         "brandembassy/datetime": "^3.0",
         "nette/utils": "^3.0",
         "aws/aws-sdk-php": "^3.209",
