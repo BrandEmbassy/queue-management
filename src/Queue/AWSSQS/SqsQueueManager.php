@@ -40,12 +40,12 @@ class SqsQueueManager implements QueueManagerInterface
 
     public const CONSUME_LOOP_ITERATIONS_NO_LIMIT = -1;
 
+    // SQS allows maximum message delay of 15 minutes
+    public const MAX_DELAY_IN_SECONDS = 15 * 60;
+
     private const WAIT_TIME_SECONDS = 'WaitTimeSeconds';
 
     private const DELAY_SECONDS = 'DelaySeconds';
-
-    // SQS allows maximum message delay of 15 minutes
-    private const MAX_DELAY_IN_SECONDS = 15 * 60;
 
     private string $s3BucketName;
 
@@ -240,8 +240,8 @@ class SqsQueueManager implements QueueManagerInterface
     public function pushDelayed(JobInterface $job, int $delayInSeconds, int $maxDelayInSeconds = self::MAX_DELAY_IN_SECONDS): void
     {
         assert(
-            $maxDelayInSeconds > 0,
-            'Argument $maxDelayInSeconds must be greater than 0',
+            $maxDelayInSeconds >= 0,
+            'Argument $maxDelayInSeconds must be greater or equal to 0',
         );
 
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());

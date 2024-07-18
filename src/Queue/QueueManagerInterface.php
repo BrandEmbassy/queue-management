@@ -15,7 +15,13 @@ interface QueueManagerInterface
     public function push(JobInterface $job): void;
 
 
-    public function pushDelayed(JobInterface $job, int $delayInSeconds): void;
+    /**
+     * @param int $maxDelayInSeconds This parameter can be used to override the default maximum delay before using
+     *                               delayed job scheduler (if one is configured). This can be useful for
+     *                               implementation of automated tests & synthetic monitoring of delayed job
+     *                               scheduler on live environments while maintaining quick feedback loop.
+     */
+    public function pushDelayed(JobInterface $job, int $delayInSeconds, int $maxDelayInSeconds): void;
 
 
     public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void;
