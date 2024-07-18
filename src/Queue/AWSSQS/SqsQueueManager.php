@@ -263,6 +263,8 @@ class SqsQueueManager implements QueueManagerInterface
                     [
                         'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
                         'scheduledEventId' => $scheduledEventId,
+                        'delayInSeconds' => $delayInSeconds,
+                        'maxDelayInSeconds' => $maxDelayInSeconds,
                         LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
                         LoggerContextField::JOB_UUID => $job->getUuid(),
                     ],
@@ -275,6 +277,8 @@ class SqsQueueManager implements QueueManagerInterface
                 'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
                 [
                     'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
+                    'delayInSeconds' => $delayInSeconds,
+                    'maxDelayInSeconds' => $maxDelayInSeconds,
                     LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
                     LoggerContextField::JOB_UUID => $job->getUuid(),
                 ],
