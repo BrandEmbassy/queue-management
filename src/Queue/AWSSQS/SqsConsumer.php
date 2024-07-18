@@ -148,7 +148,11 @@ class SqsConsumer implements SqsConsumerInterface
 
                 if ($timeRemainsInSeconds > 0) {
                     $this->logSqsDelayJob($job, $timeRemainsInSeconds);
-                    $this->queueManager->pushDelayed($job, $timeRemainsInSeconds);
+                    $this->queueManager->pushDelayed(
+                        $job,
+                        $timeRemainsInSeconds,
+                        SqsQueueManager::MAX_DELAY_IN_SECONDS,
+                    );
 
                     return JobExecutionStatus::DELAYED_NOT_PLANNED_YET;
                 }

@@ -15,6 +15,7 @@ use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\JobExecutionStatus;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
@@ -319,7 +320,7 @@ class SqsConsumerTest extends TestCase
             ->andReturn($exampleJob);
 
         $this->queueManagerMock->expects('pushDelayed')
-            ->with($exampleJob, $expectedDelay);
+            ->with($exampleJob, $expectedDelay, SqsQueueManager::MAX_DELAY_IN_SECONDS);
 
         $this->sqsClientMock->expects('deleteMessage')
             ->with([
