@@ -232,21 +232,21 @@ class SqsQueueManager implements QueueManagerInterface
 
 
     /**
-     * @param int|null $maxDelayInSeconds This parameter can be used to override the default maximum delay before using
-     *                                    delayed job scheduler (if one is configured). This can be useful for
-     *                                    implementation of automated tests & synthetic monitoring of delayed job
-     *                                    scheduler on live environments while maintaining quick feedback loop.
+     * @param int $maxDelayInSeconds This parameter can be used to override the default maximum delay before using
+     *                               delayed job scheduler (if one is configured). This can be useful for
+     *                               implementation of automated tests & synthetic monitoring of delayed job
+     *                               scheduler on live environments while maintaining quick feedback loop.
      */
-    public function pushDelayed(JobInterface $job, int $delayInSeconds, ?int $maxDelayInSeconds = null): void
+    public function pushDelayed(JobInterface $job, int $delayInSeconds, int $maxDelayInSeconds = self::MAX_DELAY_IN_SECONDS): void
     {
         assert(
-            $maxDelayInSeconds === null || $maxDelayInSeconds > 0,
+            $maxDelayInSeconds > 0,
             'Argument $maxDelayInSeconds must be greater than 0',
         );
 
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        if ($delayInSeconds > ($maxDelayInSeconds ?? self::MAX_DELAY_IN_SECONDS)) {
+        if ($delayInSeconds > $maxDelayInSeconds) {
             $executionPlannedAt = $this->dateTimeImmutableFactory->getNow()->modify(
                 sprintf('+ %d seconds', $delayInSeconds),
             );
