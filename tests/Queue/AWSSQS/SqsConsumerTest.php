@@ -173,7 +173,8 @@ class SqsConsumerTest extends TestCase
 
     public function testRemoveJobWithUnresolvableExceptionFailure(): void
     {
-        $unresolvableProcessFailException = new class() extends Exception implements UnresolvableProcessFailExceptionInterface{};
+        $unresolvableProcessFailException = new class() extends Exception implements UnresolvableProcessFailExceptionInterface {
+        };
 
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
@@ -233,7 +234,7 @@ class SqsConsumerTest extends TestCase
 
 
     #[DataProvider('possibleLogLevelAlteringExceptionsThrownDataProvider')]
-    public function testRequeueDelayableProcessFailWithLogLevelControl(Exception $thrownException, JobInterface $job, callable $loggerExpectationCallable): void
+    public function testRequeueDelayableProcessFailWithLogLevelControl(Throwable $thrownException, JobInterface $job, callable $loggerExpectationCallable): void
     {
         $this->jobLoaderMock->expects('loadJob')
             ->with('{"foo":"bar"}')
@@ -267,40 +268,40 @@ class SqsConsumerTest extends TestCase
     public static function possibleLogLevelAlteringExceptionsThrownDataProvider(): array
     {
         return [
-            'exception is warning only' => (static function(): array {
+            'exception is warning only' => (static function (): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleWarningOnlyException::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning'),
                 ];
             })(),
-            'previous of the exception is warning only' => (static function(): array {
+            'previous of the exception is warning only' => (static function (): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleExceptionWithPreviousWarningOnlyException::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasWarning('Job execution failed [attempts: 1], reason: I will be logged as a warning'),
                 ];
             })(),
-            'exception is custom log level' => (static function(): array {
+            'exception is custom log level' => (static function (): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleExceptionWithCustomLogLevel::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info'),
                 ];
             })(),
-            'previous of the exception is custom log level' => (static function(): array {
+            'previous of the exception is custom log level' => (static function (): array {
                 $exampleJob = new ExampleJob();
 
                 return [
                     'thrownException' => ExampleExceptionWithPreviousCustomLogLevelException::create($exampleJob),
                     'job' => $exampleJob,
-                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info')
+                    'loggerExpectationCallable' => static fn(TestLogger $logger) => $logger->hasInfo('Job execution failed [attempts: 1], reason: I will be logged as a info'),
                 ];
             })(),
         ];
@@ -397,7 +398,6 @@ class SqsConsumerTest extends TestCase
             'Same dateTime' => [
                 'executionPlannedAt' => new DateTimeImmutable('2016-08-15T15:00:00+00:0'),
             ],
-
         ];
     }
 

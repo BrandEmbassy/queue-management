@@ -7,7 +7,6 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
-use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Queue\AWSSQS\DelayedJobSchedulerInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
@@ -21,9 +20,9 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
 use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
-use Ramsey\Uuid\Uuid;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 use function sprintf;
@@ -67,6 +66,7 @@ class SqsQueueManagerTest extends TestCase
      */
     private Result $awsResultMock;
 
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -78,7 +78,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testPush(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -99,7 +99,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testPushWithInvalidCharacters(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -134,7 +134,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testPushWithTooBigMessage(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -176,7 +176,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testPushDelayed(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -197,7 +197,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testPushDelayedWithJobDelayOverSqsMaxDelayLimit(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -209,7 +209,9 @@ class SqsQueueManagerTest extends TestCase
             'jobName' => 'exampleJob',
             'attempts' => 1,
             'createdAt' => '2018-08-01T10:15:47+01:00',
-            'jobParameters' => ['foo' => 'bar'],
+            'jobParameters' => [
+                'foo' => 'bar',
+            ],
             'executionPlannedAt' => '2016-08-15T15:30:00+00:00',
         ];
 
@@ -233,7 +235,8 @@ class SqsQueueManagerTest extends TestCase
         $queueManager->pushDelayed($exampleJob, 1800);
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+
+    #[DataProvider('queueNameDataProvider')]
     public function testPushDelayedWithJobDelayOverSqsMaxDelayLimitUsingDelayedJobScheduler(string $queueName, string $queueNamePrefix): void
     {
         $jobUuid = '86dac5fb-cd24-4f77-b3dd-409ebf5e4b9f';
@@ -253,7 +256,7 @@ class SqsQueueManagerTest extends TestCase
         $queueManager = $this->createQueueManagerWithExpectations(
             $queueNamePrefix,
             1,
-            $delayedJobSchedulerMock
+            $delayedJobSchedulerMock,
         );
 
         $this->loggerMock->hasInfo(
@@ -264,7 +267,38 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
+    public function testPushDelayedWithJobDelayOverCustomSqsMaxDelayLimitUsingDelayedJobScheduler(string $queueName, string $queueNamePrefix): void
+    {
+        $jobUuid = '86dac5fb-cd24-4f77-b3dd-409ebf5e4b9f';
+        $exampleJob = $this->createExampleJob($queueName);
+
+        /** @var DelayedJobSchedulerInterface&MockInterface $delayedJobSchedulerMock */
+        $delayedJobSchedulerMock = Mockery::mock(DelayedJobSchedulerInterface::class);
+        $fullQueueName = $queueNamePrefix . $queueName;
+        $delayedJobSchedulerMock
+            ->expects('scheduleJob')
+            ->with($exampleJob, $fullQueueName)
+            ->andReturn($jobUuid);
+        $delayedJobSchedulerMock
+            ->expects('getSchedulerName')
+            ->andReturn('SQS Scheduler');
+
+        $queueManager = $this->createQueueManagerWithExpectations(
+            $queueNamePrefix,
+            1,
+            $delayedJobSchedulerMock,
+        );
+
+        $this->loggerMock->hasInfo(
+            'Requested delay is greater than SQS limit. Job execution has been planned using SQS Scheduler.',
+        );
+
+        $queueManager->pushDelayed($exampleJob, 65, 60);
+    }
+
+
+    #[DataProvider('queueNameDataProvider')]
     public function testPushDelayedWithMilliSeconds(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -283,7 +317,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testPushWithReconnect(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);
@@ -318,7 +352,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testConsume(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);
@@ -353,7 +387,7 @@ class SqsQueueManagerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    #[DataProvider('queueNameDataProvider')]
     public function testConsumeWithReconnect(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 2);
@@ -476,8 +510,7 @@ class SqsQueueManagerTest extends TestCase
         string $queueNamePrefix = '',
         int $connectionIsCreatedTimes = 1,
         ?DelayedJobSchedulerInterface $delayedJobScheduler = null,
-    ): SqsQueueManager
-    {
+    ): SqsQueueManager {
         return new SqsQueueManager(
             self::S3_BUCKET_NAME,
             $this->createSqsClientFactoryMock($this->sqsClientMock, $connectionIsCreatedTimes),
@@ -500,8 +533,7 @@ class SqsQueueManagerTest extends TestCase
     private function createSqsClientFactoryMock(
         SqsClient $sqsClientMock,
         int $connectionIsCreatedTimes = 1
-    ): SqsClientFactory
-    {
+    ): SqsClientFactory {
         $sqsClientFactoryMock = Mockery::mock(SqsClientFactory::class);
 
         $sqsClientFactoryMock->expects('create')
@@ -512,14 +544,14 @@ class SqsQueueManagerTest extends TestCase
         return $sqsClientFactoryMock;
     }
 
+
     /**
      * @return S3ClientFactory&MockInterface
      */
     private function createS3ClientFactoryMock(
         S3Client $s3ClientMock,
         int $connectionIsCreatedTimes = 1
-    ): S3ClientFactory
-    {
+    ): S3ClientFactory {
         $s3ClientFactoryMock = Mockery::mock(S3ClientFactory::class);
 
         $s3ClientFactoryMock->expects('create')

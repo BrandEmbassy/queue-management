@@ -15,7 +15,7 @@ class SqsClientFactoryTest extends TestCase
     {
         $sqsClientFactory = new SqsClientFactory(
             [
-                'region'  => 'eu-central-1',
+                'region' => 'eu-central-1',
                 'version' => '2015-10-07',  // will throw Aws\Exception\UnresolvedApiException: 'The sqs service does not have version: 2015-10-07'
                 'http' => [
                     'verify' => false,

@@ -18,6 +18,7 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use Nette\Utils\Json;
 use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
@@ -50,7 +51,7 @@ class JobLoaderTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('executionPlannedAtDataProvider')]
+    #[DataProvider('executionPlannedAtDataProvider')]
     public function testLoadSimpleJob(?DateTimeImmutable $executionPlannedAt): void
     {
         $jobLoader = $this->createJobLoader();
@@ -73,7 +74,9 @@ class JobLoaderTest extends TestCase
             JobParameters::ATTEMPTS => ExampleJob::ATTEMPTS,
             JobParameters::JOB_NAME => ExampleJob::JOB_NAME,
             JobParameters::CREATED_AT => ExampleJob::CREATED_AT,
-            JobParameters::PARAMETERS => [ExampleJob::PARAMETER_FOO => 'bar'],
+            JobParameters::PARAMETERS => [
+                ExampleJob::PARAMETER_FOO => 'bar',
+            ],
         ];
 
         if ($executionPlannedAt !== null) {
@@ -131,8 +134,12 @@ class JobLoaderTest extends TestCase
     public static function executionPlannedAtDataProvider(): array
     {
         return [
-            'Null executionPlannedAt' => ['executionPlannedAt' => null],
-            'Not Null executionPlannedAt' => ['executionPlannedAt' => DateTimeFromString::create(self::EXECUTION_PLANNED_AT)],
+            'Null executionPlannedAt' => [
+                'executionPlannedAt' => null,
+            ],
+            'Not Null executionPlannedAt' => [
+                'executionPlannedAt' => DateTimeFromString::create(self::EXECUTION_PLANNED_AT),
+            ],
         ];
     }
 }

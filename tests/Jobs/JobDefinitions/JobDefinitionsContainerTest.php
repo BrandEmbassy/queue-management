@@ -13,6 +13,7 @@ use BE\QueueManagement\Jobs\Loading\SimpleJobLoader;
 use BE\QueueManagement\Jobs\SimpleJob;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\Execution\ExampleJobProcessor;
 
@@ -27,7 +28,7 @@ class JobDefinitionsContainerTest extends TestCase
     private const SIMPLE_JOB_NAME = 'simpleJob';
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('queueDefinitionDataProvider')]
+    #[DataProvider('queueDefinitionDataProvider')]
     public function testGetJobDefinition(string $expectedQueueName, string $queueNamePrefix): void
     {
         $exampleJobProcessor = new ExampleJobProcessor();

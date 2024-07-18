@@ -45,7 +45,7 @@ class SqsQueueManager implements QueueManagerInterface
     private const DELAY_SECONDS = 'DelaySeconds';
 
     // SQS allows maximum message delay of 15 minutes
-    private const MAX_DELAY_SECONDS = 15 * 60;
+    private const MAX_DELAY_IN_SECONDS = 15 * 60;
 
     private string $s3BucketName;
 
@@ -231,11 +231,22 @@ class SqsQueueManager implements QueueManagerInterface
     }
 
 
-    public function pushDelayed(JobInterface $job, int $delayInSeconds): void
+    /**
+     * @param int $maxDelayInSeconds This parameter can be used to override the default maximum delay before using
+     *                               delayed job scheduler (if one is configured). This can be useful for
+     *                               implementation of automated tests & synthetic monitoring of delayed job
+     *                               scheduler on live environments while maintaining quick feedback loop.
+     */
+    public function pushDelayed(JobInterface $job, int $delayInSeconds, int $maxDelayInSeconds = self::MAX_DELAY_IN_SECONDS): void
     {
+        assert(
+            $maxDelayInSeconds > 0,
+            'Argument $maxDelayInSeconds must be greater than 0',
+        );
+
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        if ($delayInSeconds > self::MAX_DELAY_SECONDS) {
+        if ($delayInSeconds > $maxDelayInSeconds) {
             $executionPlannedAt = $this->dateTimeImmutableFactory->getNow()->modify(
                 sprintf('+ %d seconds', $delayInSeconds),
             );
@@ -252,6 +263,8 @@ class SqsQueueManager implements QueueManagerInterface
                     [
                         'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
                         'scheduledEventId' => $scheduledEventId,
+                        'delayInSeconds' => $delayInSeconds,
+                        'maxDelayInSeconds' => $maxDelayInSeconds,
                         LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
                         LoggerContextField::JOB_UUID => $job->getUuid(),
                     ],
@@ -264,12 +277,14 @@ class SqsQueueManager implements QueueManagerInterface
                 'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
                 [
                     'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
+                    'delayInSeconds' => $delayInSeconds,
+                    'maxDelayInSeconds' => $maxDelayInSeconds,
                     LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
                     LoggerContextField::JOB_UUID => $job->getUuid(),
                 ],
             );
 
-            $delayInSeconds = self::MAX_DELAY_SECONDS;
+            $delayInSeconds = self::MAX_DELAY_IN_SECONDS;
         }
 
         $parameters = [self::DELAY_SECONDS => $delayInSeconds];
@@ -309,7 +324,7 @@ class SqsQueueManager implements QueueManagerInterface
 
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
-        if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
+        if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_IN_SECONDS) {
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 

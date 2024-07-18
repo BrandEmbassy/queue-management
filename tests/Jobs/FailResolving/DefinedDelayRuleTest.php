@@ -14,6 +14,7 @@ use Exception;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 use Throwable;
@@ -35,13 +36,16 @@ class DefinedDelayRuleTest extends TestCase
 
     private const MAXIMUM_DELAY = 300;
 
-    private const LINEAR_DELAY_DEFINITION = [4 => 30, 0 => 5];
+    private const LINEAR_DELAY_DEFINITION = [
+        4 => 30,
+        0 => 5,
+    ];
 
 
     /**
      * @throw Throwable
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('attemptsDataProvider')]
+    #[DataProvider('attemptsDataProvider')]
     public function testCorrectDelayIsReturned(
         int $expectedDelay,
         int $attempts
@@ -103,11 +107,10 @@ class DefinedDelayRuleTest extends TestCase
 
 
     /**
-     *
      * @param class-string<Throwable> $expectedException
      * @param int[] $linearDelayDefinition
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('badDataProvider')]
+    #[DataProvider('badDataProvider')]
     public function testExceptionIsThrownWithBadDelayDefinition(
         string $expectedException,
         string $expectedExceptionMessage,
@@ -132,12 +135,17 @@ class DefinedDelayRuleTest extends TestCase
             'Missing definition for 0 attempts' => [
                 'expectedException' => DelayRuleException::class,
                 'expectedExceptionMessage' => 'Missing definition for 0 attempts',
-                'linearDelayDefinition' => [1 => 5],
+                'linearDelayDefinition' => [
+                    1 => 5,
+                ],
             ],
             'Incorrect definition order' => [
                 'expectedException' => DelayRuleException::class,
                 'expectedExceptionMessage' => 'Delays definition keys must be sorted descending',
-                'linearDelayDefinition' => [0 => 5, 2 => 5],
+                'linearDelayDefinition' => [
+                    0 => 5,
+                    2 => 5,
+                ],
             ],
         ];
     }

@@ -17,6 +17,7 @@ class ExampleExceptionWithCustomLogLevel extends UnableToProcessLoadedJobExcepti
         return new self($job, 'I will be logged as info');
     }
 
+
     public function getLogLevelForJob(JobInterface $job): string
     {
         return LogLevel::INFO;

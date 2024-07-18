@@ -14,6 +14,7 @@ use Generator;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
@@ -32,7 +33,7 @@ class ExponentialDelayRuleTest extends TestCase
     /**
      * @throw Throwable
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('attemptNumberDataProvider')]
+    #[DataProvider('attemptNumberDataProvider')]
     public function testCorrectDelayIsReturned(
         int $expectedDelayInMilliseconds,
         int $expectedDelayInSeconds,
