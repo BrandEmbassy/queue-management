@@ -37,7 +37,9 @@ class ExampleJobTest extends TestCase
             JobParameters::JOB_NAME => ExampleJob::JOB_NAME,
             JobParameters::ATTEMPTS => 1,
             JobParameters::CREATED_AT => self::JOB_CREATED_AT,
-            JobParameters::PARAMETERS => ['foo' => 'bar'],
+            JobParameters::PARAMETERS => [
+                'foo' => 'bar',
+            ],
             JobParameters::EXECUTION_PLANNED_AT => null,
         ];
 

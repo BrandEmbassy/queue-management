@@ -4,8 +4,10 @@ namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
 use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use function str_repeat;
+use function strlen;
 
 /**
  * @final
@@ -15,7 +17,7 @@ class SqsMessageTest extends TestCase
     /**
      * @param array<string, array<string, string>> $messageAttributes
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('messageProvider')]
+    #[DataProvider('messageProvider')]
     public function testIsTooBig(bool $expectedIsTooBig, string $messageBody, array $messageAttributes): void
     {
         Assert::assertSame($expectedIsTooBig, SqsMessage::isTooBig($messageBody, $messageAttributes));

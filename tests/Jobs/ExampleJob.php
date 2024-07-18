@@ -8,6 +8,8 @@ use BE\QueueManagement\Jobs\SimpleJob;
 use BrandEmbassy\DateTime\DateTimeFromString;
 use Doctrine\Common\Collections\ArrayCollection;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
+use function assert;
+use function is_string;
 use function str_repeat;
 
 /**

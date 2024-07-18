@@ -10,6 +10,7 @@ use BE\QueueManagement\Queue\QueueWorker;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 
@@ -39,7 +40,7 @@ class SqsWorkerTest extends TestCase
     }
 
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('differentQueueNameStrategyDataProvider')]
+    #[DataProvider('differentQueueNameStrategyDataProvider')]
     public function testStart(string $expectedQueueName, ?QueueNameStrategy $queueNameStrategy): void
     {
         $sqsWorker = $this->createSqsWorker($queueNameStrategy);
