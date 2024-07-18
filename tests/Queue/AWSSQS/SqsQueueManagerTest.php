@@ -265,6 +265,37 @@ class SqsQueueManagerTest extends TestCase
 
 
     #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
+    public function testPushDelayedWithJobDelayOverCustomSqsMaxDelayLimitUsingDelayedJobScheduler(string $queueName, string $queueNamePrefix): void
+    {
+        $jobUuid = '86dac5fb-cd24-4f77-b3dd-409ebf5e4b9f';
+        $exampleJob = $this->createExampleJob($queueName);
+
+        /** @var DelayedJobSchedulerInterface&MockInterface $delayedJobSchedulerMock */
+        $delayedJobSchedulerMock = Mockery::mock(DelayedJobSchedulerInterface::class);
+        $fullQueueName = $queueNamePrefix . $queueName;
+        $delayedJobSchedulerMock
+            ->expects('scheduleJob')
+            ->with($exampleJob, $fullQueueName)
+            ->andReturn($jobUuid);
+        $delayedJobSchedulerMock
+            ->expects('getSchedulerName')
+            ->andReturn('SQS Scheduler');
+
+        $queueManager = $this->createQueueManagerWithExpectations(
+            $queueNamePrefix,
+            1,
+            $delayedJobSchedulerMock
+        );
+
+        $this->loggerMock->hasInfo(
+            'Requested delay is greater than SQS limit. Job execution has been planned using SQS Scheduler.',
+        );
+
+        $queueManager->pushDelayed($exampleJob, 65, 60);
+    }
+
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('queueNameDataProvider')]
     public function testPushDelayedWithMilliSeconds(string $queueName, string $queueNamePrefix): void
     {
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix);

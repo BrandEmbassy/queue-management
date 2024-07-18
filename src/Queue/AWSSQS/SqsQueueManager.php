@@ -45,7 +45,7 @@ class SqsQueueManager implements QueueManagerInterface
     private const DELAY_SECONDS = 'DelaySeconds';
 
     // SQS allows maximum message delay of 15 minutes
-    private const MAX_DELAY_SECONDS = 15 * 60;
+    private const MAX_DELAY_IN_SECONDS = 15 * 60;
 
     private string $s3BucketName;
 
@@ -231,11 +231,22 @@ class SqsQueueManager implements QueueManagerInterface
     }
 
 
-    public function pushDelayed(JobInterface $job, int $delayInSeconds): void
+    /**
+     * @param int|null $maxDelayInSeconds This parameter can be used to override the default maximum delay before using
+     *                                    delayed job scheduler (if one is configured). This can be useful for
+     *                                    implementation of automated tests & synthetic monitoring of delayed job
+     *                                    scheduler on live environments while maintaining quick feedback loop.
+     */
+    public function pushDelayed(JobInterface $job, int $delayInSeconds, ?int $maxDelayInSeconds = null): void
     {
+        assert(
+            $maxDelayInSeconds === null || $maxDelayInSeconds > 0,
+            'Argument $maxDelayInSeconds must be greater than 0',
+        );
+
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
-        if ($delayInSeconds > self::MAX_DELAY_SECONDS) {
+        if ($delayInSeconds > ($maxDelayInSeconds ?? self::MAX_DELAY_IN_SECONDS)) {
             $executionPlannedAt = $this->dateTimeImmutableFactory->getNow()->modify(
                 sprintf('+ %d seconds', $delayInSeconds),
             );
@@ -269,7 +280,7 @@ class SqsQueueManager implements QueueManagerInterface
                 ],
             );
 
-            $delayInSeconds = self::MAX_DELAY_SECONDS;
+            $delayInSeconds = self::MAX_DELAY_IN_SECONDS;
         }
 
         $parameters = [self::DELAY_SECONDS => $delayInSeconds];
@@ -309,7 +320,7 @@ class SqsQueueManager implements QueueManagerInterface
 
         $delaySeconds = (int)($properties[self::DELAY_SECONDS] ?? 0);
 
-        if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_SECONDS) {
+        if ($delaySeconds < 0 || $delaySeconds > self::MAX_DELAY_IN_SECONDS) {
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
