@@ -9,6 +9,8 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
+use BE\QueueManagement\Observability\ExecutionPlannedEvent;
+use BE\QueueManagement\Observability\MessageSentEvent;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
@@ -17,6 +19,7 @@ use LogicException;
 use Nette\Utils\Json;
 use Nette\Utils\Validators;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 use function assert;
 use function count;
@@ -69,6 +72,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private ?DelayedJobSchedulerInterface $delayedJobScheduler;
 
+    private ?EventDispatcherInterface $eventDispatcher;
+
     private bool $isBeingTerminated = false;
 
 
@@ -80,6 +85,7 @@ class SqsQueueManager implements QueueManagerInterface
         LoggerInterface $logger,
         DateTimeImmutableFactory $dateTimeImmutableFactory,
         ?DelayedJobSchedulerInterface $delayedJobScheduler = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
         int $consumeLoopIterationsCount = self::CONSUME_LOOP_ITERATIONS_NO_LIMIT,
         string $queueNamePrefix = ''
     ) {
@@ -94,6 +100,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->queueNamePrefix = $queueNamePrefix;
         $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
         $this->delayedJobScheduler = $delayedJobScheduler;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
 
@@ -246,10 +253,13 @@ class SqsQueueManager implements QueueManagerInterface
 
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
 
+        $executionPlannedAt = $this->dateTimeImmutableFactory->getNow()->modify(
+            sprintf('+ %d seconds', $delayInSeconds),
+        );
+
+        $finalDelayInSeconds = $delayInSeconds;
+
         if ($delayInSeconds > $maxDelayInSeconds) {
-            $executionPlannedAt = $this->dateTimeImmutableFactory->getNow()->modify(
-                sprintf('+ %d seconds', $delayInSeconds),
-            );
             $job->setExecutionPlannedAt($executionPlannedAt);
 
             if ($this->delayedJobScheduler !== null) {
@@ -270,6 +280,16 @@ class SqsQueueManager implements QueueManagerInterface
                     ],
                 );
 
+                if ($this->eventDispatcher !== null) {
+                    $this->eventDispatcher->dispatch(new ExecutionPlannedEvent(
+                        $job,
+                        $executionPlannedAt,
+                        $delayInSeconds,
+                        $prefixedQueueName,
+                        $scheduledEventId,
+                    ));
+                }
+
                 return;
             }
 
@@ -284,18 +304,29 @@ class SqsQueueManager implements QueueManagerInterface
                 ],
             );
 
-            $delayInSeconds = self::MAX_DELAY_IN_SECONDS;
+            $finalDelayInSeconds = self::MAX_DELAY_IN_SECONDS;
         }
 
-        $parameters = [self::DELAY_SECONDS => $delayInSeconds];
+        $parameters = [self::DELAY_SECONDS => $finalDelayInSeconds];
 
         $sqsMessageId = $this->publishMessage($job, $prefixedQueueName, $parameters);
+
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(new ExecutionPlannedEvent(
+                $job,
+                $executionPlannedAt,
+                $delayInSeconds,
+                $prefixedQueueName,
+                null,
+            ));
+        }
+
         LoggerHelper::logJobPushedIntoQueue(
             $job,
             $prefixedQueueName,
             $this->logger,
             JobType::get(JobType::SQS),
-            $delayInSeconds,
+            $finalDelayInSeconds,
             $sqsMessageId,
         );
     }
@@ -373,6 +404,14 @@ class SqsQueueManager implements QueueManagerInterface
     private function sendMessage(array $messageToSend): string
     {
         $result = $this->sqsClient->sendMessage($messageToSend);
+
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(new MessageSentEvent(
+                $messageToSend[SqsSendingMessageFields::DELAY_SECONDS],
+                $messageToSend[SqsSendingMessageFields::MESSAGE_ATTRIBUTES],
+                $messageToSend[SqsSendingMessageFields::MESSAGE_BODY],
+            ));
+        }
 
         return $result->get(SqsMessageFields::MESSAGE_ID);
     }

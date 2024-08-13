@@ -21,7 +21,8 @@
         "aws/aws-sdk-php": "^3.209",
         "predis/predis": "^1.1 || ^2.1.2",
         "ramsey/uuid": "^4.2",
-        "tracy/tracy": "^2.9"
+        "tracy/tracy": "^2.9",
+        "symfony/event-dispatcher-contracts": "^3.5"
     },
     "require-dev": {
         "brandembassy/coding-standard": "^11.1",

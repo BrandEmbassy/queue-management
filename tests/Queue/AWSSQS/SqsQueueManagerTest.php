@@ -7,6 +7,8 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Observability\ExecutionPlannedEvent;
+use BE\QueueManagement\Observability\MessageSentEvent;
 use BE\QueueManagement\Queue\AWSSQS\DelayedJobSchedulerInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
@@ -23,6 +25,7 @@ use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\Test\TestLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Tests\BE\QueueManagement\Jobs\ExampleJob;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 use function sprintf;
@@ -237,6 +240,75 @@ class SqsQueueManagerTest extends TestCase
 
 
     #[DataProvider('queueNameDataProvider')]
+    public function testPushDelayedWithJobDelayOverSqsMaxDelayLimitAndEventDispatcher(string $queueName, string $queueNamePrefix): void
+    {
+        $exampleJob = $this->createExampleJob($queueName);
+
+        /** @var ExecutionPlannedEvent&MockInterface $executionPlannedEventMock */
+        $executionPlannedEventMock = Mockery::mock(ExecutionPlannedEvent::class);
+
+        /** @var EventDispatcherInterface&MockInterface $eventDispatcherMock */
+        $eventDispatcherMock = Mockery::mock(EventDispatcherInterface::class);
+        $eventDispatcherMock
+            ->shouldReceive('dispatch')
+            ->once()
+            ->with(Mockery::on(fn($event) => $event instanceof ExecutionPlannedEvent
+                    && $event->job === $exampleJob
+                    && $event->executionPlannedAt->getTimestamp() === (new DateTimeImmutable(self::FROZEN_DATE_TIME))->modify('+ 1800 seconds')->getTimestamp()
+                    && $event->delayInSeconds === 1800
+                    && $event->prefixedQueueName === $queueNamePrefix . $queueName
+                    && $event->scheduledEventId === null))
+            ->andReturn($executionPlannedEventMock);
+
+        $eventDispatcherMock
+            ->shouldReceive('dispatch')
+            ->once()
+            ->with(Mockery::on(fn($event) => $event instanceof MessageSentEvent
+                    && $event->delayInSeconds === 900
+                    && $event->messageAttributes === [
+                        'QueueUrl' => [
+                            'DataType' => 'String',
+                            'StringValue' => $queueNamePrefix . $queueName,
+                        ],
+                    ]
+                    && $event->messageBody === '{"jobUuid":"some-job-uuid","jobName":"exampleJob","attempts":1,"createdAt":"2018-08-01T10:15:47+01:00","jobParameters":{"foo":"bar"},"executionPlannedAt":"2016-08-15T15:30:00+00:00"}'))
+            ->andReturn($executionPlannedEventMock);
+
+        $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 1, null, $eventDispatcherMock);
+
+        $expectedMessageBody = [
+            'jobUuid' => 'some-job-uuid',
+            'jobName' => 'exampleJob',
+            'attempts' => 1,
+            'createdAt' => '2018-08-01T10:15:47+01:00',
+            'jobParameters' => [
+                'foo' => 'bar',
+            ],
+            'executionPlannedAt' => '2016-08-15T15:30:00+00:00',
+        ];
+
+        $this->sqsClientMock->expects('sendMessage')
+            ->with(
+                Mockery::on(
+                    fn(array $message): bool => $this->messageCheckOk(
+                        $message,
+                        Json::encode($expectedMessageBody),
+                        900,
+                    ),
+                ),
+            )
+            ->andReturn($this->createSqsSendMessageResultMock());
+
+        $this->loggerMock->hasInfo(
+            'Requested delay is greater than SQS limit. Job execution has been planned and will be requeued until then.',
+        );
+        $this->loggerMock->hasInfo('Job (exampleJob) [some-job-uuid] pushed into exampleJobQueue queue');
+
+        $queueManager->pushDelayed($exampleJob, 1800);
+    }
+
+
+    #[DataProvider('queueNameDataProvider')]
     public function testPushDelayedWithJobDelayOverSqsMaxDelayLimitUsingDelayedJobScheduler(string $queueName, string $queueNamePrefix): void
     {
         $jobUuid = '86dac5fb-cd24-4f77-b3dd-409ebf5e4b9f';
@@ -288,6 +360,54 @@ class SqsQueueManagerTest extends TestCase
             $queueNamePrefix,
             1,
             $delayedJobSchedulerMock,
+        );
+
+        $this->loggerMock->hasInfo(
+            'Requested delay is greater than SQS limit. Job execution has been planned using SQS Scheduler.',
+        );
+
+        $queueManager->pushDelayed($exampleJob, 65, 60);
+    }
+
+
+    #[DataProvider('queueNameDataProvider')]
+    public function testPushDelayedWithJobDelayOverCustomSqsMaxDelayLimitUsingDelayedJobSchedulerAndEventDispatcher(string $queueName, string $queueNamePrefix): void
+    {
+        $scheduledEventUuid = '86dac5fb-cd24-4f77-b3dd-409ebf5e4b9f';
+        $exampleJob = $this->createExampleJob($queueName);
+
+        /** @var DelayedJobSchedulerInterface&MockInterface $delayedJobSchedulerMock */
+        $delayedJobSchedulerMock = Mockery::mock(DelayedJobSchedulerInterface::class);
+
+        $fullQueueName = $queueNamePrefix . $queueName;
+        $delayedJobSchedulerMock
+            ->expects('scheduleJob')
+            ->with($exampleJob, $fullQueueName)
+            ->andReturn($scheduledEventUuid);
+        $delayedJobSchedulerMock
+            ->expects('getSchedulerName')
+            ->andReturn('SQS Scheduler');
+
+        /** @var ExecutionPlannedEvent&MockInterface $executionPlannedEventMock */
+        $executionPlannedEventMock = Mockery::mock(ExecutionPlannedEvent::class);
+
+        /** @var EventDispatcherInterface&MockInterface $eventDispatcherMock */
+        $eventDispatcherMock = Mockery::mock(EventDispatcherInterface::class);
+        $eventDispatcherMock
+            ->expects('dispatch')
+            ->with(Mockery::on(fn($event) => $event instanceof ExecutionPlannedEvent
+                    && $event->job === $exampleJob
+                    && $event->executionPlannedAt->getTimestamp() === (new DateTimeImmutable(self::FROZEN_DATE_TIME))->modify('+ 65 seconds')->getTimestamp()
+                    && $event->delayInSeconds === 65
+                    && $event->prefixedQueueName === $fullQueueName
+                    && $event->scheduledEventId === $scheduledEventUuid))
+            ->andReturn($executionPlannedEventMock);
+
+        $queueManager = $this->createQueueManagerWithExpectations(
+            $queueNamePrefix,
+            1,
+            $delayedJobSchedulerMock,
+            $eventDispatcherMock,
         );
 
         $this->loggerMock->hasInfo(
@@ -510,6 +630,7 @@ class SqsQueueManagerTest extends TestCase
         string $queueNamePrefix = '',
         int $connectionIsCreatedTimes = 1,
         ?DelayedJobSchedulerInterface $delayedJobScheduler = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
     ): SqsQueueManager {
         return new SqsQueueManager(
             self::S3_BUCKET_NAME,
@@ -521,6 +642,7 @@ class SqsQueueManagerTest extends TestCase
                 new DateTimeImmutable(self::FROZEN_DATE_TIME),
             ),
             $delayedJobScheduler,
+            $eventDispatcher,
             1,
             $queueNamePrefix,
         );
