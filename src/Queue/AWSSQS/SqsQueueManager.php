@@ -14,6 +14,7 @@ use BE\QueueManagement\Observability\MessageSentEvent;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
+use DateTimeImmutable;
 use GuzzleHttp\Psr7\Stream;
 use LogicException;
 use Nette\Utils\Json;
@@ -263,32 +264,7 @@ class SqsQueueManager implements QueueManagerInterface
             $job->setExecutionPlannedAt($executionPlannedAt);
 
             if ($this->delayedJobScheduler !== null) {
-                $scheduledEventId = $this->delayedJobScheduler->scheduleJob($job, $prefixedQueueName);
-
-                $this->logger->info(
-                    sprintf(
-                        'Requested delay is greater than SQS limit. Job execution has been planned using %s.',
-                        $this->delayedJobScheduler->getSchedulerName(),
-                    ),
-                    [
-                        'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
-                        'scheduledEventId' => $scheduledEventId,
-                        'delayInSeconds' => $delayInSeconds,
-                        'maxDelayInSeconds' => $maxDelayInSeconds,
-                        LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
-                        LoggerContextField::JOB_UUID => $job->getUuid(),
-                    ],
-                );
-
-                if ($this->eventDispatcher !== null) {
-                    $this->eventDispatcher->dispatch(new ExecutionPlannedEvent(
-                        $job,
-                        $executionPlannedAt,
-                        $delayInSeconds,
-                        $prefixedQueueName,
-                        $scheduledEventId,
-                    ));
-                }
+                $this->scheduleJob($job, $prefixedQueueName, $executionPlannedAt, $delayInSeconds, $maxDelayInSeconds);
 
                 return;
             }
@@ -440,6 +416,43 @@ class SqsQueueManager implements QueueManagerInterface
         // No checkConn method in SqsClient. For now just providing fake response
         // in the future we might want to check somehow whether we still have connectivity.
         return true;
+    }
+
+
+    private function scheduleJob(
+        JobInterface $job,
+        string $prefixedQueueName,
+        DateTimeImmutable $executionPlannedAt,
+        int $delayInSeconds,
+        int $maxDelayInSeconds
+    ): void {
+        assert($this->delayedJobScheduler !== null, 'Delayed job scheduler must be set to schedule a job.');
+        $scheduledEventId = $this->delayedJobScheduler->scheduleJob($job, $prefixedQueueName);
+
+        $this->logger->info(
+            sprintf(
+                'Requested delay is greater than SQS limit. Job execution has been planned using %s.',
+                $this->delayedJobScheduler->getSchedulerName(),
+            ),
+            [
+                'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
+                'scheduledEventId' => $scheduledEventId,
+                'delayInSeconds' => $delayInSeconds,
+                'maxDelayInSeconds' => $maxDelayInSeconds,
+                LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
+                LoggerContextField::JOB_UUID => $job->getUuid(),
+            ],
+        );
+
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(new ExecutionPlannedEvent(
+                $job,
+                $executionPlannedAt,
+                $delayInSeconds,
+                $prefixedQueueName,
+                $scheduledEventId,
+            ));
+        }
     }
 
 
