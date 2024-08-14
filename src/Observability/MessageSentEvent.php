@@ -9,6 +9,7 @@ class MessageSentEvent
      */
     public function __construct(
         public readonly int $delayInSeconds,
+        public readonly string $messageId,
         public readonly array $messageAttributes,
         public readonly string $messageBody,
     ) {

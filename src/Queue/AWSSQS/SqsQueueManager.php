@@ -9,8 +9,10 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
-use BE\QueueManagement\Observability\ExecutionPlannedEvent;
+use BE\QueueManagement\Observability\AfterExecutionPlannedEvent;
+use BE\QueueManagement\Observability\BeforeExecutionPlannedEvent;
 use BE\QueueManagement\Observability\MessageSentEvent;
+use BE\QueueManagement\Observability\PlannedExecutionStrategyEnum;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;
@@ -20,6 +22,7 @@ use LogicException;
 use Nette\Utils\Json;
 use Nette\Utils\Validators;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 use function assert;
@@ -257,12 +260,11 @@ class SqsQueueManager implements QueueManagerInterface
         $executionPlannedAt = $this->dateTimeImmutableFactory->getNow()->modify(
             sprintf('+ %d seconds', $delayInSeconds),
         );
+        $job->setExecutionPlannedAt($executionPlannedAt);
 
         $finalDelayInSeconds = $delayInSeconds;
 
         if ($delayInSeconds > $maxDelayInSeconds) {
-            $job->setExecutionPlannedAt($executionPlannedAt);
-
             if ($this->delayedJobScheduler !== null) {
                 $this->scheduleJob($job, $prefixedQueueName, $executionPlannedAt, $delayInSeconds, $maxDelayInSeconds);
 
@@ -283,17 +285,41 @@ class SqsQueueManager implements QueueManagerInterface
             $finalDelayInSeconds = self::MAX_DELAY_IN_SECONDS;
         }
 
+        $this->planExecutionUsingSqsDeliveryDelay($job, $prefixedQueueName, $delayInSeconds, $finalDelayInSeconds);
+    }
+
+
+    private function planExecutionUsingSqsDeliveryDelay(
+        JobInterface $job,
+        string $prefixedQueueName,
+        int $delayInSeconds,
+        int $finalDelayInSeconds
+    ): void {
         $parameters = [self::DELAY_SECONDS => $finalDelayInSeconds];
+
+        $beforeExecutionPlannedEvent = null;
+        if ($this->eventDispatcher !== null) {
+            $beforeExecutionPlannedEvent = new BeforeExecutionPlannedEvent(
+                Uuid::uuid4(),
+                $job,
+                $prefixedQueueName,
+                $delayInSeconds,
+                PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY,
+            );
+            $this->eventDispatcher->dispatch($beforeExecutionPlannedEvent);
+        }
 
         $sqsMessageId = $this->publishMessage($job, $prefixedQueueName, $parameters);
 
         if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new ExecutionPlannedEvent(
+            $this->eventDispatcher->dispatch(new AfterExecutionPlannedEvent(
+                $beforeExecutionPlannedEvent->executionPlannedId,
                 $job,
-                $executionPlannedAt,
-                $delayInSeconds,
                 $prefixedQueueName,
+                $delayInSeconds,
+                PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY,
                 null,
+                $sqsMessageId,
             ));
         }
 
@@ -305,6 +331,58 @@ class SqsQueueManager implements QueueManagerInterface
             $finalDelayInSeconds,
             $sqsMessageId,
         );
+    }
+
+
+    private function scheduleJob(
+        JobInterface $job,
+        string $prefixedQueueName,
+        DateTimeImmutable $executionPlannedAt,
+        int $delayInSeconds,
+        int $maxDelayInSeconds
+    ): void {
+        assert($this->delayedJobScheduler !== null, 'Delayed job scheduler must be set to schedule a job.');
+
+        $beforeExecutionPlannedEvent = null;
+        if ($this->eventDispatcher !== null) {
+            $beforeExecutionPlannedEvent = new BeforeExecutionPlannedEvent(
+                Uuid::uuid4(),
+                $job,
+                $prefixedQueueName,
+                $delayInSeconds,
+                PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER,
+            );
+            $this->eventDispatcher->dispatch($beforeExecutionPlannedEvent);
+        }
+
+        $scheduledEventId = $this->delayedJobScheduler->scheduleJob($job, $prefixedQueueName);
+
+        $this->logger->info(
+            sprintf(
+                'Requested delay is greater than SQS limit. Job execution has been planned using %s.',
+                $this->delayedJobScheduler->getSchedulerName(),
+            ),
+            [
+                'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
+                'scheduledEventId' => $scheduledEventId,
+                'delayInSeconds' => $delayInSeconds,
+                'maxDelayInSeconds' => $maxDelayInSeconds,
+                LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
+                LoggerContextField::JOB_UUID => $job->getUuid(),
+            ],
+        );
+
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(new AfterExecutionPlannedEvent(
+                $beforeExecutionPlannedEvent->executionPlannedId,
+                $job,
+                $prefixedQueueName,
+                $delayInSeconds,
+                PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER,
+                $scheduledEventId,
+                null,
+            ));
+        }
     }
 
 
@@ -380,16 +458,18 @@ class SqsQueueManager implements QueueManagerInterface
     private function sendMessage(array $messageToSend): string
     {
         $result = $this->sqsClient->sendMessage($messageToSend);
+        $messageId = $result->get(SqsMessageFields::MESSAGE_ID);
 
         if ($this->eventDispatcher !== null) {
             $this->eventDispatcher->dispatch(new MessageSentEvent(
                 $messageToSend[SqsSendingMessageFields::DELAY_SECONDS],
+                $messageId,
                 $messageToSend[SqsSendingMessageFields::MESSAGE_ATTRIBUTES],
                 $messageToSend[SqsSendingMessageFields::MESSAGE_BODY],
             ));
         }
 
-        return $result->get(SqsMessageFields::MESSAGE_ID);
+        return $messageId;
     }
 
 
@@ -416,43 +496,6 @@ class SqsQueueManager implements QueueManagerInterface
         // No checkConn method in SqsClient. For now just providing fake response
         // in the future we might want to check somehow whether we still have connectivity.
         return true;
-    }
-
-
-    private function scheduleJob(
-        JobInterface $job,
-        string $prefixedQueueName,
-        DateTimeImmutable $executionPlannedAt,
-        int $delayInSeconds,
-        int $maxDelayInSeconds
-    ): void {
-        assert($this->delayedJobScheduler !== null, 'Delayed job scheduler must be set to schedule a job.');
-        $scheduledEventId = $this->delayedJobScheduler->scheduleJob($job, $prefixedQueueName);
-
-        $this->logger->info(
-            sprintf(
-                'Requested delay is greater than SQS limit. Job execution has been planned using %s.',
-                $this->delayedJobScheduler->getSchedulerName(),
-            ),
-            [
-                'executionPlannedAt' => DateTimeFormatter::format($executionPlannedAt),
-                'scheduledEventId' => $scheduledEventId,
-                'delayInSeconds' => $delayInSeconds,
-                'maxDelayInSeconds' => $maxDelayInSeconds,
-                LoggerContextField::JOB_QUEUE_NAME => $prefixedQueueName,
-                LoggerContextField::JOB_UUID => $job->getUuid(),
-            ],
-        );
-
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new ExecutionPlannedEvent(
-                $job,
-                $executionPlannedAt,
-                $delayInSeconds,
-                $prefixedQueueName,
-                $scheduledEventId,
-            ));
-        }
     }
 
 
