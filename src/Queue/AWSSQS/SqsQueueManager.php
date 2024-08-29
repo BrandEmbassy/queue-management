@@ -413,14 +413,13 @@ class SqsQueueManager implements QueueManagerInterface
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
-        $messageAttributes = [
-            SqsSendingMessageFields::QUEUE_URL => [
-                'DataType' => 'String',
-                // queueName might be handy here if we want to consume
-                // from multiple queues in parallel via promises.
-                // Then we need queue in message directly so that we can delete it.
-                'StringValue' => $prefixedQueueName,
-            ],
+        $messageAttributes = $job->getMessageAttributes();
+        $messageAttributes[SqsSendingMessageFields::QUEUE_URL] = [
+            SqsMessageAttributeFields::DATA_TYPE->value => SqsMessageAttributeDataType::STRING->value,
+            // queueName might be handy here if we want to consume
+            // from multiple queues in parallel via promises.
+            // Then we need queue in message directly so that we can delete it.
+            SqsMessageAttributeFields::STRING_VALUE->value => $prefixedQueueName,
         ];
 
         if (SqsMessage::isTooBig($messageBody, $messageAttributes)) {

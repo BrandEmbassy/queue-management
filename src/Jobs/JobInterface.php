@@ -61,4 +61,16 @@ interface JobInterface
 
 
     public function setExecutionPlannedAt(DateTimeImmutable $executionPlannedAt): void;
+
+
+    /**
+     * @return array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
+     */
+    public function getMessageAttributes(): array;
+
+
+    /**
+     * @param array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}> $messageAttributes
+     */
+    public function setMessageAttributes(array $messageAttributes): void;
 }
