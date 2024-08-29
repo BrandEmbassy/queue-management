@@ -41,6 +41,17 @@ class SqsQueueManagerTest extends TestCase
 
     private const QUEUE_URL = 'https://sqs.eu-central-1.amazonaws.com/583027123456/MyQueue1';
 
+    private const CUSTOM_MESSAGE_ATTRIBUTE = 'customMessageAttribute';
+
+    private const CUSTOM_MESSAGE_ATTRIBUTE_VALUE = 'customMessageAttributeValue';
+
+    public const CUSTOM_MESSAGE_ATTRIBUTES = [
+        self::CUSTOM_MESSAGE_ATTRIBUTE => [
+            'DataType' => 'String',
+            'StringValue' => self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+        ],
+    ];
+
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
 
     private const S3_BUCKET_NAME = 'thisIsS3Bucket';
@@ -116,11 +127,19 @@ class SqsQueueManagerTest extends TestCase
                 ->withQueueName($queueName),
             'This ￾is random text.',
         );
+        $exampleJobWithInvalidCharacter->setMessageAttribute(
+            self::CUSTOM_MESSAGE_ATTRIBUTE,
+            self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+        );
 
         $exampleJobWithValidCharacter = new ExampleJob(
             ExampleJobDefinition::create()
                 ->withQueueName($queueName),
             'This is random text.',
+        );
+        $exampleJobWithValidCharacter->setMessageAttribute(
+            self::CUSTOM_MESSAGE_ATTRIBUTE,
+            self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
         );
 
         $this->sqsClientMock->expects('sendMessage')
@@ -172,7 +191,7 @@ class SqsQueueManagerTest extends TestCase
         $this->sqsClientMock->expects('sendMessage')
             ->with(
                 Mockery::on(
-                    fn(array $message): bool => $this->messageCheckOk($message, $messageBody, 0),
+                    fn(array $message): bool => $this->messageCheckOk($message, $messageBody, 0, false),
                 ),
             )
             ->andReturn($this->createSqsSendMessageResultMock());
@@ -287,6 +306,10 @@ class SqsQueueManagerTest extends TestCase
             ->with(Mockery::on(fn($event) => $event instanceof MessageSentEvent
                 && $event->delayInSeconds === 900
                 && $event->messageAttributes === [
+                    'customMessageAttribute' => [
+                        'DataType' => 'String',
+                        'StringValue' => 'customMessageAttributeValue',
+                    ],
                     'QueueUrl' => [
                         'DataType' => 'String',
                         'StringValue' => $queueNamePrefix . $queueName,
@@ -647,12 +670,20 @@ class SqsQueueManagerTest extends TestCase
     /**
      * @param array<string, mixed> $message
      */
-    private function messageCheckOk(array $message, string $messageBody, int $delay): bool
-    {
+    private function messageCheckOk(
+        array $message,
+        string $messageBody,
+        int $delay,
+        bool $checkCustomAttribute = true
+    ): bool {
         return $message['MessageBody'] === $messageBody
             && $message[SqsSendingMessageFields::DELAY_SECONDS] === $delay
             && $message[SqsSendingMessageFields::QUEUE_URL] === self::QUEUE_URL
-            && $message[SqsSendingMessageFields::MESSAGE_ATTRIBUTES][SqsSendingMessageFields::QUEUE_URL]['StringValue'] === self::QUEUE_URL;
+            && $message[SqsSendingMessageFields::MESSAGE_ATTRIBUTES][SqsSendingMessageFields::QUEUE_URL]['StringValue'] === self::QUEUE_URL
+            && (
+                $checkCustomAttribute === false
+                || $message[SqsSendingMessageFields::MESSAGE_ATTRIBUTES][self::CUSTOM_MESSAGE_ATTRIBUTE]['StringValue'] === self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE
+            );
     }
 
 
@@ -661,6 +692,8 @@ class SqsQueueManagerTest extends TestCase
         return new ExampleJob(
             ExampleJobDefinition::create()
                 ->withQueueName($queueName),
+            'bar',
+            self::CUSTOM_MESSAGE_ATTRIBUTES,
         );
     }
 

@@ -28,8 +28,14 @@ class ExampleJob extends SimpleJob
     public const PARAMETER_FOO = 'foo';
 
 
-    public function __construct(?JobDefinitionInterface $jobDefinition = null, string $bar = 'bar')
-    {
+    /**
+     * @param array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}> $messageAttributes
+     */
+    public function __construct(
+        ?JobDefinitionInterface $jobDefinition = null,
+        string $bar = 'bar',
+        array $messageAttributes = [],
+    ) {
         /**
          * Prevent phpstan error Template type T on class Doctrine\Common\Collections\Collection is not covariant
          * @var array<string,mixed> $parameters
@@ -43,6 +49,7 @@ class ExampleJob extends SimpleJob
             $jobDefinition ?? ExampleJobDefinition::create(),
             new ArrayCollection($parameters),
             null,
+            $messageAttributes,
         );
     }
 
