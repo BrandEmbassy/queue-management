@@ -11,6 +11,8 @@ use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use Nette\Utils\Json;
 use function array_merge;
+use function is_numeric;
+use function str_contains;
 
 class SimpleJob implements JobInterface
 {
@@ -188,18 +190,43 @@ class SimpleJob implements JobInterface
     }
 
 
-    /**
-     * @return array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
-     */
-    public function getMessageAttributes(): array
-    {
-        return $this->messageAttributes;
+    public function getMessageAttribute(
+        string $messageAttributeName,
+        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
+    ): string|int|float|null {
+        if (!isset($this->messageAttributes[$messageAttributeName])) {
+            return null;
+        }
+
+        $valueKey = $messageAttributeDataType === SqsMessageAttributeDataType::BINARY
+            ? SqsMessageAttributeFields::BINARY_VALUE->value
+            : SqsMessageAttributeFields::STRING_VALUE->value;
+
+        $value = $this->messageAttributes[$messageAttributeName][$valueKey] ?? null;
+
+        if ($value === null) {
+            return null;
+        }
+
+        if ($messageAttributeDataType === SqsMessageAttributeDataType::NUMBER) {
+            if (is_numeric($value)) {
+                if (str_contains($value, '.')) {
+                    return (float)$value;
+                }
+
+                return (int)$value;
+            }
+
+            return null;
+        }
+
+        return $value;
     }
 
 
     public function setMessageAttribute(
         string $messageAttributeName,
-        string $messageAttributeValue,
+        string|int|float $messageAttributeValue,
         SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
     ): void {
         $valueKey = $messageAttributeDataType === SqsMessageAttributeDataType::BINARY
@@ -209,10 +236,19 @@ class SimpleJob implements JobInterface
         /** @var array{DataType: string, StringValue?: string, BinaryValue?: string} $messageAttribute */
         $messageAttribute = [
             SqsMessageAttributeFields::DATA_TYPE->value => $messageAttributeDataType->value,
-            $valueKey => $messageAttributeValue,
+            $valueKey => (string)$messageAttributeValue,
         ];
 
         $this->messageAttributes[$messageAttributeName] = $messageAttribute;
+    }
+
+
+    /**
+     * @return array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
+     */
+    public function getMessageAttributes(): array
+    {
+        return $this->messageAttributes;
     }
 
 

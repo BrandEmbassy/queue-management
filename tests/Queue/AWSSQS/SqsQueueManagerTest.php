@@ -8,8 +8,9 @@ use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Observability\AfterExecutionPlannedEvent;
+use BE\QueueManagement\Observability\AfterMessageSentEvent;
 use BE\QueueManagement\Observability\BeforeExecutionPlannedEvent;
-use BE\QueueManagement\Observability\MessageSentEvent;
+use BE\QueueManagement\Observability\BeforeMessageSentEvent;
 use BE\QueueManagement\Observability\PlannedExecutionStrategyEnum;
 use BE\QueueManagement\Queue\AWSSQS\DelayedJobSchedulerInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
@@ -269,8 +270,10 @@ class SqsQueueManagerTest extends TestCase
         $beforeExecutionPlannedEventMock = Mockery::mock(BeforeExecutionPlannedEvent::class);
         /** @var BeforeExecutionPlannedEvent&MockInterface $afterExecutionPlannedEventMock */
         $afterExecutionPlannedEventMock = Mockery::mock(AfterExecutionPlannedEvent::class);
-        /** @var MessageSentEvent&MockInterface $messageSentEventMock */
-        $messageSentEventMock = Mockery::mock(MessageSentEvent::class);
+        /** @var BeforeMessageSentEvent&MockInterface $beforeMessageSentEventMock */
+        $beforeMessageSentEventMock = Mockery::mock(BeforeMessageSentEvent::class);
+        /** @var AfterMessageSentEvent&MockInterface $afterMessageSentEventMock */
+        $afterMessageSentEventMock = Mockery::mock(AfterMessageSentEvent::class);
 
         /** @var EventDispatcherInterface&MockInterface $eventDispatcherMock */
         $eventDispatcherMock = Mockery::mock(EventDispatcherInterface::class);
@@ -303,7 +306,18 @@ class SqsQueueManagerTest extends TestCase
         $eventDispatcherMock
             ->shouldReceive('dispatch')
             ->once()
-            ->with(Mockery::on(fn($event) => $event instanceof MessageSentEvent
+            ->with(
+                Mockery::on(fn($event) => $event instanceof BeforeMessageSentEvent
+                && $event->job === $exampleJob
+                && $event->delayInSeconds === 900
+                && $event->prefixedQueueName === $queueNamePrefix . $queueName),
+            )
+            ->andReturn($beforeMessageSentEventMock);
+
+        $eventDispatcherMock
+            ->shouldReceive('dispatch')
+            ->once()
+            ->with(Mockery::on(fn($event) => $event instanceof AfterMessageSentEvent
                 && $event->delayInSeconds === 900
                 && $event->messageAttributes === [
                     'customMessageAttribute' => [
@@ -316,7 +330,7 @@ class SqsQueueManagerTest extends TestCase
                     ],
                 ]
                 && $event->messageBody === '{"jobUuid":"some-job-uuid","jobName":"exampleJob","attempts":1,"createdAt":"2018-08-01T10:15:47+01:00","jobParameters":{"foo":"bar"},"executionPlannedAt":"2016-08-15T15:30:00+00:00"}'))
-            ->andReturn($messageSentEventMock);
+            ->andReturn($afterMessageSentEventMock);
 
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 1, null, $eventDispatcherMock);
 

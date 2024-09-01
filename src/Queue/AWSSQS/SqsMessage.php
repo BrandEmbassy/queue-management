@@ -2,6 +2,8 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
+use function is_numeric;
+use function str_contains;
 use function strlen;
 
 /**
@@ -72,6 +74,40 @@ class SqsMessage
     }
 
 
+    public function getMessageAttribute(
+        string $messageAttributeName,
+        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
+    ): string|int|float|null {
+        if (!isset($this->message[SqsMessageFields::MESSAGE_ATTRIBUTES][$messageAttributeName])) {
+            return null;
+        }
+
+        $valueKey = $messageAttributeDataType === SqsMessageAttributeDataType::BINARY
+            ? SqsMessageAttributeFields::BINARY_VALUE->value
+            : SqsMessageAttributeFields::STRING_VALUE->value;
+
+        $value = $this->message[SqsMessageFields::MESSAGE_ATTRIBUTES][$messageAttributeName][$valueKey] ?? null;
+
+        if ($value === null) {
+            return null;
+        }
+
+        if ($messageAttributeDataType === SqsMessageAttributeDataType::NUMBER) {
+            if (is_numeric($value)) {
+                if (str_contains((string)$value, '.')) {
+                    return (float)$value;
+                }
+
+                return (int)$value;
+            }
+
+            return null;
+        }
+
+        return $value;
+    }
+
+
     public function getQueueUrl(): string
     {
         return $this->queueUrl;
@@ -94,8 +130,8 @@ class SqsMessage
         $messageSize = strlen($messageBody);
         foreach ($messageAttributes as $messageAttributeKey => $messageAttribute) {
             $messageSize += strlen($messageAttributeKey);
-            $messageSize += strlen($messageAttribute['DataType'] ?? '');
-            $messageSize += strlen($messageAttribute['StringValue'] ?? '');
+            $messageSize += strlen($messageAttribute[SqsMessageAttributeFields::DATA_TYPE->value] ?? '');
+            $messageSize += strlen($messageAttribute[SqsMessageAttributeFields::STRING_VALUE->value] ?? '');
         }
 
         return $messageSize > self::MAX_SQS_SIZE_KB * 1024;

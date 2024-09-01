@@ -10,8 +10,9 @@ use BE\QueueManagement\Jobs\JobType;
 use BE\QueueManagement\Logging\LoggerContextField;
 use BE\QueueManagement\Logging\LoggerHelper;
 use BE\QueueManagement\Observability\AfterExecutionPlannedEvent;
+use BE\QueueManagement\Observability\AfterMessageSentEvent;
 use BE\QueueManagement\Observability\BeforeExecutionPlannedEvent;
-use BE\QueueManagement\Observability\MessageSentEvent;
+use BE\QueueManagement\Observability\BeforeMessageSentEvent;
 use BE\QueueManagement\Observability\PlannedExecutionStrategyEnum;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeFormatter;
@@ -413,6 +414,14 @@ class SqsQueueManager implements QueueManagerInterface
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
+        if ($this->eventDispatcher !== null) {
+            $this->eventDispatcher->dispatch(new BeforeMessageSentEvent(
+                $job,
+                $delaySeconds,
+                $prefixedQueueName,
+            ));
+        }
+
         $messageAttributes = $job->getMessageAttributes();
         $messageAttributes[SqsSendingMessageFields::QUEUE_URL] = [
             SqsMessageAttributeFields::DATA_TYPE->value => SqsMessageAttributeDataType::STRING->value,
@@ -460,7 +469,7 @@ class SqsQueueManager implements QueueManagerInterface
         $messageId = $result->get(SqsMessageFields::MESSAGE_ID);
 
         if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new MessageSentEvent(
+            $this->eventDispatcher->dispatch(new AfterMessageSentEvent(
                 $messageToSend[SqsSendingMessageFields::DELAY_SECONDS],
                 $messageId,
                 $messageToSend[SqsSendingMessageFields::MESSAGE_ATTRIBUTES],
