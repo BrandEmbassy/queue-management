@@ -312,17 +312,15 @@ class SqsQueueManager implements QueueManagerInterface
 
         $sqsMessageId = $this->publishMessage($job, $prefixedQueueName, $parameters);
 
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new AfterExecutionPlannedEvent(
-                $beforeExecutionPlannedEvent->executionPlannedId,
-                $job,
-                $prefixedQueueName,
-                $delayInSeconds,
-                PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY,
-                null,
-                $sqsMessageId,
-            ));
-        }
+        $this->eventDispatcher?->dispatch(new AfterExecutionPlannedEvent(
+            $beforeExecutionPlannedEvent->executionPlannedId ?? Uuid::uuid4(),
+            $job,
+            $prefixedQueueName,
+            $delayInSeconds,
+            PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY,
+            null,
+            $sqsMessageId,
+        ));
 
         LoggerHelper::logJobPushedIntoQueue(
             $job,
@@ -373,17 +371,15 @@ class SqsQueueManager implements QueueManagerInterface
             ],
         );
 
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new AfterExecutionPlannedEvent(
-                $beforeExecutionPlannedEvent->executionPlannedId,
-                $job,
-                $prefixedQueueName,
-                $delayInSeconds,
-                PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER,
-                $scheduledEventId,
-                null,
-            ));
-        }
+        $this->eventDispatcher?->dispatch(new AfterExecutionPlannedEvent(
+            $beforeExecutionPlannedEvent->executionPlannedId ?? Uuid::uuid4(),
+            $job,
+            $prefixedQueueName,
+            $delayInSeconds,
+            PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER,
+            $scheduledEventId,
+            null,
+        ));
     }
 
 
@@ -414,13 +410,11 @@ class SqsQueueManager implements QueueManagerInterface
             throw SqsClientException::createFromInvalidDelaySeconds($delaySeconds);
         }
 
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new BeforeMessageSentEvent(
-                $job,
-                $delaySeconds,
-                $prefixedQueueName,
-            ));
-        }
+        $this->eventDispatcher?->dispatch(new BeforeMessageSentEvent(
+            $job,
+            $delaySeconds,
+            $prefixedQueueName,
+        ));
 
         $messageAttributes = $job->getMessageAttributes();
         $messageAttributes[SqsSendingMessageFields::QUEUE_URL] = [
@@ -468,14 +462,12 @@ class SqsQueueManager implements QueueManagerInterface
         $result = $this->sqsClient->sendMessage($messageToSend);
         $messageId = $result->get(SqsMessageFields::MESSAGE_ID);
 
-        if ($this->eventDispatcher !== null) {
-            $this->eventDispatcher->dispatch(new AfterMessageSentEvent(
-                $messageToSend[SqsSendingMessageFields::DELAY_SECONDS],
-                $messageId,
-                $messageToSend[SqsSendingMessageFields::MESSAGE_ATTRIBUTES],
-                $messageToSend[SqsSendingMessageFields::MESSAGE_BODY],
-            ));
-        }
+        $this->eventDispatcher?->dispatch(new AfterMessageSentEvent(
+            $messageToSend[SqsSendingMessageFields::DELAY_SECONDS],
+            $messageId,
+            $messageToSend[SqsSendingMessageFields::MESSAGE_ATTRIBUTES],
+            $messageToSend[SqsSendingMessageFields::MESSAGE_BODY],
+        ));
 
         return $messageId;
     }
