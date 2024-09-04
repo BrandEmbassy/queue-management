@@ -8,13 +8,16 @@ use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
 use BE\QueueManagement\Observability\AfterExecutionPlannedEvent;
+use BE\QueueManagement\Observability\AfterMessageSentEvent;
 use BE\QueueManagement\Observability\BeforeExecutionPlannedEvent;
-use BE\QueueManagement\Observability\MessageSentEvent;
+use BE\QueueManagement\Observability\BeforeMessageSentEvent;
 use BE\QueueManagement\Observability\PlannedExecutionStrategyEnum;
 use BE\QueueManagement\Queue\AWSSQS\DelayedJobSchedulerInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\AWSSQS\SqsSendingMessageFields;
 use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
@@ -45,12 +48,7 @@ class SqsQueueManagerTest extends TestCase
 
     private const CUSTOM_MESSAGE_ATTRIBUTE_VALUE = 'customMessageAttributeValue';
 
-    public const CUSTOM_MESSAGE_ATTRIBUTES = [
-        self::CUSTOM_MESSAGE_ATTRIBUTE => [
-            'DataType' => 'String',
-            'StringValue' => self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
-        ],
-    ];
+    private const CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE = SqsMessageAttributeDataType::STRING;
 
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
 
@@ -128,8 +126,11 @@ class SqsQueueManagerTest extends TestCase
             'This ￾is random text.',
         );
         $exampleJobWithInvalidCharacter->setMessageAttribute(
-            self::CUSTOM_MESSAGE_ATTRIBUTE,
-            self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+            new SqsMessageAttribute(
+                self::CUSTOM_MESSAGE_ATTRIBUTE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE,
+            ),
         );
 
         $exampleJobWithValidCharacter = new ExampleJob(
@@ -138,8 +139,11 @@ class SqsQueueManagerTest extends TestCase
             'This is random text.',
         );
         $exampleJobWithValidCharacter->setMessageAttribute(
-            self::CUSTOM_MESSAGE_ATTRIBUTE,
-            self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+            new SqsMessageAttribute(
+                self::CUSTOM_MESSAGE_ATTRIBUTE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE,
+            ),
         );
 
         $this->sqsClientMock->expects('sendMessage')
@@ -269,8 +273,10 @@ class SqsQueueManagerTest extends TestCase
         $beforeExecutionPlannedEventMock = Mockery::mock(BeforeExecutionPlannedEvent::class);
         /** @var BeforeExecutionPlannedEvent&MockInterface $afterExecutionPlannedEventMock */
         $afterExecutionPlannedEventMock = Mockery::mock(AfterExecutionPlannedEvent::class);
-        /** @var MessageSentEvent&MockInterface $messageSentEventMock */
-        $messageSentEventMock = Mockery::mock(MessageSentEvent::class);
+        /** @var BeforeMessageSentEvent&MockInterface $beforeMessageSentEventMock */
+        $beforeMessageSentEventMock = Mockery::mock(BeforeMessageSentEvent::class);
+        /** @var AfterMessageSentEvent&MockInterface $afterMessageSentEventMock */
+        $afterMessageSentEventMock = Mockery::mock(AfterMessageSentEvent::class);
 
         /** @var EventDispatcherInterface&MockInterface $eventDispatcherMock */
         $eventDispatcherMock = Mockery::mock(EventDispatcherInterface::class);
@@ -303,7 +309,18 @@ class SqsQueueManagerTest extends TestCase
         $eventDispatcherMock
             ->shouldReceive('dispatch')
             ->once()
-            ->with(Mockery::on(fn($event) => $event instanceof MessageSentEvent
+            ->with(
+                Mockery::on(fn($event) => $event instanceof BeforeMessageSentEvent
+                && $event->job === $exampleJob
+                && $event->delayInSeconds === 900
+                && $event->prefixedQueueName === $queueNamePrefix . $queueName),
+            )
+            ->andReturn($beforeMessageSentEventMock);
+
+        $eventDispatcherMock
+            ->shouldReceive('dispatch')
+            ->once()
+            ->with(Mockery::on(fn($event) => $event instanceof AfterMessageSentEvent
                 && $event->delayInSeconds === 900
                 && $event->messageAttributes === [
                     'customMessageAttribute' => [
@@ -316,7 +333,7 @@ class SqsQueueManagerTest extends TestCase
                     ],
                 ]
                 && $event->messageBody === '{"jobUuid":"some-job-uuid","jobName":"exampleJob","attempts":1,"createdAt":"2018-08-01T10:15:47+01:00","jobParameters":{"foo":"bar"},"executionPlannedAt":"2016-08-15T15:30:00+00:00"}'))
-            ->andReturn($messageSentEventMock);
+            ->andReturn($afterMessageSentEventMock);
 
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 1, null, $eventDispatcherMock);
 
@@ -693,7 +710,13 @@ class SqsQueueManagerTest extends TestCase
             ExampleJobDefinition::create()
                 ->withQueueName($queueName),
             'bar',
-            self::CUSTOM_MESSAGE_ATTRIBUTES,
+            [
+                self::CUSTOM_MESSAGE_ATTRIBUTE => new SqsMessageAttribute(
+                    self::CUSTOM_MESSAGE_ATTRIBUTE,
+                    self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+                    self::CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE,
+                ),
+            ],
         );
     }
 
@@ -805,6 +828,13 @@ class SqsQueueManagerTest extends TestCase
 
         Assert::assertCount(1, $sqsMessages);
         Assert::assertSame($expectedMessageBody, $sqsMessages[0]->getBody());
+        Assert::assertEquals([
+            'QueueUrl' => new SqsMessageAttribute(
+                'QueueUrl',
+                $queueUrl,
+                SqsMessageAttributeDataType::STRING,
+            ),
+        ], $sqsMessages[0]->getMessageAttributes());
     }
 
 
@@ -852,6 +882,13 @@ class SqsQueueManagerTest extends TestCase
 
         Assert::assertCount(1, $sqsMessages);
         Assert::assertSame($messageBodyExpected, $sqsMessages[0]->getBody());
+        Assert::assertEquals([
+            'QueueUrl' => new SqsMessageAttribute(
+                'QueueUrl',
+                'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
+                SqsMessageAttributeDataType::STRING,
+            ),
+        ], $sqsMessages[0]->getMessageAttributes());
     }
 
 

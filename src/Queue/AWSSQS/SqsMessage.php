@@ -10,6 +10,13 @@ use function strlen;
  * AWS SQS API does not provide type for SQSMessage, only type \Aws\Result. This class is simple abstraction over this generic type.
  * For details see https://docs.aws.amazon.com/aws-sdk-php/v3/api/class-Aws.Result.html
  *
+ * @phpstan-type TSqsMessage array{
+ *     MessageAttributes: array<string,SqsMessageAttribute>,
+ *     Body: string,
+ *     Attributes: mixed[],
+ *     ReceiptHandle: mixed,
+ *     MessageId: string,
+ * }
  * @final
  */
 class SqsMessage
@@ -18,7 +25,7 @@ class SqsMessage
     public const MAX_SQS_SIZE_KB = 256;
 
     /**
-     * @var mixed[]
+     * @var TSqsMessage
      */
     private array $message;
 
@@ -26,7 +33,7 @@ class SqsMessage
 
 
     /**
-     * @param array<mixed> $message
+     * @param TSqsMessage $message
      */
     public function __construct(array $message, string $queueUrl)
     {
@@ -35,10 +42,7 @@ class SqsMessage
     }
 
 
-    /**
-     * @return mixed
-     */
-    public function getReceiptHandle()
+    public function getReceiptHandle(): mixed
     {
         return $this->message[SqsMessageFields::RECEIPT_HANDLE];
     }
@@ -72,6 +76,13 @@ class SqsMessage
     }
 
 
+    public function getMessageAttribute(
+        string $messageAttributeName
+    ): ?SqsMessageAttribute {
+        return $this->message[SqsMessageFields::MESSAGE_ATTRIBUTES][$messageAttributeName] ?? null;
+    }
+
+
     public function getQueueUrl(): string
     {
         return $this->queueUrl;
@@ -87,15 +98,14 @@ class SqsMessage
     /**
      * Returns true if message is bigger than 256 KB (AWS SQS message size limit), false otherwise
      *
-     * @param array<string, array<string, string>> $messageAttributes
+     * @param array<string, SqsMessageAttribute> $messageAttributes
      */
     public static function isTooBig(string $messageBody, array $messageAttributes): bool
     {
         $messageSize = strlen($messageBody);
         foreach ($messageAttributes as $messageAttributeKey => $messageAttribute) {
             $messageSize += strlen($messageAttributeKey);
-            $messageSize += strlen($messageAttribute['DataType'] ?? '');
-            $messageSize += strlen($messageAttribute['StringValue'] ?? '');
+            $messageSize += $messageAttribute->getSizeInBytes();
         }
 
         return $messageSize > self::MAX_SQS_SIZE_KB * 1024;

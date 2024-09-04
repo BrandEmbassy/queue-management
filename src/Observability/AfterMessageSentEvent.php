@@ -2,7 +2,7 @@
 
 namespace BE\QueueManagement\Observability;
 
-class MessageSentEvent
+class AfterMessageSentEvent
 {
     /**
      * @param mixed[] $messageAttributes

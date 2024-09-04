@@ -3,6 +3,8 @@
 namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -15,7 +17,7 @@ use function strlen;
 class SqsMessageTest extends TestCase
 {
     /**
-     * @param array<string, array<string, string>> $messageAttributes
+     * @param array<string,SqsMessageAttribute> $messageAttributes
      */
     #[DataProvider('messageProvider')]
     public function testIsTooBig(bool $expectedIsTooBig, string $messageBody, array $messageAttributes): void
@@ -25,15 +27,20 @@ class SqsMessageTest extends TestCase
 
 
     /**
-     * @return array<array<string, mixed>>
+     * @return array<string, array{
+     *     expectedIsTooBig: bool,
+     *     messageBody: string,
+     *     messageAttributes: array<string,SqsMessageAttribute>,
+     * }>
      */
     public static function messageProvider(): array
     {
         $messageAttributes = [
-            'QueueUrl' => [
-                'DataType' => 'String',
-                'StringValue' => 'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
-            ],
+            'QueueUrl' => new SqsMessageAttribute(
+                'QueueUrl',
+                'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
+                SqsMessageAttributeDataType::STRING,
+            ),
         ];
 
         $messageBodySizeLimit = SqsMessage::MAX_SQS_SIZE_KB * 1024

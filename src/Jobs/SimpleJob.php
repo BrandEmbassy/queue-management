@@ -4,8 +4,8 @@ namespace BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\Execution\MaximumAttemptsExceededException;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeFields;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
@@ -32,14 +32,14 @@ class SimpleJob implements JobInterface
     private ?DateTimeImmutable $executionPlannedAt;
 
     /**
-     * @var array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
+     * @var array<string,SqsMessageAttribute>
      */
     private array $messageAttributes;
 
 
     /**
      * @param Collection<string, mixed> $parameters
-     * @param array<string, mixed> $messageAttributes
+     * @param array<string, SqsMessageAttribute> $messageAttributes
      */
     public function __construct(
         string $uuid,
@@ -188,8 +188,23 @@ class SimpleJob implements JobInterface
     }
 
 
+    public function getMessageAttribute(
+        string $messageAttributeName,
+        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
+    ): ?SqsMessageAttribute {
+        return $this->messageAttributes[$messageAttributeName] ?? null;
+    }
+
+
+    public function setMessageAttribute(
+        SqsMessageAttribute $sqsMessageAttribute,
+    ): void {
+        $this->messageAttributes[$sqsMessageAttribute->getName()] = $sqsMessageAttribute;
+    }
+
+
     /**
-     * @return array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
+     * @return array<string,SqsMessageAttribute>
      */
     public function getMessageAttributes(): array
     {
@@ -197,27 +212,8 @@ class SimpleJob implements JobInterface
     }
 
 
-    public function setMessageAttribute(
-        string $messageAttributeName,
-        string $messageAttributeValue,
-        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
-    ): void {
-        $valueKey = $messageAttributeDataType === SqsMessageAttributeDataType::BINARY
-            ? SqsMessageAttributeFields::BINARY_VALUE->value
-            : SqsMessageAttributeFields::STRING_VALUE->value;
-
-        /** @var array{DataType: string, StringValue?: string, BinaryValue?: string} $messageAttribute */
-        $messageAttribute = [
-            SqsMessageAttributeFields::DATA_TYPE->value => $messageAttributeDataType->value,
-            $valueKey => $messageAttributeValue,
-        ];
-
-        $this->messageAttributes[$messageAttributeName] = $messageAttribute;
-    }
-
-
     /**
-     * @param array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}> $messageAttributes
+     * @param array<string,SqsMessageAttribute> $messageAttributes
      */
     public function setMessageAttributes(array $messageAttributes): void
     {

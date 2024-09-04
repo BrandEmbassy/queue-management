@@ -15,6 +15,8 @@ use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplication;
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDisabled;
 use BE\QueueManagement\Queue\AWSSQS\SqsConsumer;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\JobExecutionStatus;
 use BE\QueueManagement\Queue\QueueManagerInterface;
@@ -37,6 +39,7 @@ use Tests\BE\QueueManagement\Jobs\Execution\ExampleWarningOnlyException;
 use Throwable;
 
 /**
+ * @phpstan-import-type TSqsMessage from SqsMessage
  * @final
  */
 class SqsConsumerTest extends TestCase
@@ -404,17 +407,19 @@ class SqsConsumerTest extends TestCase
 
 
     /**
-     * @return array<string, mixed>
+     * @return TSqsMessage
      */
     private function getSqsMessageData(): array
     {
         return [
             'MessageId' => self::MESSAGE_ID,
+            'Attributes' => [],
             'MessageAttributes' => [
-                'QueueUrl' => [
-                    'DataType' => 'String',
-                    'StringValue' => self::QUEUE_URL,
-                ],
+                'QueueUrl' => new SqsMessageAttribute(
+                    'QueueUrl',
+                    self::QUEUE_URL,
+                    SqsMessageAttributeDataType::STRING,
+                ),
             ],
             'Body' => Json::encode(['foo' => 'bar']),
             'ReceiptHandle' => self::RECEIPT_HANDLE,
@@ -423,7 +428,7 @@ class SqsConsumerTest extends TestCase
 
 
     /**
-     * @param mixed[] $messageData
+     * @param TSqsMessage $messageData
      */
     private function createSqsMessage(array $messageData): SqsMessage
     {
