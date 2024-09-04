@@ -16,6 +16,8 @@ use BE\QueueManagement\Queue\AWSSQS\DelayedJobSchedulerInterface;
 use BE\QueueManagement\Queue\AWSSQS\S3ClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsClientFactory;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
 use BE\QueueManagement\Queue\AWSSQS\SqsQueueManager;
 use BE\QueueManagement\Queue\AWSSQS\SqsSendingMessageFields;
 use BrandEmbassy\DateTime\FrozenDateTimeImmutableFactory;
@@ -46,12 +48,7 @@ class SqsQueueManagerTest extends TestCase
 
     private const CUSTOM_MESSAGE_ATTRIBUTE_VALUE = 'customMessageAttributeValue';
 
-    public const CUSTOM_MESSAGE_ATTRIBUTES = [
-        self::CUSTOM_MESSAGE_ATTRIBUTE => [
-            'DataType' => 'String',
-            'StringValue' => self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
-        ],
-    ];
+    private const CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE = SqsMessageAttributeDataType::STRING;
 
     private const RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
 
@@ -129,8 +126,11 @@ class SqsQueueManagerTest extends TestCase
             'This ￾is random text.',
         );
         $exampleJobWithInvalidCharacter->setMessageAttribute(
-            self::CUSTOM_MESSAGE_ATTRIBUTE,
-            self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+            new SqsMessageAttribute(
+                self::CUSTOM_MESSAGE_ATTRIBUTE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE,
+            ),
         );
 
         $exampleJobWithValidCharacter = new ExampleJob(
@@ -139,8 +139,11 @@ class SqsQueueManagerTest extends TestCase
             'This is random text.',
         );
         $exampleJobWithValidCharacter->setMessageAttribute(
-            self::CUSTOM_MESSAGE_ATTRIBUTE,
-            self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+            new SqsMessageAttribute(
+                self::CUSTOM_MESSAGE_ATTRIBUTE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+                self::CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE,
+            ),
         );
 
         $this->sqsClientMock->expects('sendMessage')
@@ -707,7 +710,13 @@ class SqsQueueManagerTest extends TestCase
             ExampleJobDefinition::create()
                 ->withQueueName($queueName),
             'bar',
-            self::CUSTOM_MESSAGE_ATTRIBUTES,
+            [
+                self::CUSTOM_MESSAGE_ATTRIBUTE => new SqsMessageAttribute(
+                    self::CUSTOM_MESSAGE_ATTRIBUTE,
+                    self::CUSTOM_MESSAGE_ATTRIBUTE_VALUE,
+                    self::CUSTOM_MESSAGE_ATTRIBUTE_DATA_TYPE,
+                ),
+            ],
         );
     }
 
@@ -819,6 +828,13 @@ class SqsQueueManagerTest extends TestCase
 
         Assert::assertCount(1, $sqsMessages);
         Assert::assertSame($expectedMessageBody, $sqsMessages[0]->getBody());
+        Assert::assertEquals([
+            'QueueUrl' => new SqsMessageAttribute(
+                'QueueUrl',
+                $queueUrl,
+                SqsMessageAttributeDataType::STRING,
+            ),
+        ], $sqsMessages[0]->getMessageAttributes());
     }
 
 
@@ -866,6 +882,13 @@ class SqsQueueManagerTest extends TestCase
 
         Assert::assertCount(1, $sqsMessages);
         Assert::assertSame($messageBodyExpected, $sqsMessages[0]->getBody());
+        Assert::assertEquals([
+            'QueueUrl' => new SqsMessageAttribute(
+                'QueueUrl',
+                'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
+                SqsMessageAttributeDataType::STRING,
+            ),
+        ], $sqsMessages[0]->getMessageAttributes());
     }
 
 

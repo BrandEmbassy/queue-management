@@ -4,6 +4,7 @@ namespace Tests\BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use BE\QueueManagement\Jobs\SimpleJob;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -39,60 +40,49 @@ class SimpleJobTest extends TestCase
 
     #[DataProvider('getSetMessageAttributeDataProvider')]
     public function testSetAndGetMessageAttribute(
-        string $messageAttributeName,
-        ?string $messageAttributeValue,
-        SqsMessageAttributeDataType $messageAttributeDataType,
+        SqsMessageAttribute $sqsMessageAttribute,
         string|int|float|null $expectedResult
     ): void {
-        if ($messageAttributeValue !== null) {
-            $this->job->setMessageAttribute(
-                $messageAttributeName,
-                $messageAttributeValue,
-                $messageAttributeDataType,
-            );
-        }
+        $this->job->setMessageAttribute($sqsMessageAttribute);
 
-        $result = $this->job->getMessageAttribute($messageAttributeName, $messageAttributeDataType);
-        Assert::assertSame($expectedResult, $result);
+        $result = $this->job->getMessageAttribute($sqsMessageAttribute->getName());
+        Assert::assertSame($expectedResult, $result?->getValue());
     }
 
 
     /**
      * @return Iterator<string,array{
-     *     messageAttributeName: string,
-     *     messageAttributeValue: ?string,
-     *     messageAttributeDataType: SqsMessageAttributeDataType,
-     *     expectedResult: string|int|float|null,
+     *     sqsMessageAttribute: SqsMessageAttribute,
+     *     expectedResult: string|int|float,
      * }>
      */
     public static function getSetMessageAttributeDataProvider(): Iterator
     {
         yield 'string attribute' => [
-            'messageAttributeName' => 'exampleString',
-            'messageAttributeValue' => 'Hello, World!',
-            'messageAttributeDataType' => SqsMessageAttributeDataType::STRING,
+            'sqsMessageAttribute' => new SqsMessageAttribute(
+                'exampleString',
+                'Hello, World!',
+                SqsMessageAttributeDataType::STRING,
+            ),
             'expectedResult' => 'Hello, World!',
         ];
 
         yield 'integer attribute' => [
-            'messageAttributeName' => 'exampleNumberInt',
-            'messageAttributeValue' => '123',
-            'messageAttributeDataType' => SqsMessageAttributeDataType::NUMBER,
+            'sqsMessageAttribute' => new SqsMessageAttribute(
+                'exampleNumberInt',
+                '123',
+                SqsMessageAttributeDataType::NUMBER,
+            ),
             'expectedResult' => 123,
         ];
 
         yield 'float attribute' => [
-            'messageAttributeName' => 'exampleNumberFloat',
-            'messageAttributeValue' => '123.45',
-            'messageAttributeDataType' => SqsMessageAttributeDataType::NUMBER,
+            'sqsMessageAttribute' => new SqsMessageAttribute(
+                'exampleNumberFloat',
+                '123.45',
+                SqsMessageAttributeDataType::NUMBER,
+            ),
             'expectedResult' => 123.45,
-        ];
-
-        yield 'attribute not set' => [
-            'messageAttributeName' => 'exampleNumberFloat',
-            'messageAttributeValue' => null,
-            'messageAttributeDataType' => SqsMessageAttributeDataType::STRING,
-            'expectedResult' => null,
         ];
     }
 }

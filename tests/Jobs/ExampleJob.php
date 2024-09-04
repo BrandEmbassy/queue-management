@@ -5,6 +5,7 @@ namespace Tests\BE\QueueManagement\Jobs;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
 use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\SimpleJob;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
 use BrandEmbassy\DateTime\DateTimeFromString;
 use Doctrine\Common\Collections\ArrayCollection;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
@@ -29,7 +30,7 @@ class ExampleJob extends SimpleJob
 
 
     /**
-     * @param array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}> $messageAttributes
+     * @param array<string,SqsMessageAttribute> $messageAttributes
      */
     public function __construct(
         ?JobDefinitionInterface $jobDefinition = null,

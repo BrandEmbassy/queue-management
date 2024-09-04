@@ -3,10 +3,8 @@
 namespace Tests\BE\QueueManagement\Queue\AWSSQS;
 
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeFields;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessageFields;
-use Iterator;
 use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +17,7 @@ use function strlen;
 class SqsMessageTest extends TestCase
 {
     /**
-     * @param array<string, array<string, string>> $messageAttributes
+     * @param array<string,SqsMessageAttribute> $messageAttributes
      */
     #[DataProvider('messageProvider')]
     public function testIsTooBig(bool $expectedIsTooBig, string $messageBody, array $messageAttributes): void
@@ -28,80 +26,21 @@ class SqsMessageTest extends TestCase
     }
 
 
-    #[DataProvider('getMessageAttributeDataProvider')]
-    public function testGetMessageAttribute(
-        string $messageAttributeName,
-        ?string $messageAttributeValue,
-        SqsMessageAttributeDataType $messageAttributeDataType,
-        string|int|float|null $expectedResult
-    ): void {
-        $message = [
-            SqsMessageFields::MESSAGE_ATTRIBUTES => [
-                $messageAttributeName => [
-                    $messageAttributeDataType === SqsMessageAttributeDataType::BINARY ?
-                        SqsMessageAttributeFields::BINARY_VALUE->value : SqsMessageAttributeFields::STRING_VALUE->value => $messageAttributeValue,
-                ],
-            ],
-        ];
-
-        $sqsMessage = new SqsMessage($message, 'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue');
-
-        $result = $sqsMessage->getMessageAttribute($messageAttributeName, $messageAttributeDataType);
-
-        Assert::assertSame($expectedResult, $result);
-    }
-
-
     /**
-     * @return Iterator<string,array{
-     *     messageAttributeName: string,
-     *     messageAttributeValue: ?string,
-     *     messageAttributeDataType: SqsMessageAttributeDataType,
-     *     expectedResult: string|int|float|null,
+     * @return array<string, array{
+     *     expectedIsTooBig: bool,
+     *     messageBody: string,
+     *     messageAttributes: array<string,SqsMessageAttribute>,
      * }>
-     */
-    public static function getMessageAttributeDataProvider(): Iterator
-    {
-        yield 'string attribute' => [
-            'messageAttributeName' => 'exampleString',
-            'messageAttributeValue' => 'Hello, World!',
-            'messageAttributeDataType' => SqsMessageAttributeDataType::STRING,
-            'expectedResult' => 'Hello, World!',
-        ];
-
-        yield 'integer attribute' => [
-            'messageAttributeName' => 'exampleNumberInt',
-            'messageAttributeValue' => '123',
-            'messageAttributeDataType' => SqsMessageAttributeDataType::NUMBER,
-            'expectedResult' => 123,
-        ];
-
-        yield 'float attribute' => [
-            'messageAttributeName' => 'exampleNumberFloat',
-            'messageAttributeValue' => '123.45',
-            'messageAttributeDataType' => SqsMessageAttributeDataType::NUMBER,
-            'expectedResult' => 123.45,
-        ];
-
-        yield 'attribute not set' => [
-            'messageAttributeName' => 'notSet',
-            'messageAttributeValue' => null,
-            'messageAttributeDataType' => SqsMessageAttributeDataType::STRING,
-            'expectedResult' => null,
-        ];
-    }
-
-
-    /**
-     * @return array<array<string, mixed>>
      */
     public static function messageProvider(): array
     {
         $messageAttributes = [
-            'QueueUrl' => [
-                'DataType' => 'String',
-                'StringValue' => 'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
-            ],
+            'QueueUrl' => new SqsMessageAttribute(
+                'QueueUrl',
+                'https://sqs.eu-central-1.amazonaws.com/1234567891/SomeQueue',
+                SqsMessageAttributeDataType::STRING,
+            ),
         ];
 
         $messageBodySizeLimit = SqsMessage::MAX_SQS_SIZE_KB * 1024

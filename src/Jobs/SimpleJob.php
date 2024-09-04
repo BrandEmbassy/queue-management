@@ -4,15 +4,13 @@ namespace BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\Execution\MaximumAttemptsExceededException;
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeFields;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
 use Nette\Utils\Json;
 use function array_merge;
-use function is_numeric;
-use function str_contains;
 
 class SimpleJob implements JobInterface
 {
@@ -34,14 +32,14 @@ class SimpleJob implements JobInterface
     private ?DateTimeImmutable $executionPlannedAt;
 
     /**
-     * @var array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
+     * @var array<string,SqsMessageAttribute>
      */
     private array $messageAttributes;
 
 
     /**
      * @param Collection<string, mixed> $parameters
-     * @param array<string, mixed> $messageAttributes
+     * @param array<string, SqsMessageAttribute> $messageAttributes
      */
     public function __construct(
         string $uuid,
@@ -193,58 +191,20 @@ class SimpleJob implements JobInterface
     public function getMessageAttribute(
         string $messageAttributeName,
         SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
-    ): string|int|float|null {
-        if (!isset($this->messageAttributes[$messageAttributeName])) {
-            return null;
-        }
-
-        $valueKey = $messageAttributeDataType === SqsMessageAttributeDataType::BINARY
-            ? SqsMessageAttributeFields::BINARY_VALUE->value
-            : SqsMessageAttributeFields::STRING_VALUE->value;
-
-        $value = $this->messageAttributes[$messageAttributeName][$valueKey] ?? null;
-
-        if ($value === null) {
-            return null;
-        }
-
-        if ($messageAttributeDataType === SqsMessageAttributeDataType::NUMBER) {
-            if (is_numeric($value)) {
-                if (str_contains($value, '.')) {
-                    return (float)$value;
-                }
-
-                return (int)$value;
-            }
-
-            return null;
-        }
-
-        return $value;
+    ): ?SqsMessageAttribute {
+        return $this->messageAttributes[$messageAttributeName] ?? null;
     }
 
 
     public function setMessageAttribute(
-        string $messageAttributeName,
-        string|int|float $messageAttributeValue,
-        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
+        SqsMessageAttribute $sqsMessageAttribute,
     ): void {
-        $valueKey = $messageAttributeDataType === SqsMessageAttributeDataType::BINARY
-            ? SqsMessageAttributeFields::BINARY_VALUE->value
-            : SqsMessageAttributeFields::STRING_VALUE->value;
-
-        /** @var array{DataType: string, StringValue?: string, BinaryValue?: string} $messageAttribute */
-        $messageAttribute = [
-            SqsMessageAttributeFields::DATA_TYPE->value => $messageAttributeDataType->value,
-            $valueKey => (string)$messageAttributeValue,
-        ];
-
-        $this->messageAttributes[$messageAttributeName] = $messageAttribute;
+        $this->messageAttributes[$sqsMessageAttribute->getName()] = $sqsMessageAttribute;
     }
 
 
     /**
-     * @return array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
+     * @return array<string,SqsMessageAttribute>
      */
     public function getMessageAttributes(): array
     {
@@ -253,7 +213,7 @@ class SimpleJob implements JobInterface
 
 
     /**
-     * @param array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}> $messageAttributes
+     * @param array<string,SqsMessageAttribute> $messageAttributes
      */
     public function setMessageAttributes(array $messageAttributes): void
     {

@@ -2,8 +2,6 @@
 
 namespace BE\QueueManagement\Queue\AWSSQS;
 
-use function is_numeric;
-use function str_contains;
 use function strlen;
 
 /**
@@ -12,6 +10,13 @@ use function strlen;
  * AWS SQS API does not provide type for SQSMessage, only type \Aws\Result. This class is simple abstraction over this generic type.
  * For details see https://docs.aws.amazon.com/aws-sdk-php/v3/api/class-Aws.Result.html
  *
+ * @phpstan-type TSqsMessage array{
+ *     MessageAttributes: array<string,SqsMessageAttribute>,
+ *     Body: string,
+ *     Attributes: mixed[],
+ *     ReceiptHandle: mixed,
+ *     MessageId: string,
+ * }
  * @final
  */
 class SqsMessage
@@ -20,7 +25,7 @@ class SqsMessage
     public const MAX_SQS_SIZE_KB = 256;
 
     /**
-     * @var mixed[]
+     * @var TSqsMessage
      */
     private array $message;
 
@@ -28,7 +33,7 @@ class SqsMessage
 
 
     /**
-     * @param array<mixed> $message
+     * @param TSqsMessage $message
      */
     public function __construct(array $message, string $queueUrl)
     {
@@ -37,10 +42,7 @@ class SqsMessage
     }
 
 
-    /**
-     * @return mixed
-     */
-    public function getReceiptHandle()
+    public function getReceiptHandle(): mixed
     {
         return $this->message[SqsMessageFields::RECEIPT_HANDLE];
     }
@@ -75,36 +77,9 @@ class SqsMessage
 
 
     public function getMessageAttribute(
-        string $messageAttributeName,
-        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
-    ): string|int|float|null {
-        if (!isset($this->message[SqsMessageFields::MESSAGE_ATTRIBUTES][$messageAttributeName])) {
-            return null;
-        }
-
-        $valueKey = $messageAttributeDataType === SqsMessageAttributeDataType::BINARY
-            ? SqsMessageAttributeFields::BINARY_VALUE->value
-            : SqsMessageAttributeFields::STRING_VALUE->value;
-
-        $value = $this->message[SqsMessageFields::MESSAGE_ATTRIBUTES][$messageAttributeName][$valueKey] ?? null;
-
-        if ($value === null) {
-            return null;
-        }
-
-        if ($messageAttributeDataType === SqsMessageAttributeDataType::NUMBER) {
-            if (is_numeric($value)) {
-                if (str_contains((string)$value, '.')) {
-                    return (float)$value;
-                }
-
-                return (int)$value;
-            }
-
-            return null;
-        }
-
-        return $value;
+        string $messageAttributeName
+    ): ?SqsMessageAttribute {
+        return $this->message[SqsMessageFields::MESSAGE_ATTRIBUTES][$messageAttributeName] ?? null;
     }
 
 
@@ -123,15 +98,14 @@ class SqsMessage
     /**
      * Returns true if message is bigger than 256 KB (AWS SQS message size limit), false otherwise
      *
-     * @param array<string, array<string, string>> $messageAttributes
+     * @param array<string, SqsMessageAttribute> $messageAttributes
      */
     public static function isTooBig(string $messageBody, array $messageAttributes): bool
     {
         $messageSize = strlen($messageBody);
         foreach ($messageAttributes as $messageAttributeKey => $messageAttribute) {
             $messageSize += strlen($messageAttributeKey);
-            $messageSize += strlen($messageAttribute[SqsMessageAttributeFields::DATA_TYPE->value] ?? '');
-            $messageSize += strlen($messageAttribute[SqsMessageAttributeFields::STRING_VALUE->value] ?? '');
+            $messageSize += $messageAttribute->getSizeInBytes();
         }
 
         return $messageSize > self::MAX_SQS_SIZE_KB * 1024;

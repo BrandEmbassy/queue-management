@@ -3,7 +3,7 @@
 namespace BE\QueueManagement\Jobs;
 
 use BE\QueueManagement\Jobs\JobDefinitions\JobDefinitionInterface;
-use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
 use DateTimeImmutable;
 
 interface JobInterface
@@ -65,26 +65,23 @@ interface JobInterface
 
 
     /**
-     * @return array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}>
+     * @return array<string,SqsMessageAttribute>
      */
     public function getMessageAttributes(): array;
 
 
     /**
-     * @param array<string,array{DataType: string, StringValue?: string, BinaryValue?: string}> $messageAttributes
+     * @param array<string,SqsMessageAttribute> $messageAttributes
      */
     public function setMessageAttributes(array $messageAttributes): void;
 
 
     public function getMessageAttribute(
         string $messageAttributeName,
-        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
-    ): string|int|float|null;
+    ): SqsMessageAttribute|null;
 
 
     public function setMessageAttribute(
-        string $messageAttributeName,
-        string|int|float $messageAttributeValue,
-        SqsMessageAttributeDataType $messageAttributeDataType = SqsMessageAttributeDataType::STRING
+        SqsMessageAttribute $sqsMessageAttribute,
     ): void;
 }

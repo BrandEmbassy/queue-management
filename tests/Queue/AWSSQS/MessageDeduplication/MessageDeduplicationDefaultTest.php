@@ -4,6 +4,8 @@ namespace Tests\BE\QueueManagement\Queue\AWSSQS\MessageDeduplication;
 
 use BE\QueueManagement\Queue\AWSSQS\MessageDeduplication\MessageDeduplicationDefault;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessage;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
+use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttributeDataType;
 use BE\QueueManagement\Redis\RedisClient;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
@@ -28,26 +30,6 @@ class MessageDeduplicationDefaultTest extends TestCase
 
     private const TEST_RECEIPT_HANDLE = 'AQEBMJRLDYbo...BYSvLGdGU9t8Q==';
 
-    private const TEST_MESSAGE = [
-        'MessageId' => self::MESSAGE_ID,
-        'ReceiptHandle' => self::TEST_RECEIPT_HANDLE,
-        'MD5OfBody' => 'e0001b05d30f529eaf4bbbf585280a4c',
-        'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
-        'Attributes' => [
-            'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:GroupAccessArchitectsSession',
-            'ApproximateFirstReceiveTimestamp' => '1645787771287',
-            'ApproximateReceiveCount' => '1',
-            'SentTimestamp' => '1645787708045',
-        ],
-        'MD5OfMessageAttributes' => 'e4849a650dbb07b06723f9cf0ebe1f68',
-        'MessageAttributes' => [
-            'QueueUrl' => [
-                'StringValue' => self::TEST_QUEUE_URL,
-                'DataType' => 'String',
-            ],
-        ],
-    ];
-
     private const EXPECTED_REDIS_KEY = 'AWS_DEDUP_PREFIX_' . self::QUEUE_NAME . '_' . self::MESSAGE_ID;
 
     private const DEFAULT_TTL_VALUE = 7200;
@@ -55,7 +37,7 @@ class MessageDeduplicationDefaultTest extends TestCase
 
     public function testMessageNotYetSeen(): void
     {
-        $message = new SqsMessage(self::TEST_MESSAGE, self::TEST_QUEUE_URL);
+        $message = $this->createTestMessage();
         $clientMock = Mockery::mock(Client::class);
         $redisClient = new RedisClient($clientMock);
 
@@ -106,7 +88,26 @@ class MessageDeduplicationDefaultTest extends TestCase
 
     private function createTestMessage(): SqsMessage
     {
-        return new SqsMessage(self::TEST_MESSAGE, self::TEST_QUEUE_URL);
+        return new SqsMessage([
+            'MessageId' => self::MESSAGE_ID,
+            'ReceiptHandle' => self::TEST_RECEIPT_HANDLE,
+            'MD5OfBody' => 'e0001b05d30f529eaf4bbbf585280a4c',
+            'Body' => '{"jobUuid":"uuid-123","jobName":"exampleSqsJob","attempts":1,"createdAt":"2022-02-25T11:15:03+00:00","jobParameters":{"foo":"bar"}}',
+            'Attributes' => [
+                'SenderId' => 'AROAYPPZHWMXHMBX2SQUT:GroupAccessArchitectsSession',
+                'ApproximateFirstReceiveTimestamp' => '1645787771287',
+                'ApproximateReceiveCount' => '1',
+                'SentTimestamp' => '1645787708045',
+            ],
+            'MD5OfMessageAttributes' => 'e4849a650dbb07b06723f9cf0ebe1f68',
+            'MessageAttributes' => [
+                'QueueUrl' => new SqsMessageAttribute(
+                    'QueueUrl',
+                    self::TEST_QUEUE_URL,
+                    SqsMessageAttributeDataType::STRING,
+                ),
+            ],
+        ], self::TEST_QUEUE_URL);
     }
 
 

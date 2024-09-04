@@ -79,6 +79,8 @@ class SqsQueueManager implements QueueManagerInterface
 
     private ?EventDispatcherInterface $eventDispatcher;
 
+    private readonly SqsMessageAttributeFactory $sqsMessageAttributeFactory;
+
     private bool $isBeingTerminated = false;
 
 
@@ -106,6 +108,7 @@ class SqsQueueManager implements QueueManagerInterface
         $this->dateTimeImmutableFactory = $dateTimeImmutableFactory;
         $this->delayedJobScheduler = $delayedJobScheduler;
         $this->eventDispatcher = $eventDispatcher;
+        $this->sqsMessageAttributeFactory = new SqsMessageAttributeFactory();
     }
 
 
@@ -156,6 +159,10 @@ class SqsQueueManager implements QueueManagerInterface
                 // see https://stackoverflow.com/questions/13686316/grabbing-contents-of-object-from-s3-via-php-sdk-2
                 $content = (string)$s3ObjectBody;
                 $message[SqsMessageFields::BODY] = $content;
+            }
+
+            foreach ($message[SqsMessageFields::MESSAGE_ATTRIBUTES] ?? [] as $messageAttributeName => $messageAttributeValue) {
+                $message[SqsMessageFields::MESSAGE_ATTRIBUTES][$messageAttributeName] = $this->sqsMessageAttributeFactory->createFromArray($messageAttributeName, $messageAttributeValue);
             }
 
             $sqsMessages[] = new SqsMessage($message, $queueUrl);
@@ -416,14 +423,18 @@ class SqsQueueManager implements QueueManagerInterface
             $prefixedQueueName,
         ));
 
+        // queueName might be handy here if we want to consume
+        // from multiple queues in parallel via promises.
+        // Then we need queue in message directly so that we can delete it.
+        $job->setMessageAttribute(
+            new SqsMessageAttribute(
+                SqsSendingMessageFields::QUEUE_URL,
+                $prefixedQueueName,
+                SqsMessageAttributeDataType::STRING,
+            ),
+        );
+
         $messageAttributes = $job->getMessageAttributes();
-        $messageAttributes[SqsSendingMessageFields::QUEUE_URL] = [
-            SqsMessageAttributeFields::DATA_TYPE->value => SqsMessageAttributeDataType::STRING->value,
-            // queueName might be handy here if we want to consume
-            // from multiple queues in parallel via promises.
-            // Then we need queue in message directly so that we can delete it.
-            SqsMessageAttributeFields::STRING_VALUE->value => $prefixedQueueName,
-        ];
 
         if (SqsMessage::isTooBig($messageBody, $messageAttributes)) {
             $key = $this->messageKeyGenerator->generate($job);
@@ -437,9 +448,14 @@ class SqsQueueManager implements QueueManagerInterface
             $messageBody = (string)(new S3Pointer($this->s3BucketName, $key, $receipt));
         }
 
+        $normalizedMessageAttributes = [];
+        foreach ($messageAttributes as $messageAttribute) {
+            $normalizedMessageAttributes[$messageAttribute->getName()] = $messageAttribute->toArray();
+        }
+
         $messageToSend = [
             SqsSendingMessageFields::DELAY_SECONDS => $delaySeconds,
-            SqsSendingMessageFields::MESSAGE_ATTRIBUTES => $messageAttributes,
+            SqsSendingMessageFields::MESSAGE_ATTRIBUTES => $normalizedMessageAttributes,
             SqsSendingMessageFields::MESSAGE_BODY => $messageBody,
             SqsSendingMessageFields::QUEUE_URL => $prefixedQueueName,
         ];
