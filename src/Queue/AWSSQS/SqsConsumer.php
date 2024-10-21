@@ -38,9 +38,9 @@ class SqsConsumer implements SqsConsumerInterface
 
     protected MessageDeduplication $messageDeduplication;
 
-    private DateTimeImmutableFactory $dateTimeImmutableFactory;
+    protected DateTimeImmutableFactory $dateTimeImmutableFactory;
 
-    private QueueManagerInterface $queueManager;
+    protected QueueManagerInterface $queueManager;
 
 
     public function __construct(
