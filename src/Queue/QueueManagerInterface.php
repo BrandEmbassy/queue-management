@@ -21,7 +21,7 @@ interface QueueManagerInterface
      *                               implementation of automated tests & synthetic monitoring of delayed job
      *                               scheduler on live environments while maintaining quick feedback loop.
      */
-    public function pushDelayed(JobInterface $job, int $delayInSeconds, int $maxDelayInSeconds): void;
+    public function pushDelayed(JobInterface $job, int $delayInSeconds, ?int $maxDelayInSeconds = null): void;
 
 
     public function pushDelayedWithMilliseconds(JobInterface $job, int $delayInMilliseconds): void;
