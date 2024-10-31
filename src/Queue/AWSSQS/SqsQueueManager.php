@@ -256,11 +256,11 @@ class SqsQueueManager implements QueueManagerInterface
      *                               implementation of automated tests & synthetic monitoring of delayed job
      *                               scheduler on live environments while maintaining quick feedback loop.
      */
-    public function pushDelayed(JobInterface $job, int $delayInSeconds, int $maxDelayInSeconds = self::MAX_DELAY_IN_SECONDS): void
+    public function pushDelayed(JobInterface $job, int $delayInSeconds, ?int $maxDelayInSeconds = self::MAX_DELAY_IN_SECONDS): void
     {
         assert(
-            $maxDelayInSeconds >= 0,
-            'Argument $maxDelayInSeconds must be greater or equal to 0',
+            $maxDelayInSeconds === null || $maxDelayInSeconds >= 0,
+            'If argument $maxDelayInSeconds is specified, it must be greater or equal to 0',
         );
 
         $prefixedQueueName = $this->getPrefixedQueueName($job->getJobDefinition()->getQueueName());
@@ -271,6 +271,12 @@ class SqsQueueManager implements QueueManagerInterface
         $job->setExecutionPlannedAt($executionPlannedAt);
 
         $finalDelayInSeconds = $delayInSeconds;
+
+        if ($maxDelayInSeconds === null) {
+            $this->planExecutionUsingSqsDeliveryDelay($job, $prefixedQueueName, $delayInSeconds, $finalDelayInSeconds);
+
+            return;
+        }
 
         if ($delayInSeconds > $maxDelayInSeconds) {
             if ($this->delayedJobScheduler !== null) {
