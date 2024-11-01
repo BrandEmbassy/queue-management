@@ -237,7 +237,7 @@ class SqsQueueManager implements QueueManagerInterface
             $job,
             $prefixedQueueName,
             $this->logger,
-            JobType::get(JobType::SQS),
+            JobType::SQS,
             LoggerHelper::NOT_DELAYED,
             $sqsMessageId,
         );
@@ -339,7 +339,7 @@ class SqsQueueManager implements QueueManagerInterface
             $job,
             $prefixedQueueName,
             $this->logger,
-            JobType::get(JobType::SQS),
+            JobType::SQS,
             $finalDelayInSeconds,
             $sqsMessageId,
         );
