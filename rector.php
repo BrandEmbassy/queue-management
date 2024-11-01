@@ -1,10 +1,7 @@
 <?php declare(strict_types = 1);
 
 use Rector\Caching\ValueObject\Storage\FileCacheStorage;
-use Rector\CodeQuality\Rector\Concat\JoinStringConcatRector;
-use Rector\CodingStyle\Rector\Stmt\NewlineAfterStatementRector;
 use Rector\Config\RectorConfig;
-use Rector\Php74\Rector\LNumber\AddLiteralSeparatorToNumberRector;
 use Rector\PHPUnit\Set\PHPUnitSetList;
 
 return static function (RectorConfig $rectorConfig): void {
