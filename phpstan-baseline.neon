@@ -1,2 +1,16 @@
 parameters:
-	ignoreErrors: []
+	ignoreErrors:
+		-
+			message: "#^Cognitive complexity for \"BE\\\\QueueManagement\\\\Queue\\\\AWSSQS\\\\SqsQueueManager\\:\\:consumeMessages\\(\\)\" is 10, keep it under 9$#"
+			count: 1
+			path: src/Queue/AWSSQS/SqsQueueManager.php
+
+		-
+			message: "#^Cognitive complexity for \"Tests\\\\BE\\\\QueueManagement\\\\Queue\\\\AWSSQS\\\\SqsQueueManagerTest\\:\\:testPushDelayedWithJobDelayOverCustomSqsMaxDelayLimitUsingDelayedJobSchedulerAndEventDispatcher\\(\\)\" is 12, keep it under 9$#"
+			count: 1
+			path: tests/Queue/AWSSQS/SqsQueueManagerTest.php
+
+		-
+			message: "#^Cognitive complexity for \"Tests\\\\BE\\\\QueueManagement\\\\Queue\\\\AWSSQS\\\\SqsQueueManagerTest\\:\\:testPushDelayedWithJobDelayOverSqsMaxDelayLimitAndEventDispatcher\\(\\)\" is 18, keep it under 9$#"
+			count: 1
+			path: tests/Queue/AWSSQS/SqsQueueManagerTest.php
