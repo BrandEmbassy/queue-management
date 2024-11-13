@@ -7,6 +7,7 @@ use Aws\Exception\AwsException;
 use Aws\Result;
 use Aws\S3\S3Client;
 use Aws\Sqs\SqsClient;
+use BE\QueueManagement\Jobs\SimpleJob;
 use BE\QueueManagement\Observability\AfterExecutionPlannedEvent;
 use BE\QueueManagement\Observability\AfterMessageSentEvent;
 use BE\QueueManagement\Observability\BeforeExecutionPlannedEvent;
@@ -280,42 +281,6 @@ class SqsQueueManagerTest extends TestCase
 
         /** @var EventDispatcherInterface&MockInterface $eventDispatcherMock */
         $eventDispatcherMock = Mockery::mock(EventDispatcherInterface::class);
-        $eventDispatcherMock
-            ->expects('dispatch')
-            ->once()
-            ->with(Mockery::on(
-                fn($event) => $event instanceof BeforeExecutionPlannedEvent
-                && $event->job === $exampleJob
-                && $event->job->getExecutionPlannedAt()?->getTimestamp() === (new DateTimeImmutable(self::FROZEN_DATE_TIME))->modify('+ 1800 seconds')->getTimestamp()
-                && $event->delayInSeconds === 1800
-                && $event->prefixedQueueName === $queueNamePrefix . $queueName
-                && $event->plannedExecutionStrategy === PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY,
-            ))
-            ->andReturn($beforeExecutionPlannedEventMock);
-
-        $eventDispatcherMock
-            ->expects('dispatch')
-            ->once()
-            ->with(Mockery::on(fn($event) => $event instanceof AfterExecutionPlannedEvent
-                && $event->job === $exampleJob
-                && $event->job->getExecutionPlannedAt()?->getTimestamp() === (new DateTimeImmutable(self::FROZEN_DATE_TIME))->modify('+ 1800 seconds')->getTimestamp()
-                && $event->delayInSeconds === 1800
-                && $event->prefixedQueueName === $queueNamePrefix . $queueName
-                && $event->plannedExecutionStrategy === PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY
-                && $event->messageId === self::SQS_MESSAGE_ID
-                && $event->scheduledEventId === null))
-            ->andReturn($afterExecutionPlannedEventMock);
-
-        $eventDispatcherMock
-            ->shouldReceive('dispatch')
-            ->once()
-            ->with(
-                Mockery::on(fn($event) => $event instanceof BeforeMessageSentEvent
-                && $event->job === $exampleJob
-                && $event->delayInSeconds === 900
-                && $event->prefixedQueueName === $queueNamePrefix . $queueName),
-            )
-            ->andReturn($beforeMessageSentEventMock);
 
         $eventDispatcherMock
             ->shouldReceive('dispatch')
@@ -334,6 +299,47 @@ class SqsQueueManagerTest extends TestCase
                 ]
                 && $event->messageBody === '{"jobUuid":"some-job-uuid","jobName":"exampleJob","attempts":1,"createdAt":"2018-08-01T10:15:47+01:00","jobParameters":{"foo":"bar"},"executionPlannedAt":"2016-08-15T15:30:00+00:00"}'))
             ->andReturn($afterMessageSentEventMock);
+
+        $eventDispatcherMock
+            ->shouldReceive('dispatch')
+            ->once()
+            ->with(
+                Mockery::on(fn($event) => $event instanceof BeforeMessageSentEvent
+                    && $event->job === $exampleJob
+                    && $event->delayInSeconds === 900
+                    && $event->prefixedQueueName === $queueNamePrefix . $queueName),
+            )
+            ->andReturn($beforeMessageSentEventMock);
+
+        $eventDispatcherMock
+            ->expects('dispatch')
+            ->with(Mockery::on(
+                fn($event) => $this->matchEvent(
+                    $event,
+                    BeforeExecutionPlannedEvent::class,
+                    $exampleJob,
+                    $queueNamePrefix . $queueName,
+                    PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY,
+                    '+ 1800 seconds',
+                    1800,
+                ),
+            ))
+            ->andReturn($beforeExecutionPlannedEventMock);
+
+        $eventDispatcherMock
+            ->expects('dispatch')
+            ->with(Mockery::on(fn($event) => $this->matchEvent(
+                $event,
+                AfterExecutionPlannedEvent::class,
+                $exampleJob,
+                $queueNamePrefix . $queueName,
+                PlannedExecutionStrategyEnum::SQS_DELIVERY_DELAY,
+                '+ 1800 seconds',
+                1800,
+            )
+                && $event->messageId === self::SQS_MESSAGE_ID
+                && $event->scheduledEventId === null))
+            ->andReturn($afterExecutionPlannedEventMock);
 
         $queueManager = $this->createQueueManagerWithExpectations($queueNamePrefix, 1, null, $eventDispatcherMock);
 
@@ -460,24 +466,30 @@ class SqsQueueManagerTest extends TestCase
             ->expects('dispatch')
             ->once()
             ->with(Mockery::on(
-                fn($event) => $event instanceof BeforeExecutionPlannedEvent
-                && $event->job === $exampleJob
-                && $event->job->getExecutionPlannedAt()?->getTimestamp() === (new DateTimeImmutable(self::FROZEN_DATE_TIME))->modify('+ 65 seconds')->getTimestamp()
-                && $event->delayInSeconds === 65
-                && $event->prefixedQueueName === $fullQueueName
-                && $event->plannedExecutionStrategy === PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER,
+                fn($event) => $this->matchEvent(
+                    $event,
+                    BeforeExecutionPlannedEvent::class,
+                    $exampleJob,
+                    $fullQueueName,
+                    PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER,
+                    '+ 65 seconds',
+                    65,
+                ),
             ))
             ->andReturn($beforeExecutionPlannedEventMock);
 
         $eventDispatcherMock
             ->expects('dispatch')
             ->once()
-            ->with(Mockery::on(fn($event) => $event instanceof AfterExecutionPlannedEvent
-                && $event->job === $exampleJob
-                && $event->job->getExecutionPlannedAt()?->getTimestamp() === (new DateTimeImmutable(self::FROZEN_DATE_TIME))->modify('+ 65 seconds')->getTimestamp()
-                && $event->delayInSeconds === 65
-                && $event->prefixedQueueName === $fullQueueName
-                && $event->plannedExecutionStrategy === PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER
+            ->with(Mockery::on(fn($event) => $this->matchEvent(
+                $event,
+                AfterExecutionPlannedEvent::class,
+                $exampleJob,
+                $fullQueueName,
+                PlannedExecutionStrategyEnum::DELAYED_JOB_SCHEDULER,
+                '+ 65 seconds',
+                65,
+            )
                 && $event->messageId === null
                 && $event->scheduledEventId === $scheduledEventUuid))
             ->andReturn($afterExecutionPlannedEventMock);
@@ -903,5 +915,23 @@ class SqsQueueManagerTest extends TestCase
             ->andReturn(self::SQS_MESSAGE_ID);
 
         return $mock;
+    }
+
+
+    private function matchEvent(
+        BeforeExecutionPlannedEvent|AfterExecutionPlannedEvent $event,
+        string $expectedEventClass,
+        SimpleJob $exampleJob,
+        string $expectedQueueName,
+        PlannedExecutionStrategyEnum $expectedPlannedExecutionsStrategyEnum,
+        string $expectedExecutionPlannedAtTimeDiff,
+        int $expectedDelayInSeconds,
+    ): bool {
+        return $event instanceof $expectedEventClass
+            && $event->job === $exampleJob
+            && $event->job->getExecutionPlannedAt()?->getTimestamp() === (new DateTimeImmutable(self::FROZEN_DATE_TIME))->modify($expectedExecutionPlannedAtTimeDiff)->getTimestamp()
+            && $event->delayInSeconds === $expectedDelayInSeconds
+            && $event->prefixedQueueName === $expectedQueueName
+            && $event->plannedExecutionStrategy === $expectedPlannedExecutionsStrategyEnum;
     }
 }

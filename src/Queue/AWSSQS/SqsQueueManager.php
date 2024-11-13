@@ -203,16 +203,9 @@ class SqsQueueManager implements QueueManagerInterface
                 ]);
 
                 $messages = $result->get('Messages');
-                if ($messages !== null && count($messages) > 0) {
-                    $sqsMessages = $this->fromAwsResultMessages($messages, $prefixedQueueName);
-                    foreach ($sqsMessages as $sqsMessage) {
-                        $consumer($sqsMessage);
-                    }
-                }
+                $this->processAwsMessages($messages, $prefixedQueueName, $consumer);
 
-                if ($isLoopIterationsLimitEnabled) {
-                    ++$loopIterationsCounter;
-                }
+                $loopIterationsCounter = $isLoopIterationsLimitEnabled ? $loopIterationsCounter + 1 : $loopIterationsCounter;
             } catch (AwsException $exception) {
                 $this->logger->warning(
                     'AwsException: ' . $exception->getMessage(),
@@ -549,5 +542,21 @@ class SqsQueueManager implements QueueManagerInterface
     private function writeDebugLog(string $message): void
     {
         $this->logger->debug('Gracefully terminating command: ' . $message);
+    }
+
+
+    /**
+     * @param mixed[]|null $messages
+     */
+    private function processAwsMessages(?array $messages, string $prefixedQueueName, callable $consumer): void
+    {
+        if ($messages === null || count($messages) <= 0) {
+            return;
+        }
+
+        $sqsMessages = $this->fromAwsResultMessages($messages, $prefixedQueueName);
+        foreach ($sqsMessages as $sqsMessage) {
+            $consumer($sqsMessage);
+        }
     }
 }
