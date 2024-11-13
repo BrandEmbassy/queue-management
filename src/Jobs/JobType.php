@@ -2,13 +2,8 @@
 
 namespace BE\QueueManagement\Jobs;
 
-use MabeEnum\Enum;
-
-/**
- * @final
- */
-class JobType extends Enum
+enum JobType: string
 {
-    public const SQS = 'SQS';
-    public const UNKNOWN = 'unknown';
+    case SQS = 'SQS';
+    case UNKNOWN = 'unknown';
 }
