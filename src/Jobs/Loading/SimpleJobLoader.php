@@ -7,11 +7,13 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\SimpleJob;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\Collection;
+use function assert;
+use function is_a;
 
 class SimpleJobLoader implements JobLoaderInterface
 {
     /**
-     * @param Collection<string, mixed>|mixed[] $parameters
+     * @param Collection<string, mixed> $parameters
      */
     public function load(
         JobDefinitionInterface $jobDefinition,
@@ -21,8 +23,8 @@ class SimpleJobLoader implements JobLoaderInterface
         Collection $parameters,
         ?DateTimeImmutable $executionPlannedAt = null
     ): JobInterface {
-        /** @var SimpleJob $jobClass */
         $jobClass = $jobDefinition->getJobClass();
+        assert(is_a($jobClass, SimpleJob::class, true), 'Loaded job class must be instance of ' . SimpleJob::class);
 
         return new $jobClass($uuid, $createdAt, $attempts, $jobDefinition, $parameters, $executionPlannedAt);
     }

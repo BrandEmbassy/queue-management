@@ -18,7 +18,7 @@ class JobDefinitionsContainer
     private JobDefinitionFactoryInterface $jobDefinitionFactory;
 
     /**
-     * @var Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]|null
+     * @var Collection<string, JobDefinitionInterface>|null
      */
     private ?Collection $jobDefinitions = null;
 
@@ -52,7 +52,7 @@ class JobDefinitionsContainer
 
 
     /**
-     * @return Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
+     * @return Collection<string, JobDefinitionInterface>
      */
     public function all(): Collection
     {
@@ -67,7 +67,7 @@ class JobDefinitionsContainer
     /**
      * @param array<string, TJobDefinition> $jobDefinitionsConfig
      *
-     * @return Collection<string, JobDefinitionInterface>|JobDefinitionInterface[]
+     * @return Collection<string, JobDefinitionInterface>
      */
     private function loadJobDefinitions(array $jobDefinitionsConfig): Collection
     {
