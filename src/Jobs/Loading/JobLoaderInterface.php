@@ -10,7 +10,7 @@ use Doctrine\Common\Collections\Collection;
 interface JobLoaderInterface
 {
     /**
-     * @param Collection<string, mixed>|mixed[] $parameters
+     * @param Collection<string, mixed> $parameters
      */
     public function load(
         JobDefinitionInterface $jobDefinition,

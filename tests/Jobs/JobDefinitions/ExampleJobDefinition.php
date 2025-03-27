@@ -98,7 +98,7 @@ class ExampleJobDefinition implements JobDefinitionInterface
     }
 
 
-    public function getMaxAttempts(): ?int
+    public function getMaxAttempts(): int
     {
         return self::MAX_ATTEMPTS;
     }

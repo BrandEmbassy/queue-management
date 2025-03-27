@@ -7,3 +7,6 @@ parameters:
     paths:
         - src
         - tests
+
+    ignoreErrors:
+        - "#^Method [\\w\\\\]+:\\:getLogLevelForJob\\(\\) never returns '[\\w]+' so it can be removed from the return type\\.$#" # We don't want to stricten the return type of this method, it can return any of the LogLevel constants

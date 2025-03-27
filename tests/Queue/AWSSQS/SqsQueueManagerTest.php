@@ -272,7 +272,7 @@ class SqsQueueManagerTest extends TestCase
 
         /** @var BeforeExecutionPlannedEvent&MockInterface $beforeExecutionPlannedEventMock */
         $beforeExecutionPlannedEventMock = Mockery::mock(BeforeExecutionPlannedEvent::class);
-        /** @var BeforeExecutionPlannedEvent&MockInterface $afterExecutionPlannedEventMock */
+        /** @var AfterExecutionPlannedEvent&MockInterface $afterExecutionPlannedEventMock */
         $afterExecutionPlannedEventMock = Mockery::mock(AfterExecutionPlannedEvent::class);
         /** @var BeforeMessageSentEvent&MockInterface $beforeMessageSentEventMock */
         $beforeMessageSentEventMock = Mockery::mock(BeforeMessageSentEvent::class);
@@ -457,7 +457,7 @@ class SqsQueueManagerTest extends TestCase
 
         /** @var BeforeExecutionPlannedEvent&MockInterface $beforeExecutionPlannedEventMock */
         $beforeExecutionPlannedEventMock = Mockery::mock(BeforeExecutionPlannedEvent::class);
-        /** @var BeforeExecutionPlannedEvent&MockInterface $afterExecutionPlannedEventMock */
+        /** @var AfterExecutionPlannedEvent&MockInterface $afterExecutionPlannedEventMock */
         $afterExecutionPlannedEventMock = Mockery::mock(AfterExecutionPlannedEvent::class);
 
         /** @var EventDispatcherInterface&MockInterface $eventDispatcherMock */

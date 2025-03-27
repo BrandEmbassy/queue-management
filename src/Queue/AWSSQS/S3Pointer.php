@@ -8,6 +8,7 @@ use function count;
 use function is_array;
 use function is_object;
 use function json_encode;
+use function property_exists;
 
 /**
  * @final
@@ -59,8 +60,8 @@ class S3Pointer
         return count($messageBody) === 2 &&
             is_array($messageBody[0]) &&
             is_object($messageBody[1]) &&
-            isset($messageBody[1]->s3BucketName) &&
-            isset($messageBody[1]->s3Key);
+            property_exists($messageBody[1], 's3BucketName') &&
+            property_exists($messageBody[1], 's3Key');
     }
 
 
