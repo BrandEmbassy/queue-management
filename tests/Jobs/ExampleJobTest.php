@@ -96,7 +96,7 @@ class ExampleJobTest extends TestCase
     {
         /**
          * Prevent phpstan error Template type T on class Doctrine\Common\Collections\Collection is not covariant
-         * @var array<string,mixed> $parameters
+         * @var array<string,mixed>
          */
         $parameters = ['foo' => $foo];
 

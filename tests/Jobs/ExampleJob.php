@@ -7,6 +7,7 @@ use BE\QueueManagement\Jobs\JobInterface;
 use BE\QueueManagement\Jobs\SimpleJob;
 use BE\QueueManagement\Queue\AWSSQS\SqsMessageAttribute;
 use BrandEmbassy\DateTime\DateTimeFromString;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Tests\BE\QueueManagement\Jobs\JobDefinitions\ExampleJobDefinition;
 use function assert;
@@ -36,10 +37,11 @@ class ExampleJob extends SimpleJob
         ?JobDefinitionInterface $jobDefinition = null,
         string $bar = 'bar',
         array $messageAttributes = [],
+        ?DateTimeImmutable $executionPlannedAt = null,
     ) {
         /**
          * Prevent phpstan error Template type T on class Doctrine\Common\Collections\Collection is not covariant
-         * @var array<string,mixed> $parameters
+         * @var array<string,mixed>
          */
         $parameters = [self::PARAMETER_FOO => $bar];
 
@@ -49,7 +51,7 @@ class ExampleJob extends SimpleJob
             self::ATTEMPTS,
             $jobDefinition ?? ExampleJobDefinition::create(),
             new ArrayCollection($parameters),
-            null,
+            $executionPlannedAt,
             $messageAttributes,
         );
     }

@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace BE\QueueManagement\Queue\AWSSQS;
+namespace BE\QueueManagement\Queue\AWSSQS\SqsScheduler;
 
 use BE\QueueManagement\Jobs\JobInterface;
 

@@ -14,6 +14,7 @@ use BE\QueueManagement\Observability\AfterMessageSentEvent;
 use BE\QueueManagement\Observability\BeforeExecutionPlannedEvent;
 use BE\QueueManagement\Observability\BeforeMessageSentEvent;
 use BE\QueueManagement\Observability\PlannedExecutionStrategyEnum;
+use BE\QueueManagement\Queue\AWSSQS\SqsScheduler\DelayedJobSchedulerInterface;
 use BE\QueueManagement\Queue\QueueManagerInterface;
 use BrandEmbassy\DateTime\DateTimeFormatter;
 use BrandEmbassy\DateTime\DateTimeImmutableFactory;

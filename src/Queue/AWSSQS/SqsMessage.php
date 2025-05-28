@@ -15,7 +15,7 @@ use function strlen;
  *     Body: string,
  *     Attributes: mixed[],
  *     ReceiptHandle: mixed,
- *     MessageId: string,
+ *     MessageId?: string,
  * }
  * @final
  */
